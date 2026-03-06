@@ -255,7 +255,7 @@ export function ResetPage({ onVerify, onReset, onBack }) {
                   className="btn btn-warning w-full"
                   onClick={handleVerify}
                 >
-                  تحقق ←
+                  Confirm
                 </button>
               </>
             )}
