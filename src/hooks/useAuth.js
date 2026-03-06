@@ -39,7 +39,7 @@ export function useAuth() {
 
   const login = async (u, p) => {
     let a = authStorage.get();
-    // If no local account, try fetching from Firebase (cross-device login)
+    // Always try Firebase too (handles cross-device + stale cache)
     if (!a) {
       a = await getGlobalAdminKeyFB();
       if (a) {
@@ -47,10 +47,21 @@ export function useAuth() {
       }
     }
     if (!a) return false;
-    if (u === a.username && p === a.password) {
+    // Case-insensitive username comparison so "peter" matches "Peter"
+    if (u.trim().toLowerCase() === a.username.trim().toLowerCase() && p === a.password) {
       sessionStore.set();
       setScreen("app");
       return true;
+    }
+    // Local cache might be stale — try fetching fresh from Firebase
+    const fresh = await getGlobalAdminKeyFB();
+    if (fresh) {
+      authStorage.set(fresh);
+      if (u.trim().toLowerCase() === fresh.username.trim().toLowerCase() && p === fresh.password) {
+        sessionStore.set();
+        setScreen("app");
+        return true;
+      }
     }
     return false;
   };
