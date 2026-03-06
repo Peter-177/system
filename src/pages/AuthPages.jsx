@@ -4,12 +4,15 @@ import { Field, AuthShell } from "../components/UI";
 export function SetupPage({ onDone, onGoLogin }) {
   const [form, setForm] = useState({ username: "", password: "", confirm: "" });
   const [errors, setErrors] = useState({});
+  const [globalError, setGlobalError] = useState("");
+  const [loading, setLoading] = useState(false);
   const upd = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }));
     setErrors((e) => ({ ...e, [k]: "" }));
+    setGlobalError("");
   };
 
-  const submit = () => {
+  const submit = async () => {
     const e = {};
     if (!form.username.trim()) e.username = "required";
     if (form.password.length < 8) e.password = "At least 8 letters";
@@ -18,7 +21,12 @@ export function SetupPage({ onDone, onGoLogin }) {
       setErrors(e);
       return;
     }
-    onDone(form.username.trim(), form.password);
+    setLoading(true);
+    const result = await onDone(form.username.trim(), form.password);
+    setLoading(false);
+    if (result && !result.ok) {
+      setGlobalError(result.error);
+    }
   };
 
   return (
@@ -48,8 +56,13 @@ export function SetupPage({ onDone, onGoLogin }) {
           />
         </Field>
       ))}
-      <button className="btn btn-primary w-full mt-1" onClick={submit}>
-        Create an account
+      {globalError && (
+        <div className="alert alert-error text-sm py-2 animate-fadeIn">
+          <span>{globalError}</span>
+        </div>
+      )}
+      <button className="btn btn-primary w-full mt-1" onClick={submit} disabled={loading}>
+        {loading ? <span className="loading loading-spinner loading-sm"></span> : "Create an account"}
       </button>
       <div className="text-center mt-2">
         <button

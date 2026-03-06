@@ -31,6 +31,14 @@ export default function App() {
     }
   }, [auth.screen]);
 
+  if (auth.screen === "loading") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-base-100">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    );
+  }
+
   if (auth.screen === "setup") return <SetupPage onDone={auth.setupAccount} onGoLogin={() => auth.setScreen("login")} />;
   if (auth.screen === "login") return <LoginFlow auth={auth} onGoSetup={() => auth.setScreen("setup")} />;
 

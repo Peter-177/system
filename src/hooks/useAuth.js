@@ -1,14 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { authStorage, sessionStore } from "../data/storage";
 import { SECRET_RESET_KEY } from "../data/config";
 import { getGlobalAdminKeyFB, setGlobalAdminKeyFB } from "../services/firestoreService";
 
 export function useAuth() {
-  const [screen, setScreen] = useState(() => {
-    if (!authStorage.exists()) return "setup";
-    if (sessionStore.get()) return "app";
-    return "login";
-  });
+  const [screen, setScreen] = useState("loading");
+
+  // On mount: decide the correct screen by checking localStorage first, then Firebase
+  useEffect(() => {
+    let cancelled = false;
+
+    async function init() {
+      // Fast path: credentials already cached locally
+      if (authStorage.exists()) {
+        if (!cancelled) setScreen(sessionStore.get() ? "app" : "login");
+        return;
+      }
+
+      // Slow path: check Firebase for an existing account
+      try {
+        const remote = await getGlobalAdminKeyFB();
+        if (cancelled) return;
+        if (remote) {
+          authStorage.set(remote); // cache locally for next time
+          setScreen("login");
+        } else {
+          setScreen("setup"); // no account anywhere → allow creation
+        }
+      } catch (err) {
+        console.error("Failed to check Firebase for account:", err);
+        if (!cancelled) setScreen("setup"); // offline fallback
+      }
+    }
+
+    init();
+    return () => { cancelled = true; };
+  }, []);
 
   const login = async (u, p) => {
     let a = authStorage.get();
@@ -33,12 +60,24 @@ export function useAuth() {
     setScreen("login");
   };
 
-  const setupAccount = (u, p) => {
+  // Returns { ok, error } — blocks creation if an account already exists in Firebase
+  const setupAccount = async (u, p) => {
+    try {
+      const existing = await getGlobalAdminKeyFB();
+      if (existing) {
+        // Account already exists — don't allow a second one
+        return { ok: false, error: "An account already exists. Please log in instead." };
+      }
+    } catch {
+      // If we can't reach Firebase, allow creation (offline-first)
+    }
+
     const data = { username: u, password: p };
     authStorage.set(data);
     sessionStore.set();
     setGlobalAdminKeyFB(u, p).catch(console.error); // sync to Firebase
     setScreen("app");
+    return { ok: true };
   };
 
   const verifySecret = (k) => k.trim() === SECRET_RESET_KEY;
