@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { studentsDB, attendanceDB, visitsDB } from "../data/storage";
 import { Page, Avatar } from "../components/UI";
 
 const FIELDS = [
@@ -14,6 +16,14 @@ export function StudentPage({
   onGoEdit,
   onGoCoupons,
 }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const handleDelete = () => {
+    studentsDB.remove(person.qrId);
+    attendanceDB.removeAll(person.qrId);
+    visitsDB.removeAll(person.qrId);
+    onBack();
+  };
   return (
     <Page>
       <div className="navbar bg-base-200 border-b border-base-300 px-4 min-h-170">
@@ -96,6 +106,38 @@ export function StudentPage({
                       <span className="font-medium">{person[key]}</span>
                     </div>
                   ) : null,
+                )}
+              </div>
+
+              {/* Delete Button */}
+              <div className="pt-4 border-t border-base-300">
+                {!confirmDelete ? (
+                  <button
+                    onClick={() => setConfirmDelete(true)}
+                    className="btn btn-outline btn-error btn-sm w-full"
+                  >
+                    🗑️ حذف الطفل
+                  </button>
+                ) : (
+                  <div className="flex flex-col gap-2 animate-fadeIn">
+                    <p className="text-sm text-error text-center font-bold">
+                      متأكد إنك عايز تمسح {person.name}؟
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleDelete}
+                        className="btn btn-error btn-sm flex-1 text-white"
+                      >
+                        ✅ أيوه امسح
+                      </button>
+                      <button
+                        onClick={() => setConfirmDelete(false)}
+                        className="btn btn-ghost btn-sm flex-1"
+                      >
+                        ❌ لا
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
