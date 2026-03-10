@@ -26,12 +26,11 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    const { screen } = auth;
-    if (screen === "app") {
+    if (auth.screen === "app") {
       setIsSyncing(true);
       syncFromFirebase().finally(() => setIsSyncing(false));
     }
-  }, [screen]);
+  }, [auth.screen]);
 
   if (auth.screen === "loading") {
     return (
