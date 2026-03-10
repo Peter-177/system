@@ -2,34 +2,37 @@ import { useState, useEffect } from "react";
 import { authStorage, sessionStore } from "../data/storage";
 import { SECRET_RESET_KEY } from "../data/config";
 import { getGlobalAdminKeyFB, setGlobalAdminKeyFB } from "../services/firestoreService";
+import { hashPassword, isHashed } from "../utils/crypto";
 
 export function useAuth() {
   const [screen, setScreen] = useState("loading");
 
-  // On mount: decide the correct screen by checking localStorage first, then Firebase
+  // On mount: decide the correct screen by checking Firebase first
   useEffect(() => {
     let cancelled = false;
 
     async function init() {
-      // Fast path: credentials already cached locally
-      if (authStorage.exists()) {
-        if (!cancelled) setScreen(sessionStore.get() ? "app" : "login");
-        return;
-      }
-
-      // Slow path: check Firebase for an existing account
       try {
         const remote = await getGlobalAdminKeyFB();
         if (cancelled) return;
+
         if (remote) {
-          authStorage.set(remote); // cache locally for next time
-          setScreen("login");
+          // Admin account exists in Firebase → go to login
+          authStorage.set(remote); // always sync latest from Firebase
+          setScreen(sessionStore.get() ? "app" : "login");
         } else {
-          setScreen("setup"); // no account anywhere → allow creation
+          // No account in Firebase → allow creation
+          setScreen("setup");
         }
       } catch (err) {
         console.error("Failed to check Firebase for account:", err);
-        if (!cancelled) setScreen("setup"); // offline fallback
+        if (cancelled) return;
+        // Offline fallback: check localStorage
+        if (authStorage.exists()) {
+          setScreen(sessionStore.get() ? "app" : "login");
+        } else {
+          setScreen("setup");
+        }
       }
     }
 
@@ -38,31 +41,45 @@ export function useAuth() {
   }, []);
 
   const login = async (u, p) => {
-    let a = authStorage.get();
-    // Always try Firebase too (handles cross-device + stale cache)
-    if (!a) {
+    // Always fetch fresh credentials from Firebase (cross-device support)
+    let a = null;
+    try {
       a = await getGlobalAdminKeyFB();
-      if (a) {
-        authStorage.set(a); // cache it locally
-      }
+      if (a) authStorage.set(a); // update local cache
+    } catch {
+      // Firebase unreachable — fall back to local cache
+      a = authStorage.get();
     }
+
     if (!a) return false;
-    // Case-insensitive username comparison so "peter" matches "Peter"
-    if (u.trim().toLowerCase() === a.username.trim().toLowerCase() && p === a.password) {
-      sessionStore.set();
-      setScreen("app");
-      return true;
-    }
-    // Local cache might be stale — try fetching fresh from Firebase
-    const fresh = await getGlobalAdminKeyFB();
-    if (fresh) {
-      authStorage.set(fresh);
-      if (u.trim().toLowerCase() === fresh.username.trim().toLowerCase() && p === fresh.password) {
-        sessionStore.set();
-        setScreen("app");
-        return true;
+
+    const inputHash = await hashPassword(p);
+
+    // Case-insensitive username comparison
+    const usernameMatch = u.trim().toLowerCase() === a.username.trim().toLowerCase();
+
+    if (usernameMatch) {
+      if (isHashed(a.password)) {
+        // Modern path: compare hashes
+        if (inputHash === a.password) {
+          sessionStore.set();
+          setScreen("app");
+          return true;
+        }
+      } else {
+        // Migration path: stored password is plaintext
+        if (p === a.password) {
+          // Auto-migrate to hashed password
+          const migrated = { username: a.username, password: inputHash };
+          authStorage.set(migrated);
+          await setGlobalAdminKeyFB(a.username, inputHash).catch(console.error);
+          sessionStore.set();
+          setScreen("app");
+          return true;
+        }
       }
     }
+
     return false;
   };
 
@@ -71,31 +88,34 @@ export function useAuth() {
     setScreen("login");
   };
 
-  // Returns { ok, error } — blocks creation if an account already exists in Firebase
+  // Returns { ok, error } — blocks creation if an account already exists
   const setupAccount = async (u, p) => {
     try {
       const existing = await getGlobalAdminKeyFB();
       if (existing) {
-        // Account already exists — don't allow a second one
         return { ok: false, error: "An account already exists. Please log in instead." };
       }
     } catch {
-      // If we can't reach Firebase, allow creation (offline-first)
+      // Offline — allow creation
     }
 
-    const data = { username: u, password: p };
+    const hashed = await hashPassword(p);
+    const data = { username: u, password: hashed };
     authStorage.set(data);
     sessionStore.set();
-    setGlobalAdminKeyFB(u, p).catch(console.error); // sync to Firebase
+    setGlobalAdminKeyFB(u, hashed).catch(console.error);
     setScreen("app");
     return { ok: true };
   };
 
   const verifySecret = (k) => k.trim() === SECRET_RESET_KEY;
-  const resetPassword = (p) => {
-    const updated = { ...authStorage.get(), password: p };
+
+  const resetPassword = async (p) => {
+    const hashed = await hashPassword(p);
+    const current = authStorage.get();
+    const updated = { ...current, password: hashed };
     authStorage.set(updated);
-    setGlobalAdminKeyFB(updated.username, p).catch(console.error); // sync to Firebase
+    await setGlobalAdminKeyFB(updated.username, hashed).catch(console.error);
   };
 
   return { screen, setScreen, login, logout, setupAccount, verifySecret, resetPassword };

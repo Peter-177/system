@@ -15,4 +15,5 @@ export const STORAGE_KEYS = {
   students: "qrapp_students",
   attendance: "qrapp_attendance",
   coupons: "qrapp_coupons",
+  visits: "qrapp_visits",
 };

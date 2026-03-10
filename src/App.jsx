@@ -4,7 +4,7 @@ import { AppRouter } from "./router/AppRouter";
 import { SetupPage, LoginPage, ResetPage } from "./pages/AuthPages";
 import { syncFromFirebase } from "./data/storage";
 
-function LoginFlow({ auth, onGoSetup }) {
+function LoginFlow({ auth }) {
   const [view, setView] = useState("login");
   if (view === "reset")
     return (
@@ -17,7 +17,8 @@ function LoginFlow({ auth, onGoSetup }) {
         onBack={() => setView("login")}
       />
     );
-  return <LoginPage onLogin={auth.login} onForgot={() => setView("reset")} onGoSetup={onGoSetup} />;
+  // Remove onGoSetup to hide the Create Account button
+  return <LoginPage onLogin={auth.login} onForgot={() => setView("reset")} />;
 }
 
 export default function App() {
@@ -25,11 +26,12 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    if (auth.screen === "app") {
+    const { screen } = auth;
+    if (screen === "app") {
       setIsSyncing(true);
       syncFromFirebase().finally(() => setIsSyncing(false));
     }
-  }, [auth.screen]);
+  }, [screen]);
 
   if (auth.screen === "loading") {
     return (
@@ -39,8 +41,10 @@ export default function App() {
     );
   }
 
-  if (auth.screen === "setup") return <SetupPage onDone={auth.setupAccount} onGoLogin={() => auth.setScreen("login")} />;
-  if (auth.screen === "login") return <LoginFlow auth={auth} onGoSetup={() => auth.setScreen("setup")} />;
+  // Setup screen only appears if NO account exists in Firebase
+  if (auth.screen === "setup") return <SetupPage onDone={auth.setupAccount} />;
+  
+  if (auth.screen === "login") return <LoginFlow auth={auth} />;
 
   if (isSyncing) {
     return (

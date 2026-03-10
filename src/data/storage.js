@@ -3,7 +3,8 @@ import {
   addStudentFB, updateStudentFB, deleteStudentFB,
   addAttendanceFB, removeAttendanceFB, resetAttendanceFB,
   addCouponFB, removeCouponFB, resetCouponsFB,
-  getAllStudentsFB, getAllAttendanceFB
+  addVisitFB, removeVisitFB, resetVisitsFB,
+  getAllStudentsFB, getAllAttendanceFB, getAllVisitsFB
 } from "../services/firestoreService";
 
 const load = (key, fb) => {
@@ -98,14 +99,38 @@ export const couponsDB = {
   },
 };
 
+export const visitsDB = {
+  getAll: () => load(STORAGE_KEYS.visits, {}),
+  get: (sid) => load(STORAGE_KEYS.visits, {})[sid] ?? [],
+  add: (sid, e) => {
+    const a = load(STORAGE_KEYS.visits, {});
+    if (!a[sid]) a[sid] = [];
+    a[sid].unshift(e);
+    save(STORAGE_KEYS.visits, a);
+    addVisitFB(sid, e).catch(console.error);
+  },
+  remove: (sid, eid) => {
+    const a = load(STORAGE_KEYS.visits, {});
+    a[sid] = (a[sid] ?? []).filter((x) => x.id !== eid);
+    save(STORAGE_KEYS.visits, a);
+    removeVisitFB(sid, eid).catch(console.error);
+  },
+  removeAll: (sid) => {
+    const a = load(STORAGE_KEYS.visits, {});
+    delete a[sid];
+    save(STORAGE_KEYS.visits, a);
+    resetVisitsFB(sid).catch(console.error);
+  },
+};
+
 export const syncFromFirebase = async () => {
   try {
     const students = await getAllStudentsFB();
     const attendance = await getAllAttendanceFB();
-    // Assuming coupons could be mapped similarly if we wrote `getAllCouponsFB`
-    // but for now, syncing students and attendance is the priority.
+    const visits = await getAllVisitsFB();
     if (Object.keys(students).length > 0) save(STORAGE_KEYS.students, students);
     if (Object.keys(attendance).length > 0) save(STORAGE_KEYS.attendance, attendance);
+    if (Object.keys(visits).length > 0) save(STORAGE_KEYS.visits, visits);
     return true;
   } catch (error) {
     console.error("Failed to sync from Firebase:", error);

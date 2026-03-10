@@ -137,6 +137,47 @@ export const resetCouponsFB = async (studentId) => {
   await deleteDoc(doc(db, "coupons", studentId));
 };
 
+// --- VISITS API --- //
+
+export const getAllVisitsFB = async () => {
+  if (!db) return {};
+  const querySnapshot = await getDocs(collection(db, "visits"));
+  const visits = {};
+  querySnapshot.forEach((doc) => {
+    visits[doc.id] = doc.data().log || [];
+  });
+  return visits;
+};
+
+export const addVisitFB = async (studentId, entry) => {
+  if (!db) return;
+  const ref = doc(db, "visits", studentId);
+  const ds = await getDoc(ref);
+  if (!ds.exists()) {
+    await setDoc(ref, { log: [entry] });
+  } else {
+    const log = ds.data().log || [];
+    log.unshift(entry);
+    await updateDoc(ref, { log });
+  }
+};
+
+export const removeVisitFB = async (studentId, entryId) => {
+  if (!db) return;
+  const ref = doc(db, "visits", studentId);
+  const ds = await getDoc(ref);
+  if (ds.exists()) {
+    const log = ds.data().log || [];
+    const newLog = log.filter(x => x.id !== entryId);
+    await updateDoc(ref, { log: newLog });
+  }
+};
+
+export const resetVisitsFB = async (studentId) => {
+  if (!db) return;
+  await deleteDoc(doc(db, "visits", studentId));
+};
+
 // --- SYSTEM API --- //
 
 export const getGlobalAdminKeyFB = async () => {

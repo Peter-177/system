@@ -1,20 +1,14 @@
-import { useState, useMemo, useEffect, useRef } from "react";
-import { attendanceDB, studentsDB } from "../data/storage";
-import { buildAttendanceEntry, registeredToday } from "../utils/helpers";
+import { useState, useMemo, useRef } from "react";
+import { visitsDB, studentsDB } from "../data/storage";
+import { buildVisitEntry, visitedToday } from "../utils/helpers";
 import { Page, Navbar, StudentMiniCard, Toast } from "../components/UI";
 import { useToast } from "../hooks/useToast";
 
-export function AttendancePage({ person, onBack, onGoHistory }) {
+export function VisitsPage({ onBack, onGoVisitsHistory }) {
   const [query, setQuery] = useState("");
   const [pendingList, setPendingList] = useState([]);
   const toast = useToast();
   const inputRef = useRef(null);
-
-  useEffect(() => {
-    if (person && !pendingList.find((p) => p.qrId === person.qrId)) {
-      setPendingList([person]);
-    }
-  }, [person, pendingList]);
 
   const allStudents = useMemo(() => {
     const db = studentsDB.getAll();
@@ -24,13 +18,13 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
   const addPerson = (student) => {
     if (!student) return;
     if (pendingList.find((p) => p.qrId === student.qrId)) {
-      toast.show("الشخص ده موجود في القائمة بالفعل");
+      toast.show("الطفل ده موجود في القائمة بالفعل");
       setQuery("");
       return;
     }
-    const log = attendanceDB.get(student.qrId);
-    if (registeredToday(log)) {
-      toast.show(`⚠️ ${student.name} متسجل النهارده!`);
+    const log = visitsDB.get(student.qrId);
+    if (visitedToday(log)) {
+      toast.show(`⚠️ ${student.name} اتزار النهارده!`);
       return;
     }
     setPendingList((prev) => [student, ...prev]);
@@ -48,7 +42,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
       if (match) {
         addPerson(match);
       } else {
-        toast.show("مش لاقي حد بالاسم او الـ ID ده");
+        toast.show("مش لاقي حد بالاسم أو الـ ID ده");
       }
     }
   };
@@ -59,15 +53,15 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
 
   const handleSave = () => {
     if (pendingList.length === 0) return;
-    let registeredCount = 0;
+    let count = 0;
     pendingList.forEach((p) => {
-      const log = attendanceDB.get(p.qrId);
-      if (!registeredToday(log)) {
-        attendanceDB.add(p.qrId, buildAttendanceEntry());
-        registeredCount++;
+      const log = visitsDB.get(p.qrId);
+      if (!visitedToday(log)) {
+        visitsDB.add(p.qrId, buildVisitEntry());
+        count++;
       }
     });
-    toast.show(`✅ تم تسجيل حضور ${registeredCount} شخص بنجاح`);
+    toast.show(`✅ تم تسجيل زيارة ${count} طفل بنجاح`);
     setPendingList([]);
   };
 
@@ -86,7 +80,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
   return (
     <Page>
       <Toast msg={toast.msg} />
-      <Navbar onBack={onBack} title="✅ تسجيل الحضور" />
+      <Navbar onBack={onBack} title="🏠 تسجيل الزيارات" />
 
       <div className="flex-1 max-w-md mx-auto w-full px-4 py-6 flex flex-col gap-4 animate-slideUp">
         {/* Top Controls */}
@@ -101,11 +95,11 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
             autoFocus
           />
           <button
-            onClick={onGoHistory}
+            onClick={onGoVisitsHistory}
             className="btn btn-outline btn-info px-4 whitespace-nowrap"
-            title="تاريخ الحضور"
+            title="تاريخ الزيارات"
           >
-            📅 تاريخ الحضور
+            📅 تاريخ الزيارات
           </button>
         </div>
 
@@ -130,7 +124,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
         <div className="flex-1 flex flex-col gap-3 min-h-[300px]">
           {pendingList.length === 0 ? (
             <div className="text-center text-base-content/40 py-10 text-sm">
-              اكتب الاسم أو الـ ID ودوس Enter لإضافة للتحضير
+              اكتب اسم الطفل أو الـ ID ودوس Enter لإضافة للزيارة
             </div>
           ) : (
             pendingList.map((p) => (
@@ -159,9 +153,9 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
         {pendingList.length > 0 && (
           <button
             onClick={handleSave}
-            className="btn btn-success btn-lg w-full text-xl shadow-lg mt-auto text-white sticky bottom-6 animate-slideUp"
+            className="btn btn-info btn-lg w-full text-xl shadow-lg mt-auto text-white sticky bottom-6 animate-slideUp"
           >
-            ✅ تسجيل الحضور ({pendingList.length})
+            🏠 تسجيل الزيارة ({pendingList.length})
           </button>
         )}
       </div>
