@@ -16,12 +16,13 @@ const fmtDate = (v) => {
 const FIELDS = [
   { icon: "🆔", label: "الكود", key: "qrId" },
   { icon: "🏠", label: "العنوان", key: "address" },
-  { icon: "🎂", label: "تاريخ الميلاد", key: "birthdate", fmt: fmtDate },
-  { icon: "📚", label: "السنة الدراسية", key: "year" },
-  { icon: "📱", label: "رقم التليفون", key: "phone" },
+  { icon: "🎂", label: "عيد ميلاده", key: "birthdate", fmt: fmtDate },
+  { icon: "📚", label: "في سنة كام؟", key: "year" },
+  { icon: "📱", label: "التليفون", key: "phone" },
 ];
 
 export function StudentPage({
+  currentUser,
   person,
   onBack,
   onGoAttendance,
@@ -63,12 +64,14 @@ export function StudentPage({
         </div>
         <div className="navbar-center"></div>
         <div className="navbar-end flex gap-2">
-          <button
-            onClick={onGoAttendance}
-            className="btn btn-sm border-primary/30 text-primary hover:bg-primary/10 btn-outline"
-          >
-            📋 سجل الحضور
-          </button>
+          {currentUser?.role === "admin" && (
+            <button
+              onClick={onGoAttendance}
+              className="btn btn-sm border-primary/30 text-primary hover:bg-primary/10 btn-outline"
+            >
+              📋 سجل الحضور
+            </button>
+          )}
           <button
             onClick={onGoCoupons}
             className="btn btn-sm border-warning/30 text-warning hover:bg-warning/10 btn-outline"
@@ -105,7 +108,7 @@ export function StudentPage({
                   onClick={() => setShowDetails(!showDetails)}
                   className="btn btn-outline btn-primary font-bold w-full max-w-[200px]"
                 >
-                  {showDetails ? "إخفاء التفاصيل ⬆️" : "تفاصيل أكتر ⬇️"}
+                  {showDetails ? "اخفي البيانات⬆️" : "باقي البيانات⬇️"}
                 </button>
               </div>
 
@@ -135,25 +138,25 @@ export function StudentPage({
                     onClick={() => setConfirmDelete(true)}
                     className="btn btn-outline btn-error btn-sm w-full"
                   >
-                    🗑️ حذف الطفل
+                    🗑️ امسح الطفل
                   </button>
                 ) : (
                   <div className="flex flex-col gap-2 animate-fadeIn">
                     <p className="text-sm text-error text-center font-bold">
-                      متأكد إنك عايز تمسح {person.name}؟
+                      متأكد عايز تمسح {person.name}؟
                     </p>
                     <div className="flex gap-2">
                       <button
                         onClick={handleDelete}
                         className="btn btn-error btn-sm flex-1 text-white"
                       >
-                        ✅ أيوه امسح
+                        ✅ أيوة امسحه
                       </button>
                       <button
                         onClick={() => setConfirmDelete(false)}
                         className="btn btn-ghost btn-sm flex-1"
                       >
-                        ❌ لا
+                        ❌ لا خلاص
                       </button>
                     </div>
                   </div>

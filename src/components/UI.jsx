@@ -40,7 +40,7 @@ export function Navbar({ onBack, title, right }) {
           <button
             onClick={onBack}
             className="btn btn-ghost btn-sm btn-circle text-base-content/60 hover:text-primary hover:bg-primary/10 transition-colors"
-            title="رجوع"
+            title="نرجع لورا"
           >
             <svg
               className="w-5 h-5"
@@ -227,7 +227,7 @@ export function ImageCropperModal({ imageSrc, onCropDone, onCancel }) {
         
         {/* Header */}
         <div className="p-4 flex justify-between items-center border-b border-base-300">
-          <h3 className="font-bold text-lg">تعديل الصورة</h3>
+          <h3 className="font-bold text-lg">ظبط الصورة</h3>
           <button onClick={onCancel} className="btn btn-ghost btn-xs btn-circle text-base-content/50 hover:bg-base-300">
             ✕
           </button>
@@ -268,10 +268,10 @@ export function ImageCropperModal({ imageSrc, onCropDone, onCancel }) {
           {/* Buttons */}
           <div className="flex justify-end gap-2 pt-2 border-t border-base-300">
             <button onClick={onCancel} className="btn btn-ghost">
-              إلغاء
+              لا بلاش
             </button>
             <button onClick={handleApply} className="btn btn-primary px-8">
-              تأكيد
+              تمام
             </button>
           </div>
         </div>

@@ -135,7 +135,7 @@ export function BirthdayPage({ onBack }) {
       }
       todayBirthdays.forEach((s) => {
         sendNotification(
-          "🎂 عيد ميلاد سعيد!",
+          "🎂 كل سنة وأنت طيب!",
           `النهارده عيد ميلاد ${s.name}! 🎉`
         );
       });
@@ -161,7 +161,7 @@ export function BirthdayPage({ onBack }) {
               }`}
             >
               {m}
-              {idx === currentMonthIdx && <span className="ml-1 text-[10px] opacity-70">(الحالي)</span>}
+              {idx === currentMonthIdx && <span className="ml-1 text-[10px] opacity-70">(الشهر ده)</span>}
             </button>
           ))}
         </div>
@@ -170,8 +170,8 @@ export function BirthdayPage({ onBack }) {
         <div className="card bg-base-200 border border-base-300">
           <div className="card-body p-4 flex-row items-center justify-between">
             <div>
-               <div className="text-lg font-bold">الأشهر المحددة: {selectedMonths.map(m => MONTHS[m]).join("، ")}</div>
-               <div className="text-xs text-base-content/50">أعياد ميلاد الأطفال في هذه الأشهر</div>
+               <div className="text-lg font-bold">الشهور اللي اخترتها: {selectedMonths.map(m => MONTHS[m]).join("، ")}</div>
+               <div className="text-xs text-base-content/50">أعياد ميلاد العيال في الشهور دي</div>
             </div>
             <div className="badge badge-primary badge-lg px-3 py-4 text-lg font-bold">
                {birthdayStudents.length}
@@ -181,7 +181,7 @@ export function BirthdayPage({ onBack }) {
 
         {/* Birthday List */}
         {birthdayStudents.length === 0 ? (
-          <Empty icon="🎂" message={`مافيش أعياد ميلاد متسجلة في الأشهر المحددة`} />
+          <Empty icon="🎂" message={`مافيش عيال عندها أعياد ميلاد في الشهور دي`} />
         ) : (
           <div className="flex flex-col gap-3">
             {birthdayStudents.map((s, i) => (
@@ -216,7 +216,7 @@ export function BirthdayPage({ onBack }) {
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-sm truncate">{s.name}</div>
                       <div className="text-xs text-base-content/40 font-mono">
-                        {fmtDate(s.birthdate) || "لا يوجد تاريخ ميلاد"}
+                        {fmtDate(s.birthdate) || "مافيش تاريخ ميلاد"}
                       </div>
                     </div>
 
@@ -231,7 +231,7 @@ export function BirthdayPage({ onBack }) {
                       </div>
                     ) : s.daysLeft < 0 ? (
                       <div className="badge badge-ghost gap-1 text-xs px-3 py-3">
-                        فات 🗓️
+                        فات خلاص 🗓️
                       </div>
                     ) : (
                       <div

@@ -81,8 +81,8 @@ export function HistoryPage({ onBack }) {
               </select>
             </div>
 
-            <button onClick={search} className="btn btn-primary w-full">
-              🔍 Search
+            <button onClick={search} className="btn btn-primary w-full text-lg">
+              🔍 دور
             </button>
           </div>
         </div>
@@ -101,7 +101,7 @@ export function HistoryPage({ onBack }) {
             </div>
 
             {results.length === 0 ? (
-              <Empty icon="📭" message="مافيش طلاب حضروا في الفترة دي" />
+              <Empty icon="📭" message="مافيش عيال حضرت في الوقت ده" />
             ) : (
               results.map((s, i) => (
                 <div

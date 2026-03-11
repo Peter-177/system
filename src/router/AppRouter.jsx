@@ -87,7 +87,7 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout }) {
     case "create-class":
       return <CreateClassPage onBack={()=>window.history.back()} onSaved={()=>setPage("classes")} />;
     case "class-detail":
-      return <ClassDetailPage classId={activeClass} currentUser={currentUser} onBack={()=>window.history.back()} onGoStudent={goStudent} onGoAttendance={(p)=>{setActivePerson(p);setPage("student-attendance");}} onGoCoupons={(p)=>{setActivePerson(p);setPage("coupons");}} />;
+      return <ClassDetailPage classId={activeClass} currentUser={currentUser} onBack={()=>window.history.back()} onGoStudent={goStudent} onGoCoupons={(p)=>{setActivePerson(p);setPage("coupons");}} />;
     case "admin":
       return (
         <AdminPage 
@@ -99,13 +99,13 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout }) {
         />
       );
     case "student":
-      return <StudentPage person={activePerson} onBack={()=>window.history.back()} onGoAttendance={()=>setPage("student-attendance")} onGoEdit={()=>setPage("edit")} onGoCoupons={()=>setPage("coupons")} />;
+      return <StudentPage currentUser={currentUser} person={activePerson} onBack={()=>window.history.back()} onGoAttendance={()=>setPage("student-attendance")} onGoEdit={()=>setPage("edit")} onGoCoupons={()=>setPage("coupons")} />;
     case "add":
       return <AddIdPage onBack={()=>window.history.back()} onNext={id=>{setPendingId(id);setPage("add-form");}} />;
     case "add-form":
       return <AddFormPage onBack={()=>window.history.back()} pendingId={pendingId} onGoAttendance={p=>{setActivePerson(p);setPage("student-attendance");}} onGoStudent={goStudent} />;
     case "attendance":
-      return <AttendancePage person={activePerson} onBack={()=>window.history.back()} onGoHistory={()=>setPage("history")} />;
+      return <AttendancePage currentUser={currentUser} person={activePerson} onBack={()=>window.history.back()} onGoHistory={()=>setPage("history")} />;
     case "student-attendance":
       return <PersonalAttendancePage person={activePerson} onBack={()=>window.history.back()} />;
     case "edit":

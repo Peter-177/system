@@ -33,20 +33,20 @@ export function CouponsPage({ person, onBack }) {
     couponsDB.add(person.qrId, buildCouponEntry(val));
     setLog(couponsDB.get(person.qrId));
     setInput("");
-    toast.show(`✅ تم إضافة ${val} كوبون`);
+    toast.show(`✅ ضيفنا ${val} كوبون`);
     inputRef.current?.focus();
   };
 
   const handleRemove = (eid) => {
     couponsDB.remove(person.qrId, eid);
     setLog(couponsDB.get(person.qrId));
-    toast.show("🗑️ تم الحذف");
+    toast.show("🗑️ اتمسح");
   };
 
   const handleReset = () => {
     couponsDB.reset(person.qrId);
     setLog([]);
-    toast.show("🔄 تم تصفير الحساب");
+    toast.show("🔄 صفرنا الحساب خلاص");
   };
 
   const handleSubtract = () => {
@@ -59,7 +59,7 @@ export function CouponsPage({ person, onBack }) {
     couponsDB.add(person.qrId, buildCouponEntry(-val));
     setLog(couponsDB.get(person.qrId));
     setInput("");
-    toast.show(`❌ تم خصم ${val} كوبون`);
+    toast.show(`❌ خصمنا ${val} كوبون`);
     inputRef.current?.focus();
   };
 
@@ -79,7 +79,7 @@ export function CouponsPage({ person, onBack }) {
         >
           <div className="card-body items-center py-6 gap-1">
             <div className="text-xs text-base-content/30 tracking-widest uppercase">
-              إجمالي الكوبونات
+              مجموع الكوبونات
             </div>
             <div
               className={`text-6xl font-black transition-colors ${total > 0 ? "text-warning" : (total < 0 ? "text-error" : "text-base-content/10")}`}
@@ -121,13 +121,13 @@ export function CouponsPage({ person, onBack }) {
           <div className="card bg-base-200 border border-base-300 overflow-hidden">
             <div className="flex justify-between items-center px-4 py-3 border-b border-base-300">
               <span className="text-xs text-base-content/40 font-medium">
-                📋 السجل ({log.length} عمليات)
+                📋 السجل ({log.length} عمليات حصلت)
               </span>
               <button
                 onClick={handleReset}
                 className="btn btn-ghost btn-xs text-error/50 hover:text-error hover:bg-error/10"
               >
-                تصفير
+                صفر الحساب
               </button>
             </div>
             <div className="divide-y divide-base-300">
@@ -146,7 +146,7 @@ export function CouponsPage({ person, onBack }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium">
-                        {isPositive ? `إضافة ${entry.amount} كوبون` : `خصم ${Math.abs(entry.amount)} كوبون`}
+                        {isPositive ? `ضيفنا ${entry.amount}` : `خصمنا ${Math.abs(entry.amount)}`}
                       </div>
                       <div className="text-xs font-mono text-base-content/30">
                         {entry.timestamp.slice(0, 10)} —{" "}

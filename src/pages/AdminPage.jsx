@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import * as XLSX from "xlsx";
 import { Page, Navbar, Empty } from "../components/UI";
 import { getAllUsersFB, updateUserPermissionsFB, deleteUserFB } from "../services/firestoreService";
 import { classesDB, studentsDB } from "../data/storage";
@@ -44,8 +45,8 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
   if (currentUser?.role !== "admin") {
     return (
       <Page>
-        <Navbar title="غير مصرح" onBack={onBack} />
-        <Empty message="هذه الصفحة للمشرفين فقط" icon="🔒" />
+        <Navbar title="مينفعش تدخل" onBack={onBack} />
+        <Empty message="الصفحة دي للمشرفين بس" icon="🔒" />
       </Page>
     );
   }
@@ -78,23 +79,40 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
   };
 
   const handleDeleteUser = async (username) => {
-    if (!window.confirm(`هل أنت متأكد من حذف المستخدم "${username}"؟`)) return;
+    if (!window.confirm(`بجد عايز تمسح الخادم "${username}"؟`)) return;
     
     try {
       await deleteUserFB(username);
       setUsers(users.filter(u => u.username !== username));
     } catch (err) {
       console.error(err);
-      alert("فشل حذف المستخدم");
+      alert("معلش، ما عرفناش نمسح الخادم");
     }
+  };
+
+  const handleExportExcel = () => {
+    const students = studentsDB.getAll();
+    const data = Object.entries(students).map(([qrId, s]) => ({
+      "الكود (ID)": qrId,
+      "الاسم": s.name || "",
+      "السنة الدراسية": s.year || "",
+      "العنوان": s.address || "",
+      "رقم التليفون": s.phone || "",
+      "تاريخ الميلاد": s.birthdate || "",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "بيانات الأطفال");
+    XLSX.writeFile(wb, "بيانات_الأطفال.xlsx");
   };
 
   return (
     <Page>
-      <Navbar title="لوحة الإدارة (Admin)" onBack={onBack} />
+      <Navbar title="لوحة الإدارة" onBack={onBack} />
       
       <div className="flex-1 px-5 py-6 max-w-lg mx-auto w-full pb-24 animate-slideUp" dir="rtl">
-        <h2 className="text-xl font-extrabold text-base-content tracking-tight mb-5 px-1">نظرة عامة</h2>
+        <h2 className="text-xl font-extrabold text-base-content tracking-tight mb-5 px-1">بصة سريعة</h2>
 
         {/* Featured Actions Section */}
         <div className="mb-8">
@@ -113,7 +131,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
                 <div className="text-2xl font-black tracking-tight leading-tight text-base-content group-hover:text-primary transition-colors">إدارة الفصول</div>
                 <div className="text-sm font-bold text-base-content/40 flex items-center gap-1.5 mt-0.5">
                   <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                  <span>{classList.length} فصول متاحة</span>
+                  <span>{classList.length} فصول موجودة</span>
                 </div>
               </div>
             </div>
@@ -130,7 +148,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
         <div className="grid grid-cols-2 gap-4 mb-8">
           <div className="relative group p-4 flex flex-col items-center justify-center rounded-[1.5rem] bg-base-100 border border-base-200 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20">
             <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xl mb-2">👥</div>
-            <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest text-center">الطلاب</div>
+            <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest text-center">العيال</div>
             <div className="text-xl font-black text-base-content">{totalStudents}</div>
           </div>
           
@@ -142,7 +160,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
 
           <div className="relative group p-4 flex flex-col items-center justify-center rounded-[1.5rem] bg-base-100 border border-base-200 shadow-sm transition-all duration-300 hover:shadow-md hover:border-info/20">
             <div className="w-10 h-10 rounded-full bg-info/10 text-info flex items-center justify-center text-xl mb-2">🛡️</div>
-            <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest text-center">المستخدمين</div>
+            <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest text-center">الخدام</div>
             <div className="text-xl font-black text-base-content">{users.length + 1}</div>
           </div>
 
@@ -154,7 +172,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
         </div>
 
         {/* Quick Actions Title */}
-        <h2 className="text-lg font-extrabold text-base-content tracking-tight mb-4 px-1">إجراءات سريعة</h2>
+        <h2 className="text-lg font-extrabold text-base-content tracking-tight mb-4 px-1">حاجات سريعة</h2>
         
         {/* Quick Actions Grid */}
         <div className="grid grid-cols-3 gap-3 mb-10">
@@ -163,7 +181,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
             className="flex flex-col items-center p-3 rounded-2xl bg-base-100 border border-base-200 hover:border-primary/40 hover:bg-primary/5 transition-all"
           >
             <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-xl mb-2">👤</div>
-            <span className="text-[10px] font-bold">إضافة طالب</span>
+            <span className="text-[10px] font-bold">ضيف طفل</span>
           </button>
           
           <button 
@@ -171,7 +189,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
             className="flex flex-col items-center p-3 rounded-2xl bg-base-100 border border-base-200 hover:border-secondary/40 hover:bg-secondary/5 transition-all"
           >
             <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center text-xl mb-2">🏗️</div>
-            <span className="text-[10px] font-bold">إنشاء فصل</span>
+            <span className="text-[10px] font-bold">اعمل فصل جديد</span>
           </button>
 
           <button 
@@ -181,11 +199,20 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
             <div className="w-10 h-10 rounded-xl bg-neutral/10 text-neutral flex items-center justify-center text-xl mb-2">🏠</div>
             <span className="text-[10px] font-bold">الرئيسية</span>
           </button>
+
+          <button 
+            onClick={handleExportExcel}
+            className="flex flex-col items-center p-3 rounded-2xl bg-success/10 border border-success/30 hover:bg-success/20 transition-all col-span-3"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xl">📊</span>
+              <span className="text-sm font-bold text-success-content">نزل كل البيانات (Excel)</span>
+            </div>
+          </button>
         </div>
 
-
         <div className="flex items-center justify-between mb-4 px-1">
-          <h2 className="text-lg font-bold text-base-content">مستخدمين النظام</h2>
+          <h2 className="text-lg font-bold text-base-content">الخدام</h2>
           <div className="badge badge-primary badge-outline font-mono font-bold leading-none py-2.5">
             {users.length}
           </div>
@@ -196,7 +223,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
             <span className="loading loading-spinner text-primary loading-lg"></span>
           </div>
         ) : users.length === 0 ? (
-          <Empty message="لا يوجد مستخدمين آخرين حتى الآن" icon="👥" />
+          <Empty message="مافيش خدام تانيين لسه" icon="👥" />
         ) : (
           <div className="flex flex-col gap-3">
             {users.map((u, i) => (
@@ -218,8 +245,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <span className="w-2 h-2 rounded-full bg-success"></span>
                         <span className="text-[11px] font-semibold text-base-content/50 uppercase tracking-wider">
-                          {u.permissions?.length || 0} فصول مسموحة
-                        </span>
+                          {u.permissions?.length || 0} فصول مسموح بيهم                        </span>
                       </div>
                     </div>
                   </div>
@@ -228,7 +254,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
                       className="btn btn-sm btn-ghost hover:bg-primary hover:text-primary-content text-base-content/50 rounded-xl transition-all"
                       onClick={() => handleEditClick(u)}
                     >
-                      تعديل ⚙️
+                     الصلاحيات⚙️
                     </button>
                     <button 
                       className="btn btn-sm btn-ghost hover:bg-error hover:text-error-content text-base-content/30 rounded-xl transition-all"
@@ -254,7 +280,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
             <div className="p-6 flex flex-col overflow-hidden relative z-10">
               <div className="flex items-center justify-between border-b border-base-200/50 pb-4 mb-4">
                 <div>
-                  <h3 className="font-extrabold text-xl text-base-content">تعديل الصلاحيات</h3>
+                  <h3 className="font-extrabold text-xl text-base-content">ظبط الصلاحيات</h3>
                   <p className="text-sm font-semibold text-primary mt-0.5 tracking-wide">{editingUser.username}</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xl shadow-inner border border-primary/20">
@@ -264,7 +290,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
               
               <div className="overflow-y-auto pr-1 flex-1 py-1 space-y-2 min-h-[200px] custom-scrollbar">
                 {classList.length === 0 ? (
-                  <p className="text-sm text-center text-base-content/40 mt-8 font-medium">لا يوجد فصول. قم بإنشاء فصول أولاً.</p>
+                  <p className="text-sm text-center text-base-content/40 mt-8 font-medium">مافيش فصول. اعمل فصول الأول.</p>
                 ) : (
                   classList.map((cls) => {
                     const isChecked = tempPerms.includes(cls.id);
@@ -305,14 +331,14 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
                   onClick={() => setEditingUser(null)}
                   disabled={saving}
                 >
-                  إلغاء
+                  لا خلاص
                 </button>
                 <button 
                   className="btn flex-1 btn-primary h-12 rounded-xl text-[15px] font-bold shadow-md hover:shadow-lg transition-shadow border-none" 
                   onClick={savePermissions}
                   disabled={saving}
                 >
-                  {saving ? <span className="loading loading-spinner"></span> : "حفظ الصلاحيات"}
+                  {saving ? <span className="loading loading-spinner"></span> : "سجل الصلاحيات"}
                 </button>
               </div>
             </div>

@@ -14,7 +14,7 @@ export function ClassesPage({ currentUser, onRefreshAuth, onBack, onGoCreate, on
 
   return (
     <Page>
-      <Navbar title="الفصول (Classes)" onBack={onBack} />
+      <Navbar title="الفصول" onBack={onBack} />
 
       <div className="flex-1 px-5 py-6 space-y-5 animate-slideUp max-w-lg mx-auto w-full pb-20">
         <div className="flex items-center justify-between" dir="rtl">
@@ -29,7 +29,7 @@ export function ClassesPage({ currentUser, onRefreshAuth, onBack, onGoCreate, on
               disabled={isRefreshing}
               className="btn btn-sm btn-ghost gap-2 text-primary hover:bg-primary/10 rounded-full font-bold transition-all px-4"
             >
-              {isRefreshing ? <span className="loading loading-spinner loading-xs"></span> : "🔄 تحديث الصلاحيات"}
+              {isRefreshing ? <span className="loading loading-spinner loading-xs"></span> : "🔄 هات الصلاحيات الجديدة"}
             </button>
           )}
         </div>
@@ -44,7 +44,7 @@ export function ClassesPage({ currentUser, onRefreshAuth, onBack, onGoCreate, on
         )}
 
         {classList.length === 0 ? (
-          <Empty message="لا يوجد فصول حتى الآن" icon="📚" />
+          <Empty message="مافيش فصول لغاية دلوقتي" icon="📚" />
         ) : (
           <div className="grid grid-cols-1 gap-4 mt-2" dir="rtl">
             {classList.map((cls, idx) => {
@@ -111,6 +111,7 @@ export function CreateClassPage({ onBack, onSaved }) {
   const [loading, setLoading] = useState(false);
 
   const GRADES = [
+    "حضانه",
     "أولى ابتدائي",
     "تانية ابتدائي",
     "تالتة ابتدائي",
@@ -129,11 +130,11 @@ export function CreateClassPage({ onBack, onSaved }) {
 
   const submit = async () => {
     if (!name.trim()) {
-      setError("Please enter a class name");
+      setError("اكتب اسم الفصل لو سمحت");
       return;
     }
     if (selectedGrades.length === 0) {
-      setError("Please select at least one grade");
+      setError("اختار سنة واحدة على الأقل");
       return;
     }
 
@@ -165,7 +166,7 @@ export function CreateClassPage({ onBack, onSaved }) {
               <input
                 type="text"
                 className="input input-bordered w-full"
-                placeholder="مثال: فصل أولى وتانية"
+                placeholder="مثال: أولى وتانية ابتدائي"
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
@@ -176,7 +177,7 @@ export function CreateClassPage({ onBack, onSaved }) {
 
             <div className="form-control w-full mt-2">
               <label className="label">
-                <span className="label-text font-bold">الصفوف الدراسية المتضمنة</span>
+                <span className="label-text font-bold">السنين اللي في الفصل ده</span>
               </label>
               <div className="bg-base-100 p-3 rounded-box border border-base-300 space-y-2">
                 {GRADES.map((grade) => (
@@ -207,7 +208,7 @@ export function CreateClassPage({ onBack, onSaved }) {
               onClick={submit}
               disabled={loading}
             >
-              {loading ? <span className="loading loading-spinner"></span> : "حفظ الفصل"}
+              {loading ? <span className="loading loading-spinner"></span> : "سجل الفصل"}
             </button>
           </div>
         </div>

@@ -53,8 +53,8 @@ export function VisitsHistoryPage({ onBack }) {
                 </div>
               ))}
             </div>
-            <button onClick={search} className="btn btn-primary w-full">
-              🔍 بحث
+            <button onClick={search} className="btn btn-primary w-full text-lg">
+              🔍 دور
             </button>
           </div>
         </div>
@@ -73,7 +73,7 @@ export function VisitsHistoryPage({ onBack }) {
             </div>
 
             {results.length === 0 ? (
-              <Empty icon="📭" message="مافيش أطفال اتزاروا في الفترة دي" />
+              <Empty icon="📭" message="مافيش عيال اتزارت في الوقت ده" />
             ) : (
               results.map((s, i) => (
                 <div

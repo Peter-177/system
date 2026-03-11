@@ -17,7 +17,7 @@ export function PersonalAttendancePage({ person, onBack }) {
   const handleRemove = (eid) => {
     attendanceDB.remove(person.qrId, eid);
     setLog(attendanceDB.get(person.qrId));
-    toast.show("🗑️ تم مسح التسجيل");
+    toast.show("🗑️ اتمسح خلاص");
   };
 
   if (!person) return null;
@@ -35,7 +35,7 @@ export function PersonalAttendancePage({ person, onBack }) {
           <div className="card bg-base-200 border border-base-300">
             <div className="card-body p-4 gap-3">
               <div className="text-xs text-base-content/40 font-medium">
-                📋 مرات الحضور السابقة ({log.length})
+                📋 المرات اللي حضر فيها ({log.length})
               </div>
               <div className="flex flex-col gap-2">
                 {log.map((entry, i) => (

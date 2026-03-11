@@ -18,13 +18,13 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
   const addPerson = (student) => {
     if (!student) return;
     if (pendingList.find((p) => p.qrId === student.qrId)) {
-      toast.show("الطفل ده موجود في القائمة بالفعل");
+      toast.show("ده متسجل في القائمة أصلاً");
       setQuery("");
       return;
     }
     const log = visitsDB.get(student.qrId);
     if (visitedToday(log)) {
-      toast.show(`⚠️ ${student.name} اتزار النهارده!`);
+      toast.show(`⚠️ ${student.name} زُرناه النهارده!`);
       return;
     }
     setPendingList((prev) => [student, ...prev]);
@@ -42,7 +42,7 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
       if (match) {
         addPerson(match);
       } else {
-        toast.show("مش لاقي حد بالاسم أو الـ ID ده");
+        toast.show("ما لقيناش حد بالاسم أو الكود ده");
       }
     }
   };
@@ -61,7 +61,7 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
         count++;
       }
     });
-    toast.show(`✅ تم تسجيل زيارة ${count} طفل بنجاح`);
+    toast.show(`✅ تمام، سجلنا زيارة ${count} عيل`);
     setPendingList([]);
   };
 
@@ -90,7 +90,7 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="بحث بالاسم أو الكود (Enter)..."
+            placeholder="دور بالاسم أو الكود..."
             className="input input-bordered flex-1 shadow-sm font-mono text-sm"
             autoFocus
           />
@@ -124,7 +124,7 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
         <div className="flex-1 flex flex-col gap-3 min-h-[300px]">
           {pendingList.length === 0 ? (
             <div className="text-center text-base-content/40 py-10 text-sm">
-              اكتب اسم الطفل أو الـ ID ودوس Enter لإضافة للزيارة
+              اكتب اسم الطفل أو الكود ودوس Enter عشان تسجل الزيارة
             </div>
           ) : (
             pendingList.map((p) => (
@@ -139,7 +139,7 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
                   <button
                     onClick={() => removePerson(p.qrId)}
                     className="btn btn-ghost btn-circle text-error hover:bg-error/20"
-                    title="حذف"
+                    title="امسحه"
                   >
                     ✕
                   </button>

@@ -21,7 +21,7 @@ export function HomePage({ currentUser, onGoSearch, onGoAttendance, onGoHistory,
       color: "text-success",
       bgBase: "bg-success/10",
       border: "border-success/20",
-      show: true
+      show: currentUser?.role === "admin"
     },
     {
       label: "الزيارات",
@@ -94,7 +94,7 @@ export function HomePage({ currentUser, onGoSearch, onGoAttendance, onGoHistory,
 
       <div className="flex-1 px-5 pt-8 pb-12 animate-slideUp w-full max-w-md mx-auto">
         <h2 className="text-lg font-bold mb-5 px-1 text-base-content/80 text-right" dir="rtl">
-          القائمة الرئيسية
+          عايز تعمل إيه؟
         </h2>
         
         <div className="grid grid-cols-2 gap-4" dir="rtl">

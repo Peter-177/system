@@ -14,7 +14,7 @@ export function AddIdPage({ onBack, onNext }) {
   const go = () => {
     const t = id.trim();
     if (!t) return;
-    if (studentsDB.exists(t)) setError(`الـ ID "${t}" موجود — جرب ID تاني`);
+    if (studentsDB.exists(t)) setError(`الـ ID "${t}" موجود قبل كده — شوف واحد غيره`);
     else {
       setError("");
       onNext(t);
@@ -23,11 +23,11 @@ export function AddIdPage({ onBack, onNext }) {
 
   return (
     <Page>
-      <Navbar onBack={onBack} title="Add" />
+      <Navbar onBack={onBack} title="إضافة طفل" />
       <div className="flex-1 flex flex-col gap-4 max-w-md mx-auto w-full px-5 pt-14 pb-8 animate-slideUp">
         <div>
-          <h2 className="text-2xl font-bold">Enter the id</h2>
-          <p className="text-sm text-base-content/30 mt-1">Enter the id</p>
+          <h2 className="text-2xl font-bold">اكتب الـ ID هنا</h2>
+          <p className="text-sm text-base-content/30 mt-1">كود الطفل</p>
         </div>
         <div className="join w-full">
           <input
@@ -63,13 +63,13 @@ export function AddIdPage({ onBack, onNext }) {
 // ── Step 2: Form ───────────────────────────────
 const FORM_FIELDS = [
   { key: "name", label: "الاسم", type: "text", full: true, required: true },
-  { key: "phone", label: "رقم التليفون", type: "text" },
-  { key: "address", label: "العنوان", type: "text", full: true },
+  { key: "phone", label: "التليفون", type: "text" },
+  { key: "address", label: "السكن", type: "text", full: true },
   {
     key: "year",
     label: "الفصل",
     type: "select",
-    options: ["حضانه", "أولى ابتدائي", "تانية ابتدائي", "تالتة ابتدائي", "رابعة ابتدائي", "خامسة ابتدائي", "ستة ابتدائي"],
+    options: ["حضانه", "كيجي", "أولى ابتدائي", "تانية ابتدائي", "تالتة ابتدائي", "رابعة ابتدائي", "خامسة ابتدائي", "ستة ابتدائي"],
   },
 ];
 
@@ -182,8 +182,8 @@ export function AddFormPage({
           <div className="alert alert-success mb-5 animate-fadeIn">
             <span className="text-lg">✅</span>
             <div>
-              <div className="font-bold">Saved</div>
-              <div className="text-xs">دوس "حضور" فوق لتسجيل الحضور</div>
+              <div className="font-bold">زي الفل، اتحفظ</div>
+              <div className="text-xs">دوس "حضور" اللي فوق دي عشان تحضره</div>
             </div>
           </div>
         )}
@@ -207,7 +207,7 @@ export function AddFormPage({
             </div>
             {!saved && (
               <div className="absolute -bottom-2 bg-base-100 px-2 text-xs rounded-full border shadow-sm left-1/2 -translate-x-1/2 whitespace-nowrap">
-                {form.image ? "تغيير الصورة" : "صورة الطفل"}
+                {form.image ? "غير الصورة" : "صورة الطفل"}
               </div>
             )}
           </label>
@@ -234,7 +234,7 @@ export function AddFormPage({
 
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="col-span-2">
-            <Field label="تاريخ الميلاد" required={false}>
+            <Field label="عيد ميلاده" required={false}>
               <div className="flex gap-2 w-full" dir="ltr">
                 <select
                   className={`select select-bordered flex-1 ${saved ? "cursor-not-allowed opacity-50" : ""}`}
@@ -242,7 +242,7 @@ export function AddFormPage({
                   disabled={saved}
                   onChange={(e) => upd("birthdate_d", e.target.value)}
                 >
-                  <option value="" disabled>اليوم</option>
+                  <option value="" disabled>يوم</option>
                   {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
                     <option key={d} value={String(d).padStart(2, "0")}>{d}</option>
                   ))}
@@ -254,7 +254,7 @@ export function AddFormPage({
                   disabled={saved}
                   onChange={(e) => upd("birthdate_m", e.target.value)}
                 >
-                  <option value="" disabled>الشهر</option>
+                  <option value="" disabled>شهر</option>
                   {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                     <option key={m} value={String(m).padStart(2, "0")}>{m}</option>
                   ))}
@@ -266,7 +266,7 @@ export function AddFormPage({
                   disabled={saved}
                   onChange={(e) => upd("birthdate_y", e.target.value)}
                 >
-                  <option value="" disabled>السنة</option>
+                  <option value="" disabled>سنة</option>
                   {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map((y) => (
                     <option key={y} value={y}>{y}</option>
                   ))}
@@ -308,14 +308,14 @@ export function AddFormPage({
 
         {!saved ? (
           <button onClick={handleSave} className="btn btn-success w-full">
-            Save
+            حفظ
           </button>
         ) : (
           <button
             onClick={() => onGoStudent(pendingId)}
             className="btn btn-primary text-lg font-bold shadow-lg w-full"
           >
-            عرض البروفايل
+            بص على البروفايل
           </button>
         )}
       </div>

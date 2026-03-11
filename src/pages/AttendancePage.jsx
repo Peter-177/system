@@ -4,7 +4,7 @@ import { buildAttendanceEntry, registeredToday } from "../utils/helpers";
 import { Page, Navbar, StudentMiniCard, Toast } from "../components/UI";
 import { useToast } from "../hooks/useToast";
 
-export function AttendancePage({ person, onBack, onGoHistory }) {
+export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
   const [query, setQuery] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
   const [pendingList, setPendingList] = useState([]);
@@ -37,7 +37,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
   const addPerson = (student) => {
     if (!student) return;
     if (pendingList.find((p) => p.qrId === student.qrId)) {
-      toast.show("الشخص ده موجود في القائمة بالفعل");
+      toast.show("ده متسجل في القائمة أصلاً");
       setQuery("");
       return;
     }
@@ -61,7 +61,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
       if (match) {
         addPerson(match);
       } else {
-        toast.show("مش لاقي حد بالاسم او الـ ID ده");
+        toast.show("ما لقيناش حد بالاسم أو الكود ده");
       }
     }
   };
@@ -80,8 +80,21 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
         registeredCount++;
       }
     });
-    toast.show(`✅ تم تسجيل حضور ${registeredCount} شخص بنجاح`);
+    toast.show(`✅ تمام، حضرنا ${registeredCount} شخص`);
     setPendingList([]);
+  };
+
+  const handleSaveClass = () => {
+    if (classRoster.length === 0) return;
+    let registeredCount = 0;
+    classRoster.forEach((p) => {
+      const log = attendanceDB.get(p.qrId);
+      if (!registeredToday(log)) {
+        attendanceDB.add(p.qrId, buildAttendanceEntry());
+        registeredCount++;
+      }
+    });
+    toast.show(`✅ تمام، حضرنا ${registeredCount} من الفصل`);
   };
 
   const suggestions = useMemo(() => {
@@ -110,7 +123,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
             value={selectedClass}
             onChange={(e) => setSelectedClass(e.target.value)}
           >
-            <option value="">اختر الفصل للإظهار...</option>
+            <option value="">اختار الفصل...</option>
             {classList.map(cls => (
               <option key={cls.id} value={cls.id}>{cls.name}</option>
             ))}
@@ -124,7 +137,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="بحث بالاسم أو الكود (Enter)..."
+            placeholder="دور بالاسم أو الكود..."
             className="input input-bordered flex-1 shadow-sm font-mono text-sm"
           />
           <button
@@ -159,7 +172,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
             </h3>
             <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
               {classRoster.length === 0 ? (
-                <div className="text-center py-4 text-xs opacity-30">لا يوجد أطفال في هذا الفصل</div>
+                <div className="text-center py-4 text-xs opacity-30">مافيش عيال في الفصل ده</div>
               ) : (
                 classRoster.map(s => {
                   const hasAttended = registeredToday(attendanceDB.get(s.qrId));
@@ -189,7 +202,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                       </div>
                       
                       {hasAttended && (
-                        <span className="badge badge-success badge-xs text-[9px] font-bold">تم التحضير</span>
+                        <span className="badge badge-success badge-xs text-[9px] font-bold">اتحضر</span>
                       )}
                       {isPending && !hasAttended && (
                         <span className="badge badge-primary badge-xs text-[9px] font-bold">في القائمة</span>
@@ -199,6 +212,16 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                 })
               )}
             </div>
+            
+            {/* Admin Bulk Action */}
+            {currentUser?.role === "admin" && classRoster.some(s => !registeredToday(attendanceDB.get(s.qrId))) && (
+              <button
+                onClick={handleSaveClass}
+                className="btn btn-outline btn-success btn-sm w-full rounded-xl mt-2 font-bold"
+              >
+                ✅ حضر الفصل كله
+              </button>
+            )}
           </div>
         )}
 
@@ -210,7 +233,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
         <div className="flex-1 flex flex-col gap-3 min-h-[150px]">
           {pendingList.length === 0 ? (
             <div className="text-center text-base-content/40 py-10 text-sm">
-              اختار الفصل أو ابحث لإضافة أطفال للقائمة
+              اختار فصل أو دور عشان تحضر العيال
             </div>
           ) : (
             pendingList.map((p) => (
@@ -225,7 +248,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                   <button
                     onClick={() => removePerson(p.qrId)}
                     className="btn btn-ghost btn-circle btn-sm text-error hover:bg-error/20"
-                    title="حذف"
+                    title="امسحه"
                   >
                     ✕
                   </button>
