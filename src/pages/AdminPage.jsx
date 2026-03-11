@@ -81,7 +81,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
   };
 
   const handleDeleteUser = async (username) => {
-    if (!window.confirm(`بجد عايز تمسح الخادم "${username}"؟`)) return;
+    if (!window.confirm(`  متأكد عايز تمسح الخادم "${username}"؟`)) return;
     
     try {
       await deleteUserFB(username);
@@ -111,7 +111,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
 
   return (
     <Page>
-      <Navbar title="لوحة الإدارة" onBack={onBack} />
+      <Navbar title="Admin Dashboard" onBack={onBack} />
       
       <div className="flex-1 px-5 py-6 max-w-lg mx-auto w-full pb-24 animate-slideUp" dir="rtl">
         <h2 className="text-xl font-extrabold text-base-content tracking-tight mb-5 px-1">بصة سريعة</h2>
@@ -150,7 +150,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
         <div className="grid grid-cols-2 gap-4 mb-8">
           <div className="relative group p-4 flex flex-col items-center justify-center rounded-[1.5rem] bg-base-100 border border-base-200 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/20">
             <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xl mb-2">👥</div>
-            <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest text-center">العيال</div>
+            <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest text-center">الاطفال</div>
             <div className="text-xl font-black text-base-content">{totalStudents}</div>
           </div>
           
@@ -172,10 +172,8 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
             <div className="text-xl font-black text-base-content">{birthdaysToday}</div>
           </div>
         </div>
-
-        {/* Quick Actions Title */}
-        <h2 className="text-lg font-extrabold text-base-content tracking-tight mb-4 px-1">حاجات سريعة</h2>
-        
+      
+    
         {/* Quick Actions Grid */}
         <div className="grid grid-cols-3 gap-3 mb-10">
           <button 
@@ -215,10 +213,7 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
 
         {/* Security / Secret Key Section */}
         <div className="mb-10 p-5 rounded-[2rem] bg-base-100 border border-base-200 shadow-sm relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-40 transition-opacity">
-            <span className="text-2xl">🔐</span>
-          </div>
-          <h3 className="text-lg font-black mb-1">الرقم السري للاسترجاع</h3>
+          <h3 className="text-lg font-black mb-1">الرقم السري</h3>
           <p className="text-xs text-base-content/40 mb-4 leading-relaxed">الرقم ده بيستخدم عشان ترجع الباسورد لو نسيته. ياريت تحفظه كويس.</p>
           
           <div className="flex gap-2">
