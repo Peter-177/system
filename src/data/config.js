@@ -1,4 +1,4 @@
-export const SECRET_RESET_KEY = "my-secret-2025"; // ← غيّر الكلمة دي
+// SECRET_RESET_KEY is now stored hashed in Firestore (system/admin)
 
 export const ACCENT_COLORS = [
   "#6366f1",

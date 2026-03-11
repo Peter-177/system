@@ -18,7 +18,7 @@ export function Toast({ msg }) {
 export function Page({ children, className = "" }) {
   return (
     <div
-      className={`min-h-screen relative bg-gradient-to-br from-base-100 via-base-100 to-base-200/50 text-base-content flex flex-col overflow-x-hidden ${className}`}
+      className={`min-h-screen relative bg-linear-to-br from-base-100 via-base-100 to-base-200/50 text-base-content flex flex-col overflow-x-hidden ${className}`}
       dir="rtl"
     >
       {/* Subtle background grain/texture overlay */}

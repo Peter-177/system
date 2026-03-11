@@ -4,12 +4,14 @@ import { Page, Navbar, Empty } from "../components/UI";
 import { getAllUsersFB, updateUserPermissionsFB, deleteUserFB } from "../services/firestoreService";
 import { classesDB, studentsDB } from "../data/storage";
 
-export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, onGoCreateClass }) {
+export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, onGoCreateClass, onUpdateSecret }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null); // The user currently being edited
   const [tempPerms, setTempPerms] = useState([]); // Temporary permissions while editing
   const [saving, setSaving] = useState(false);
+  const [newSecret, setNewSecret] = useState("");
+  const [secretLoading, setSecretLoading] = useState(false);
 
   const allClasses = classesDB.getAll();
   const classList = Object.entries(allClasses).map(([id, cls]) => ({ id, ...cls }));
@@ -209,6 +211,39 @@ export function AdminPage({ currentUser, onBack, onGoClasses, onGoAddStudent, on
               <span className="text-sm font-bold text-success-content">نزل كل البيانات (Excel)</span>
             </div>
           </button>
+        </div>
+
+        {/* Security / Secret Key Section */}
+        <div className="mb-10 p-5 rounded-[2rem] bg-base-100 border border-base-200 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-40 transition-opacity">
+            <span className="text-2xl">🔐</span>
+          </div>
+          <h3 className="text-lg font-black mb-1">الرقم السري للاسترجاع</h3>
+          <p className="text-xs text-base-content/40 mb-4 leading-relaxed">الرقم ده بيستخدم عشان ترجع الباسورد لو نسيته. ياريت تحفظه كويس.</p>
+          
+          <div className="flex gap-2">
+            <input 
+              type="password"
+              placeholder="اكتب رقم سري جديد..."
+              className="input input-sm flex-1 bg-base-200 border-none rounded-xl focus:ring-2 focus:ring-primary/30"
+              value={newSecret}
+              onChange={(e) => setNewSecret(e.target.value)}
+            />
+            <button 
+              className="btn btn-sm btn-primary px-4 rounded-xl"
+              onClick={async () => {
+                if (!newSecret.trim()) return;
+                setSecretLoading(true);
+                await onUpdateSecret(newSecret.trim());
+                setNewSecret("");
+                setSecretLoading(false);
+                alert("تم حفظ الرقم السري الجديد بنجاح!");
+              }}
+              disabled={secretLoading || !newSecret.trim()}
+            >
+              {secretLoading ? <span className="loading loading-spinner loading-xs"></span> : "حفظ"}
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center justify-between mb-4 px-1">

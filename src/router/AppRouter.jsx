@@ -16,7 +16,7 @@ import { ClassesPage, CreateClassPage } from "../pages/ClassesPage";
 import { ClassDetailPage }          from "../pages/ClassDetailPage";
 import { AdminPage }                from "../pages/AdminPage";
 
-export function AppRouter({ currentUser, onRefreshAuth, onLogout }) {
+export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret }) {
   const [page,         setPageState]         = useState("home");
   const [activePerson, setActivePersonState] = useState(null);
   const [pendingId,    setPendingId]    = useState("");
@@ -96,6 +96,7 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout }) {
           onGoClasses={() => setPage("classes")} 
           onGoAddStudent={() => setPage("add")}
           onGoCreateClass={() => setPage("create-class")}
+          onUpdateSecret={onUpdateSecret}
         />
       );
     case "student":

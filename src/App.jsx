@@ -71,5 +71,5 @@ export default function App() {
     );
   }
 
-  return <AppRouter onLogout={auth.logout} currentUser={auth.currentUser} onRefreshAuth={auth.refreshUser} />;
+  return <AppRouter onLogout={auth.logout} currentUser={auth.currentUser} onRefreshAuth={auth.refreshUser} onUpdateSecret={auth.updateSecretKey} />;
 }

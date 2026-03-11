@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { authStorage, sessionStore } from "../data/storage";
-import { SECRET_RESET_KEY } from "../data/config";
 import { getGlobalAdminKeyFB, setGlobalAdminKeyFB, getUserFB, setUserFB } from "../services/firestoreService";
 import { hashPassword, isHashed } from "../utils/crypto";
 
@@ -130,7 +129,7 @@ export function useAuth() {
   };
 
   // Setup — creates the very first admin account
-  const setupAccount = async (u, p) => {
+  const setupAccount = async (u, p, s) => {
     try {
       const existing = await getGlobalAdminKeyFB();
       if (existing) {
@@ -141,7 +140,8 @@ export function useAuth() {
     }
 
     const hashed = await hashPassword(p);
-    const data = { username: u, password: hashed };
+    const sHashed = await hashPassword(s);
+    const data = { username: u, password: hashed, secretKeyHash: sHashed };
     authStorage.set(data);
 
     const user = { username: u, role: "admin", permissions: [] };
@@ -149,7 +149,7 @@ export function useAuth() {
     sessionStore.set();
     sessionStore.setUser(user);
 
-    setGlobalAdminKeyFB(u, hashed).catch(console.error);
+    setGlobalAdminKeyFB(u, hashed, sHashed).catch(console.error);
     setScreen("app");
     return { ok: true };
   };
@@ -192,14 +192,27 @@ export function useAuth() {
     return { ok: true };
   };
 
-  const verifySecret = (k) => k.trim() === SECRET_RESET_KEY;
+  const verifySecret = async (k) => {
+    const remote = await getGlobalAdminKeyFB();
+    if (!remote || !remote.secretKeyHash) return false;
+    const inputHash = await hashPassword(k);
+    return inputHash === remote.secretKeyHash;
+  };
 
   const resetPassword = async (p) => {
     const hashed = await hashPassword(p);
-    const current = authStorage.get();
-    const updated = { ...current, password: hashed };
+    const a = await getGlobalAdminKeyFB();
+    if (!a) return;
+    const updated = { ...a, password: hashed };
     authStorage.set(updated);
     await setGlobalAdminKeyFB(updated.username, hashed).catch(console.error);
+  };
+
+  const updateSecretKey = async (s) => {
+    const sHashed = await hashPassword(s);
+    const a = await getGlobalAdminKeyFB();
+    if (!a) return;
+    await setGlobalAdminKeyFB(a.username, a.password, sHashed).catch(console.error);
   };
 
   const refreshUser = async () => {
@@ -219,6 +232,6 @@ export function useAuth() {
   return {
     screen, setScreen, currentUser, setCurrentUser,
     login, logout, setupAccount, registerUser,
-    verifySecret, resetPassword, refreshUser,
+    verifySecret, resetPassword, refreshUser, updateSecretKey,
   };
 }

@@ -73,7 +73,7 @@ function SleekInput({ label, type, value, onChange, placeholder, onKeyDown, erro
 
 // ── Setup Page ──────────────────────────────────────
 export function SetupPage({ onDone, onGoLogin }) {
-  const [form, setForm] = useState({ username: "", password: "", confirm: "" });
+  const [form, setForm] = useState({ username: "", password: "", confirm: "", secret: "" });
   const [errors, setErrors] = useState({});
   const [globalError, setGlobalError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -90,6 +90,7 @@ export function SetupPage({ onDone, onGoLogin }) {
     if (!form.username.trim()) e.username = "Required";
     if (form.password.length < 8) e.password = "At least 8 letters";
     if (form.password !== form.confirm) e.confirm = "Does not match";
+    if (!form.secret.trim()) e.secret = "Secret key required";
     if (Object.keys(e).length) {
       setErrors(e);
       setShake(true);
@@ -97,7 +98,7 @@ export function SetupPage({ onDone, onGoLogin }) {
       return;
     }
     setLoading(true);
-    const result = await onDone(form.username.trim(), form.password);
+    const result = await onDone(form.username.trim(), form.password, form.secret.trim());
     setLoading(false);
     if (result && !result.ok) {
       setGlobalError(result.error);
@@ -109,40 +110,46 @@ export function SetupPage({ onDone, onGoLogin }) {
   return (
     <PremiumAuthLayout
       icon="🚀"
-      title="الأدمن"
-      subtitle="حساب أدمن واحد بس"
+      title="Admin Setup"
+      subtitle="Only one admin account"
       shake={shake}
-      dir="rtl"
+      dir="ltr"
     >
       <SleekInput
-        label="اسم الأدمن"
+        label="Admin Username"
         type="text"
         placeholder="admin"
         value={form.username}
         onChange={(e) => upd("username", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
         error={errors.username}
-        dir="rtl"
       />
       <SleekInput
-        label="باسورد قوي"
+        label="Strong Password"
         type="password"
         placeholder="••••••••"
         value={form.password}
         onChange={(e) => upd("password", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
         error={errors.password}
-        dir="rtl"
       />
       <SleekInput
-        label="أكد الباسورد"
+        label="Confirm Password"
         type="password"
         placeholder="••••••••"
         value={form.confirm}
         onChange={(e) => upd("confirm", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
         error={errors.confirm}
-        dir="rtl"
+      />
+      <SleekInput
+        label="Secret Reset Key"
+        type="password"
+        placeholder="Choose a secret word"
+        value={form.secret}
+        onChange={(e) => upd("secret", e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && submit()}
+        error={errors.secret}
       />
 
       {globalError && (
@@ -157,17 +164,17 @@ export function SetupPage({ onDone, onGoLogin }) {
         disabled={loading}
       >
         <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-[0%] transition-transform duration-300 pointer-events-none"></div>
-        {loading ? <span className="loading loading-spinner loading-md"></span> : "حفظ البيانات"}
+        {loading ? <span className="loading loading-spinner loading-md"></span> : "Save Admin"}
       </button>
 
-      <div className="text-center pt-6 mt-4 border-t border-base-content/10" dir="rtl">
+      <div className="text-center pt-6 mt-4 border-t border-base-content/10">
         <p className="text-sm text-base-content/60 font-medium">
-          عندك حساب أصلاً؟{" "}
+          Already have an account?{" "}
           <button
             className="font-bold text-primary hover:text-primary-focus transition-colors underline-offset-4 hover:underline"
             onClick={onGoLogin}
           >
-            ادخل من هنا
+            Log in
           </button>
         </p>
       </div>
@@ -193,7 +200,7 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
     const ok = await onLogin(form.username, form.password);
     setLoading(false);
     if (!ok) {
-      setError("الاسم أو الباسورد مش صح");
+      setError("Invalid username or password");
       setShake(true);
       setTimeout(() => setShake(false), 500);
     }
@@ -204,35 +211,33 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
       className="text-xs font-bold text-primary hover:text-primary-focus transition-colors"
       onClick={onForgot}
     >
-      نسيت؟
+      Forgot?
     </button>
   );
 
   return (
     <PremiumAuthLayout
       icon="👋"
-      title="نورت من تاني"
+      title=" Log In"
       shake={shake}
       dir="rtl"
     >
       <SleekInput
-        label="اسم المستخدم"
+        label="Username"
         type="text"
         placeholder="admin"
         value={form.username}
         onChange={(e) => upd("username", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
-        dir="rtl"
       />
       <SleekInput
-        label="الباسورد"
+        label="Password"
         type="password"
         placeholder="••••••••"
         value={form.password}
         onChange={(e) => upd("password", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
         rightElement={forgotButton}
-        dir="rtl"
       />
       
       {error && (
@@ -250,18 +255,18 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
         disabled={loading}
       >
         <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-[0%] transition-transform duration-300 pointer-events-none"></div>
-        {loading ? <span className="loading loading-spinner loading-md"></span> : "ادخل"}
+        {loading ? <span className="loading loading-spinner loading-md"></span> : "Log In"}
       </button>
 
       {(onGoSetup || onGoRegister) && (
-        <div className="text-center pt-6 mt-4 border-t border-base-content/10" dir="rtl">
+        <div className="text-center pt-6 mt-4 border-t border-base-content/10">
           <p className="text-sm text-base-content/60 font-medium">
-            معندكش حساب؟{" "}
+            Don't have an account?{" "}
             <button
               className="font-bold text-primary hover:text-primary-focus transition-colors underline-offset-4 hover:underline"
               onClick={onGoSetup || onGoRegister}
             >
-              سجل من هنا
+              Sign up
             </button>
           </p>
         </div>
@@ -308,39 +313,36 @@ export function RegisterPage({ onDone, onGoLogin }) {
   return (
     <PremiumAuthLayout
       icon="✨"
-      title="اعمل حساب جديد"
+      title="Create Account"
       shake={shake}
-      dir="rtl"
+      dir="ltr"
     >
       <SleekInput
-        label="اسم المستخدم"
+        label="Username"
         type="text"
         placeholder="user123"
         value={form.username}
         onChange={(e) => upd("username", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
         error={errors.username}
-        dir="rtl"
       />
       <SleekInput
-        label="الباسورد"
+        label="Password"
         type="password"
         placeholder="••••••••"
         value={form.password}
         onChange={(e) => upd("password", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
         error={errors.password}
-        dir="rtl"
       />
       <SleekInput
-        label="أكد الباسورد"
+        label="Confirm Password"
         type="password"
         placeholder="••••••••"
         value={form.confirm}
         onChange={(e) => upd("confirm", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
         error={errors.confirm}
-        dir="rtl"
       />
 
       {globalError && (
@@ -355,17 +357,17 @@ export function RegisterPage({ onDone, onGoLogin }) {
         disabled={loading}
       >
         <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-[0%] transition-transform duration-300 pointer-events-none"></div>
-        {loading ? <span className="loading loading-spinner loading-md"></span> : "سجل الحساب"}
+        {loading ? <span className="loading loading-spinner loading-md"></span> : "Sign Up"}
       </button>
 
-      <div className="text-center pt-6 mt-4 border-t border-base-content/10" dir="rtl">
+      <div className="text-center pt-6 mt-4 border-t border-base-content/10">
         <p className="text-sm text-base-content/60 font-medium">
-          عندك حساب أصلاً؟{" "}
+          Already have an account?{" "}
           <button
             className="font-bold text-primary hover:text-primary-focus transition-colors underline-offset-4 hover:underline"
             onClick={onGoLogin}
           >
-            ادخل من هنا
+            Log in
           </button>
         </p>
       </div>
@@ -379,6 +381,7 @@ export function ResetPage({ onVerify, onReset, onBack }) {
   const [secret, setSecret] = useState("");
   const [form, setForm] = useState({ password: "", confirm: "" });
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
   
   const doShake = () => {
@@ -391,8 +394,11 @@ export function ResetPage({ onVerify, onReset, onBack }) {
     setErrors((e) => ({ ...e, [k]: "" }));
   };
 
-  const handleVerify = () => {
-    if (onVerify(secret)) {
+  const handleVerify = async () => {
+    setLoading(true);
+    const ok = await onVerify(secret);
+    setLoading(false);
+    if (ok) {
       setStep("newpass");
       setErrors({});
     } else {
@@ -416,15 +422,15 @@ export function ResetPage({ onVerify, onReset, onBack }) {
   return (
     <PremiumAuthLayout
       icon={step === "verify" ? "🔑" : "🔓"}
-      title={step === "verify" ? "تغيير الباسورد" : "باسورد جديد"}
-      subtitle={step === "verify" ? "اكتب الكود السري بتاعك عشان نتأكد إنك أنت" : "اكتب باسورد جديد قوي"}
+      title={step === "verify" ? "Reset Password" : "New Password"}
+      subtitle={step === "verify" ? "Enter your secret key to verify your identity" : "Create a strong new password"}
       shake={shake}
-      dir="rtl"
+      dir="ltr"
     >
       <button
         className="absolute top-8 left-8 btn btn-ghost btn-sm btn-circle text-base-content/50 hover:bg-base-200 hover:text-base-content"
         onClick={onBack}
-        title="نرجع"
+        title="Back"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -434,15 +440,15 @@ export function ResetPage({ onVerify, onReset, onBack }) {
       {/* Steps Indicator */}
       <div className="flex justify-center mb-6">
         <ul className="steps steps-horizontal text-xs font-bold tracking-widest uppercase">
-          <li className={`step ${step === "verify" || step === "newpass" ? "step-primary" : ""}`}>تأكيد</li>
-          <li className={`step ${step === "newpass" ? "step-primary" : ""}`}>الباسورد</li>
+          <li className={`step ${step === "verify" || step === "newpass" ? "step-primary" : ""}`}>Verify</li>
+          <li className={`step ${step === "newpass" ? "step-primary" : ""}`}>Password</li>
         </ul>
       </div>
 
       {step === "verify" && (
         <>
           <SleekInput
-            label="الكود السري"
+            label="Secret Key"
             type="password"
             placeholder="••••••••••••"
             value={secret}
@@ -452,13 +458,13 @@ export function ResetPage({ onVerify, onReset, onBack }) {
             }}
             onKeyDown={(e) => e.key === "Enter" && handleVerify()}
             error={errors.secret}
-            dir="rtl"
           />
           <button
             className="btn btn-warning w-full h-14 rounded-2xl text-[1.1rem] shadow-[0_8px_20px_-6px_rgba(var(--wa),0.5)] hover:shadow-[0_12px_24px_-8px_rgba(var(--wa),0.7)] hover:-translate-y-0.5 transition-all duration-300 font-extrabold tracking-wide mt-6 border-none text-warning-content"
             onClick={handleVerify}
+            disabled={loading}
           >
-            تأكد من الكود
+            {loading ? <span className="loading loading-spinner loading-md"></span> : "Verify Key"}
           </button>
         </>
       )}
@@ -466,30 +472,28 @@ export function ResetPage({ onVerify, onReset, onBack }) {
       {step === "newpass" && (
         <>
           <SleekInput
-            label="باسورد جديد"
+            label="New Password"
             type="password"
             placeholder="••••••••"
             value={form.password}
             onChange={(e) => upd("password", e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleReset()}
             error={errors.password}
-            dir="rtl"
           />
           <SleekInput
-            label="أكد الباسورد"
+            label="Confirm Password"
             type="password"
             placeholder="••••••••"
             value={form.confirm}
             onChange={(e) => upd("confirm", e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleReset()}
             error={errors.confirm}
-            dir="rtl"
           />
           <button
             className="btn btn-primary w-full h-14 rounded-2xl text-[1.1rem] shadow-[0_8px_20px_-6px_rgba(var(--p),0.5)] hover:shadow-[0_12px_24px_-8px_rgba(var(--p),0.7)] hover:-translate-y-0.5 transition-all duration-300 font-extrabold tracking-wide mt-6 border-none"
             onClick={handleReset}
           >
-            احفظ الباسورد
+            Save Password
           </button>
         </>
       )}

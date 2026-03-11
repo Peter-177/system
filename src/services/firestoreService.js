@@ -189,9 +189,11 @@ export const getGlobalAdminKeyFB = async () => {
   return null;
 };
 
-export const setGlobalAdminKeyFB = async (username, password) => {
+export const setGlobalAdminKeyFB = async (username, password, secretKeyHash = null) => {
   if (!db) return;
-  await setDoc(doc(db, "system", "admin"), { username, password });
+  const data = { username, password };
+  if (secretKeyHash) data.secretKeyHash = secretKeyHash;
+  await setDoc(doc(db, "system", "admin"), data, { merge: true });
 };
 
 // --- USERS API --- //
