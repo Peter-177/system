@@ -193,3 +193,60 @@ export const setGlobalAdminKeyFB = async (username, password) => {
   if (!db) return;
   await setDoc(doc(db, "system", "admin"), { username, password });
 };
+
+// --- USERS API --- //
+
+export const getUserFB = async (username) => {
+  if (!db) return null;
+  const ds = await getDoc(doc(db, "users", username.toLowerCase()));
+  return ds.exists() ? ds.data() : null;
+};
+
+export const setUserFB = async (username, data) => {
+  if (!db) return;
+  await setDoc(doc(db, "users", username.toLowerCase()), data);
+};
+
+export const getAllUsersFB = async () => {
+  if (!db) return {};
+  const snap = await getDocs(collection(db, "users"));
+  const users = {};
+  snap.forEach((d) => { users[d.id] = d.data(); });
+  return users;
+};
+
+export const updateUserPermissionsFB = async (username, permissions) => {
+  if (!db) return;
+  await updateDoc(doc(db, "users", username.toLowerCase()), { permissions });
+};
+
+export const deleteUserFB = async (username) => {
+  if (!db) return;
+  await deleteDoc(doc(db, "users", username.toLowerCase()));
+};
+
+// --- CLASSES API --- //
+
+export const getClassFB = async (classId) => {
+  if (!db) return null;
+  const ds = await getDoc(doc(db, "classes", classId));
+  return ds.exists() ? ds.data() : null;
+};
+
+export const setClassFB = async (classId, data) => {
+  if (!db) return;
+  await setDoc(doc(db, "classes", classId), data);
+};
+
+export const getAllClassesFB = async () => {
+  if (!db) return {};
+  const snap = await getDocs(collection(db, "classes"));
+  const classes = {};
+  snap.forEach((d) => { classes[d.id] = d.data(); });
+  return classes;
+};
+
+export const deleteClassFB = async (classId) => {
+  if (!db) return;
+  await deleteDoc(doc(db, "classes", classId));
+};

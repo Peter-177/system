@@ -4,7 +4,8 @@ import {
   addAttendanceFB, removeAttendanceFB, resetAttendanceFB,
   addCouponFB, removeCouponFB, resetCouponsFB,
   addVisitFB, removeVisitFB, resetVisitsFB,
-  getAllStudentsFB, getAllAttendanceFB, getAllVisitsFB
+  getAllStudentsFB, getAllAttendanceFB, getAllVisitsFB,
+  getAllClassesFB, setClassFB, deleteClassFB,
 } from "../services/firestoreService";
 
 // ── In-memory data store (populated from Firebase on startup) ──
@@ -13,6 +14,7 @@ const mem = {
   [STORAGE_KEYS.attendance]: {},
   [STORAGE_KEYS.coupons]:    {},
   [STORAGE_KEYS.visits]:     {},
+  [STORAGE_KEYS.classes]:    {},
 };
 
 const loadMem = (key, fb) => mem[key] ?? fb;
@@ -33,7 +35,15 @@ export const authStorage = {
 export const sessionStore = {
   get: () => !!sessionStorage.getItem(STORAGE_KEYS.session),
   set: () => sessionStorage.setItem(STORAGE_KEYS.session, "1"),
-  clear: () => sessionStorage.removeItem(STORAGE_KEYS.session),
+  clear: () => {
+    sessionStorage.removeItem(STORAGE_KEYS.session);
+    sessionStorage.removeItem(STORAGE_KEYS.currentUser);
+  },
+  getUser: () => {
+    try { return JSON.parse(sessionStorage.getItem(STORAGE_KEYS.currentUser)); }
+    catch { return null; }
+  },
+  setUser: (u) => sessionStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify(u)),
 };
 
 // ── Students (Firebase-only) ──
@@ -135,19 +145,93 @@ export const visitsDB = {
   },
 };
 
-// ── Sync: Fetch everything from Firebase into memory ──
+// ── Classes (Firebase-only) ──
+export const classesDB = {
+  getAll: () => loadMem(STORAGE_KEYS.classes, {}),
+  get: (id) => loadMem(STORAGE_KEYS.classes, {})[id] ?? null,
+  set: (id, data) => {
+    const a = loadMem(STORAGE_KEYS.classes, {});
+    a[id] = data;
+    saveMem(STORAGE_KEYS.classes, a);
+    setClassFB(id, data).catch(console.error);
+  },
+  remove: (id) => {
+    const a = loadMem(STORAGE_KEYS.classes, {});
+    delete a[id];
+    saveMem(STORAGE_KEYS.classes, a);
+    deleteClassFB(id).catch(console.error);
+  },
+};
 export const syncFromFirebase = async () => {
   try {
     const students = await getAllStudentsFB();
     const attendance = await getAllAttendanceFB();
     const visits = await getAllVisitsFB();
-    // Always overwrite in-memory cache with Firebase data
+    const classes = await getAllClassesFB();
     saveMem(STORAGE_KEYS.students, students);
     saveMem(STORAGE_KEYS.attendance, attendance);
     saveMem(STORAGE_KEYS.visits, visits);
+    saveMem(STORAGE_KEYS.classes, classes);
     return true;
   } catch (error) {
     console.error("Failed to sync from Firebase:", error);
     return false;
   }
+};
+
+// ── Migration: Change Student ID ──
+// Moves a student's data across all 4 collections (students, attendance, visits, coupons)
+// to a new ID, then deletes the old one. Returns true if successful, false if newId exists.
+export const changeStudentId = async (oldId, newId) => {
+  if (studentsDB.exists(newId)) {
+    return false; // Cannot overwrite another student!
+  }
+
+  // 1. Get all current data
+  const student = studentsDB.get(oldId);
+  const attendance = attendanceDB.get(oldId);
+  const visits = visitsDB.get(oldId);
+  const coupons = couponsDB.get(oldId);
+
+  if (!student) return false;
+
+  // 2. Write to new ID
+  studentsDB.set(newId, student);
+  if (attendance.length > 0) {
+    // Write directly to Firebase and Memory to bypass `add` unshift
+    const memAtt = loadMem(STORAGE_KEYS.attendance, {});
+    memAtt[newId] = attendance;
+    saveMem(STORAGE_KEYS.attendance, memAtt);
+    
+    // Reverse it because addAttendanceFB unshifts each entry individually
+    for (const e of [...attendance].reverse()) {
+      await addAttendanceFB(newId, e).catch(console.error);
+    }
+  }
+  if (visits.length > 0) {
+    const memVis = loadMem(STORAGE_KEYS.visits, {});
+    memVis[newId] = visits;
+    saveMem(STORAGE_KEYS.visits, memVis);
+    
+    for (const e of [...visits].reverse()) {
+      await visitsDB.add(newId, e); // addVisitFB does unshift
+    }
+  }
+  if (coupons.length > 0) {
+    const memCoup = loadMem(STORAGE_KEYS.coupons, {});
+    memCoup[newId] = coupons;
+    saveMem(STORAGE_KEYS.coupons, memCoup);
+    
+    for (const e of coupons) {
+      await couponsDB.add(newId, e);
+    }
+  }
+
+  // 3. Delete old ID
+  studentsDB.remove(oldId);
+  attendanceDB.removeAll(oldId);
+  visitsDB.removeAll(oldId);
+  couponsDB.reset(oldId);
+
+  return true;
 };

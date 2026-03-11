@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { authStorage, sessionStore } from "../data/storage";
 import { SECRET_RESET_KEY } from "../data/config";
-import { getGlobalAdminKeyFB, setGlobalAdminKeyFB } from "../services/firestoreService";
+import { getGlobalAdminKeyFB, setGlobalAdminKeyFB, getUserFB, setUserFB } from "../services/firestoreService";
 import { hashPassword, isHashed } from "../utils/crypto";
 
 export function useAuth() {
   const [screen, setScreen] = useState("loading");
+  const [currentUser, setCurrentUser] = useState(null); // { username, role, permissions }
 
-  // On mount: decide the correct screen by checking Firebase first
+  // On mount: decide the correct screen
   useEffect(() => {
     let cancelled = false;
 
@@ -17,19 +18,31 @@ export function useAuth() {
         if (cancelled) return;
 
         if (remote) {
-          // Admin account exists in Firebase → go to login
-          authStorage.set(remote); // always sync latest from Firebase
-          setScreen(sessionStore.get() ? "app" : "login");
+          authStorage.set(remote);
+          // Check if we have a saved session
+          const savedSession = sessionStore.get();
+          const savedUser = sessionStore.getUser();
+          if (savedSession && savedUser) {
+            setCurrentUser(savedUser);
+            setScreen("app");
+          } else {
+            setScreen("login");
+          }
         } else {
-          // No account in Firebase → allow creation
           setScreen("setup");
         }
       } catch (err) {
         console.error("Failed to check Firebase for account:", err);
         if (cancelled) return;
-        // Offline fallback: check localStorage
         if (authStorage.exists()) {
-          setScreen(sessionStore.get() ? "app" : "login");
+          const savedSession = sessionStore.get();
+          const savedUser = sessionStore.getUser();
+          if (savedSession && savedUser) {
+            setCurrentUser(savedUser);
+            setScreen("app");
+          } else {
+            setScreen("login");
+          }
         } else {
           setScreen("setup");
         }
@@ -40,44 +53,71 @@ export function useAuth() {
     return () => { cancelled = true; };
   }, []);
 
+  // Login — tries admin first, then checks users collection
   const login = async (u, p) => {
-    // Always fetch fresh credentials from Firebase (cross-device support)
+    const inputHash = await hashPassword(p);
+    const uTrimmed = u.trim().toLowerCase();
+
+    // 1. Try admin login
     let a = null;
     try {
       a = await getGlobalAdminKeyFB();
-      if (a) authStorage.set(a); // update local cache
+      if (a) authStorage.set(a);
     } catch {
-      // Firebase unreachable — fall back to local cache
       a = authStorage.get();
     }
 
-    if (!a) return false;
-
-    const inputHash = await hashPassword(p);
-
-    // Case-insensitive username comparison
-    const usernameMatch = u.trim().toLowerCase() === a.username.trim().toLowerCase();
-
-    if (usernameMatch) {
-      if (isHashed(a.password)) {
-        // Modern path: compare hashes
-        if (inputHash === a.password) {
-          sessionStore.set();
-          setScreen("app");
-          return true;
+    if (a) {
+      const adminMatch = uTrimmed === a.username.trim().toLowerCase();
+      if (adminMatch) {
+        let passOk = false;
+        if (isHashed(a.password)) {
+          passOk = inputHash === a.password;
+        } else {
+          if (p === a.password) {
+            // Auto-migrate
+            const migrated = { username: a.username, password: inputHash };
+            authStorage.set(migrated);
+            await setGlobalAdminKeyFB(a.username, inputHash).catch(console.error);
+            passOk = true;
+          }
         }
-      } else {
-        // Migration path: stored password is plaintext
-        if (p === a.password) {
-          // Auto-migrate to hashed password
-          const migrated = { username: a.username, password: inputHash };
-          authStorage.set(migrated);
-          await setGlobalAdminKeyFB(a.username, inputHash).catch(console.error);
+        if (passOk) {
+          const user = { username: a.username, role: "admin", permissions: [] };
+          setCurrentUser(user);
           sessionStore.set();
+          sessionStore.setUser(user);
           setScreen("app");
           return true;
         }
       }
+    }
+
+    // 2. Try regular user login
+    try {
+      const userDoc = await getUserFB(uTrimmed);
+      if (userDoc) {
+        let passOk = false;
+        if (isHashed(userDoc.password)) {
+          passOk = inputHash === userDoc.password;
+        } else {
+          passOk = p === userDoc.password;
+        }
+        if (passOk) {
+          const user = {
+            username: userDoc.username,
+            role: userDoc.role || "user",
+            permissions: userDoc.permissions || [],
+          };
+          setCurrentUser(user);
+          sessionStore.set();
+          sessionStore.setUser(user);
+          setScreen("app");
+          return true;
+        }
+      }
+    } catch (err) {
+      console.error("Error checking user:", err);
     }
 
     return false;
@@ -85,10 +125,11 @@ export function useAuth() {
 
   const logout = () => {
     sessionStore.clear();
+    setCurrentUser(null);
     setScreen("login");
   };
 
-  // Returns { ok, error } — blocks creation if an account already exists
+  // Setup — creates the very first admin account
   const setupAccount = async (u, p) => {
     try {
       const existing = await getGlobalAdminKeyFB();
@@ -102,8 +143,51 @@ export function useAuth() {
     const hashed = await hashPassword(p);
     const data = { username: u, password: hashed };
     authStorage.set(data);
+
+    const user = { username: u, role: "admin", permissions: [] };
+    setCurrentUser(user);
     sessionStore.set();
+    sessionStore.setUser(user);
+
     setGlobalAdminKeyFB(u, hashed).catch(console.error);
+    setScreen("app");
+    return { ok: true };
+  };
+
+  // Register — creates a regular user account
+  const registerUser = async (u, p) => {
+    const uLower = u.trim().toLowerCase();
+
+    // Check if username is already taken (in users collection)
+    try {
+      const existing = await getUserFB(uLower);
+      if (existing) {
+        return { ok: false, error: "اسم المستخدم ده موجود بالفعل" };
+      }
+      // Also check if it matches the admin username
+      const admin = await getGlobalAdminKeyFB();
+      if (admin && admin.username.trim().toLowerCase() === uLower) {
+        return { ok: false, error: "اسم المستخدم ده موجود بالفعل" };
+      }
+    } catch {
+      // Offline — allow
+    }
+
+    const hashed = await hashPassword(p);
+    const userData = {
+      username: u.trim(),
+      password: hashed,
+      role: "user",
+      permissions: [],
+    };
+
+    await setUserFB(uLower, userData).catch(console.error);
+
+    // Auto-login after registration
+    const user = { username: u.trim(), role: "user", permissions: [] };
+    setCurrentUser(user);
+    sessionStore.set();
+    sessionStore.setUser(user);
     setScreen("app");
     return { ok: true };
   };
@@ -118,5 +202,23 @@ export function useAuth() {
     await setGlobalAdminKeyFB(updated.username, hashed).catch(console.error);
   };
 
-  return { screen, setScreen, login, logout, setupAccount, verifySecret, resetPassword };
+  const refreshUser = async () => {
+    if (!currentUser || currentUser.role === "admin") return;
+    try {
+      const userDoc = await getUserFB(currentUser.username);
+      if (userDoc) {
+        const updatedUser = { ...currentUser, permissions: userDoc.permissions || [] };
+        setCurrentUser(updatedUser);
+        sessionStore.setUser(updatedUser);
+      }
+    } catch (e) {
+      console.error("Failed to refresh user perms:", e);
+    }
+  };
+
+  return {
+    screen, setScreen, currentUser, setCurrentUser,
+    login, logout, setupAccount, registerUser,
+    verifySecret, resetPassword, refreshUser,
+  };
 }

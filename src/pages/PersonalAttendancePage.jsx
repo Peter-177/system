@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { attendanceDB } from "../data/storage";
-import { buildAttendanceEntry, registeredToday } from "../utils/helpers";
+import { buildAttendanceEntry } from "../utils/helpers";
 import {
   Page,
   Navbar,
@@ -13,18 +13,6 @@ import { useToast } from "../hooks/useToast";
 export function PersonalAttendancePage({ person, onBack }) {
   const [log, setLog] = useState(() => attendanceDB.get(person?.qrId));
   const toast = useToast();
-  const alreadyToday = registeredToday(log);
-
-  const handleRegister = () => {
-    if (alreadyToday) {
-      toast.show("الشخص ده اتسجل النهارده");
-      return;
-    }
-    const entry = buildAttendanceEntry();
-    attendanceDB.add(person.qrId, entry);
-    setLog(attendanceDB.get(person.qrId));
-    toast.show("✅ تم تسجيل الحضور!");
-  };
 
   const handleRemove = (eid) => {
     attendanceDB.remove(person.qrId, eid);
@@ -37,23 +25,10 @@ export function PersonalAttendancePage({ person, onBack }) {
   return (
     <Page>
       <Toast msg={toast.msg} />
-      <Navbar onBack={onBack} title="✅ سجل حضور الطالب" />
+      <Navbar onBack={onBack} title="سجل الحضور" />
 
       <div className="flex-1 max-w-md mx-auto w-full px-5 py-6 flex flex-col gap-5 animate-slideUp">
         <StudentMiniCard person={person} />
-
-        {/* Register button */}
-        <button
-          onClick={handleRegister}
-          disabled={alreadyToday}
-          className={`btn w-full text-base h-14 text-white ${
-            alreadyToday
-              ? "btn-disabled opacity-40 border border-success/20 bg-success/5"
-              : "btn-success shadow-lg shadow-success/20"
-          }`}
-        >
-          {alreadyToday ? "✅ تم التسجيل النهارده" : "✅ تسجيل حضور اليوم"}
-        </button>
 
         {/* Log */}
         {log.length > 0 ? (

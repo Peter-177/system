@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { AppRouter } from "./router/AppRouter";
-import { SetupPage, LoginPage, ResetPage } from "./pages/AuthPages";
+import { SetupPage, LoginPage, RegisterPage, ResetPage } from "./pages/AuthPages";
 import { syncFromFirebase } from "./data/storage";
 
 function LoginFlow({ auth }) {
   const [view, setView] = useState("login");
+
   if (view === "reset")
     return (
       <ResetPage
@@ -17,8 +18,22 @@ function LoginFlow({ auth }) {
         onBack={() => setView("login")}
       />
     );
-  // Remove onGoSetup to hide the Create Account button
-  return <LoginPage onLogin={auth.login} onForgot={() => setView("reset")} />;
+
+  if (view === "register")
+    return (
+      <RegisterPage
+        onDone={auth.registerUser}
+        onGoLogin={() => setView("login")}
+      />
+    );
+
+  return (
+    <LoginPage
+      onLogin={auth.login}
+      onForgot={() => setView("reset")}
+      onGoRegister={() => setView("register")}
+    />
+  );
 }
 
 export default function App() {
@@ -28,7 +43,10 @@ export default function App() {
   useEffect(() => {
     if (auth.screen === "app") {
       setIsSyncing(true);
-      syncFromFirebase().finally(() => setIsSyncing(false));
+      Promise.all([
+        syncFromFirebase(),
+        auth.refreshUser() // Live-sync user permissions
+      ]).finally(() => setIsSyncing(false));
     }
   }, [auth.screen]);
 
@@ -40,7 +58,6 @@ export default function App() {
     );
   }
 
-  // Setup screen only appears if NO account exists in Firebase
   if (auth.screen === "setup") return <SetupPage onDone={auth.setupAccount} />;
   
   if (auth.screen === "login") return <LoginFlow auth={auth} />;
@@ -54,5 +71,5 @@ export default function App() {
     );
   }
 
-  return <AppRouter onLogout={auth.logout} />;
+  return <AppRouter onLogout={auth.logout} currentUser={auth.currentUser} onRefreshAuth={auth.refreshUser} />;
 }

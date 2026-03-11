@@ -1,12 +1,16 @@
 import { useState } from "react";
-import { attendanceDB, studentsDB } from "../data/storage";
+import { attendanceDB, studentsDB, classesDB } from "../data/storage";
 import { todayISO } from "../utils/helpers";
-import { Page, Navbar, Empty } from "../components/UI";
+import { Page, Navbar, Empty, Avatar } from "../components/UI";
 
 export function HistoryPage({ onBack }) {
   const [from, setFrom] = useState(todayISO());
   const [to, setTo] = useState(todayISO());
+  const [selectedClass, setSelectedClass] = useState("all");
   const [results, setResults] = useState(null);
+
+  const allClassesDB = classesDB.getAll();
+  const classList = Object.entries(allClassesDB).map(([id, cls]) => ({ id, ...cls }));
 
   const search = () => {
     if (!from || !to) return;
@@ -14,6 +18,13 @@ export function HistoryPage({ onBack }) {
     Object.entries(attendanceDB.getAll()).forEach(([qrId, entries]) => {
       const student = studentsDB.get(qrId);
       if (!student) return;
+      
+      // Class Filter
+      if (selectedClass !== "all") {
+        const targetClass = allClassesDB[selectedClass];
+        if (!targetClass || !targetClass.grades?.includes(student.year)) return;
+      }
+
       const sessions = entries.filter((e) => {
         const d = e.timestamp.slice(0, 10);
         return d >= from && d <= to;
@@ -53,6 +64,23 @@ export function HistoryPage({ onBack }) {
                 </div>
               ))}
             </div>
+
+            <div className="w-full">
+              <label className="label py-1">
+                <span className="label-text text-xs text-base-content/40">الفصل</span>
+              </label>
+              <select 
+                className="select select-bordered w-full text-sm"
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+              >
+                <option value="all">كل الفصول</option>
+                {classList.map(cls => (
+                  <option key={cls.id} value={cls.id}>{cls.name}</option>
+                ))}
+              </select>
+            </div>
+
             <button onClick={search} className="btn btn-primary w-full">
               🔍 Search
             </button>
@@ -86,16 +114,7 @@ export function HistoryPage({ onBack }) {
                 >
                   <div className="card-body p-4 gap-3">
                     <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
-                        style={{
-                          background: s.accent + "20",
-                          border: `2px solid ${s.accent}`,
-                          color: s.accent,
-                        }}
-                      >
-                        {s.name[0].toUpperCase()}
-                      </div>
+                      <Avatar name={s.name} accent={s.accent} image={s.image} size="md" />
                       <div className="flex-1">
                         <div className="font-bold text-sm">{s.name}</div>
                         <div className="text-xs font-mono text-base-content/30">

@@ -1,6 +1,35 @@
 import { useState, useEffect, useMemo } from "react";
 import { studentsDB } from "../data/storage";
-import { Page, Navbar, Empty } from "../components/UI";
+import { Page, Navbar, Empty, Avatar } from "../components/UI";
+
+/** Converts YYYY-MM-DD to d/m/y, or passes dd/mm/yyyy through */
+const fmtDate = (v) => {
+  if (!v) return v;
+  if (v.includes("/")) return v;
+  const parts = v.split("-");
+  if (parts.length !== 3) return v;
+  return `${parseInt(parts[2])}/${parseInt(parts[1])}/${parts[0]}`;
+};
+
+/**
+ * Parse a birthdate string from either dd/mm/yyyy or YYYY-MM-DD format into a Date.
+ * Returns null if parsing fails.
+ */
+function parseBirthdate(str) {
+  if (!str) return null;
+  // Try dd/mm/yyyy
+  if (str.includes("/")) {
+    const [d, m, y] = str.split("/").map(Number);
+    if (!d || !m || !y) return null;
+    return new Date(y, m - 1, d);
+  }
+  // Try YYYY-MM-DD (old format)
+  if (str.includes("-")) {
+    const date = new Date(str);
+    return isNaN(date.getTime()) ? null : date;
+  }
+  return null;
+}
 
 /**
  * Get days remaining until birthday this year/month.
@@ -8,8 +37,8 @@ import { Page, Navbar, Empty } from "../components/UI";
  */
 function daysUntilBirthday(birthdateStr) {
   const today = new Date();
-  const bd = new Date(birthdateStr);
-  // Build this year's birthday
+  const bd = parseBirthdate(birthdateStr);
+  if (!bd) return null;
   const thisYear = today.getFullYear();
   const bday = new Date(thisYear, bd.getMonth(), bd.getDate());
   const diffMs = bday.getTime() - new Date(thisYear, today.getMonth(), today.getDate()).getTime();
@@ -19,6 +48,7 @@ function daysUntilBirthday(birthdateStr) {
 /**
  * Request browser notification permission and send a notification.
  */
+
 function sendNotification(title, body) {
   if (!("Notification" in window)) return;
   if (Notification.permission === "granted") {
@@ -34,21 +64,34 @@ function sendNotification(title, body) {
 
 export function BirthdayPage({ onBack }) {
   const [notified, setNotified] = useState(false);
-  const [query, setQuery] = useState("");
-
   const today = new Date();
-  const currentMonth = today.getMonth(); // 0-indexed
-  const currentDay = today.getDate();
+  const currentMonthIdx = today.getMonth(); // 0-11
+  const [selectedMonths, setSelectedMonths] = useState([currentMonthIdx]);
 
-  // Get all students with birthdays in the current month
+  const toggleMonth = (idx) => {
+    if (selectedMonths.includes(idx)) {
+       // Prevent empty selection
+       if (selectedMonths.length === 1) return;
+       setSelectedMonths(selectedMonths.filter(m => m !== idx));
+    } else {
+       setSelectedMonths([...selectedMonths, idx]);
+    }
+  };
+
+  const MONTHS = [
+    "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+    "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
+  ];
+
+  // Get all students with birthdays in the selected month
   const birthdayStudents = useMemo(() => {
     const all = studentsDB.getAll();
     const result = [];
 
     Object.entries(all).forEach(([qrId, student]) => {
       if (!student.birthdate) return;
-      const bd = new Date(student.birthdate);
-      if (bd.getMonth() !== currentMonth) return;
+      const bd = parseBirthdate(student.birthdate);
+      if (!bd || !selectedMonths.includes(bd.getMonth())) return;
 
       const days = daysUntilBirthday(student.birthdate);
       result.push({
@@ -68,36 +111,23 @@ export function BirthdayPage({ onBack }) {
     });
 
     return result;
-  }, [currentMonth]);
-
-  // Filter by search query — search across ALL students when typing
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return birthdayStudents;
-
-    // Search all students, not just current month
-    const all = studentsDB.getAll();
-    const results = [];
-    Object.entries(all).forEach(([qrId, student]) => {
-      if (!student.name.toLowerCase().includes(q) && !qrId.toLowerCase().includes(q)) return;
-      const bd = student.birthdate ? new Date(student.birthdate) : null;
-      const days = student.birthdate ? daysUntilBirthday(student.birthdate) : null;
-      results.push({
-        qrId,
-        ...student,
-        birthdayDay: bd ? bd.getDate() : null,
-        daysLeft: days,
-        isToday: days === 0,
-      });
-    });
-    results.sort((a, b) => a.name.localeCompare(b.name, "ar"));
-    return results;
-  }, [query, birthdayStudents]);
+  }, [selectedMonths]);
 
   // Send notification for today's birthdays (once per page visit)
   useEffect(() => {
     if (notified) return;
-    const todayBirthdays = birthdayStudents.filter((s) => s.isToday);
+    const all = studentsDB.getAll();
+    const todayBirthdays = [];
+    Object.values(all).forEach((student) => {
+       if (!student.birthdate) return;
+       const bd = parseBirthdate(student.birthdate);
+       if (!bd) return;
+       const days = daysUntilBirthday(student.birthdate);
+       if (days === 0 && bd.getMonth() === currentMonthIdx) {
+          todayBirthdays.push(student);
+       }
+    });
+
     if (todayBirthdays.length > 0) {
       // Request permission on page load
       if ("Notification" in window && Notification.permission === "default") {
@@ -111,44 +141,50 @@ export function BirthdayPage({ onBack }) {
       });
       setNotified(true);
     }
-  }, [birthdayStudents, notified]);
-
-  const monthName = today.toLocaleDateString("ar-EG", { month: "long" });
+  }, [notified, currentMonthIdx]);
 
   return (
     <Page>
       <Navbar onBack={onBack} title="🎂 أعياد الميلاد" />
 
-      <div className="flex-1 max-w-lg mx-auto w-full px-5 py-6 flex flex-col gap-5 animate-slideUp">
-        {/* Search Bar */}
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="🔍 بحث بالاسم..."
-          className="input input-bordered w-full shadow-sm text-sm"
-        />
+      <div className="flex-1 max-w-lg mx-auto w-full px-5 py-6 flex flex-col gap-5 animate-slideUp" dir="rtl">
+        {/* Months Filter */}
+        <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide snap-x">
+          {MONTHS.map((m, idx) => (
+            <button
+              key={idx}
+              onClick={() => toggleMonth(idx)}
+              className={`btn btn-sm snap-center shrink-0 rounded-full border-solid border-2 ${
+                selectedMonths.includes(idx)
+                  ? "bg-primary text-primary-content border-primary shadow-md hover:bg-primary/90"
+                  : "bg-base-200 text-base-content border-transparent hover:bg-base-300"
+              }`}
+            >
+              {m}
+              {idx === currentMonthIdx && <span className="ml-1 text-[10px] opacity-70">(الحالي)</span>}
+            </button>
+          ))}
+        </div>
 
         {/* Month Header */}
         <div className="card bg-base-200 border border-base-300">
           <div className="card-body p-4 flex-row items-center justify-between">
             <div>
-              <div className="text-lg font-bold">شهر {monthName}</div>
-              <div className="text-xs text-base-content/40">
-                أعياد ميلاد الأطفال في الشهر الحالي
-              </div>
+               <div className="text-lg font-bold">الأشهر المحددة: {selectedMonths.map(m => MONTHS[m]).join("، ")}</div>
+               <div className="text-xs text-base-content/50">أعياد ميلاد الأطفال في هذه الأشهر</div>
             </div>
-            <div className="badge badge-primary badge-lg text-lg px-4">
-              {birthdayStudents.length}
+            <div className="badge badge-primary badge-lg px-3 py-4 text-lg font-bold">
+               {birthdayStudents.length}
             </div>
           </div>
         </div>
 
         {/* Birthday List */}
-        {filtered.length === 0 ? (
-          <Empty icon="🎂" message="مافيش أعياد ميلاد في الشهر ده" />
+        {birthdayStudents.length === 0 ? (
+          <Empty icon="🎂" message={`مافيش أعياد ميلاد متسجلة في الأشهر المحددة`} />
         ) : (
           <div className="flex flex-col gap-3">
-            {filtered.map((s, i) => (
+            {birthdayStudents.map((s, i) => (
               <div
                 key={s.qrId}
                 className={`card border animate-fadeIn ${
@@ -161,22 +197,26 @@ export function BirthdayPage({ onBack }) {
                 <div className="card-body p-4 gap-2">
                   <div className="flex items-center gap-3">
                     {/* Avatar */}
-                    <div
-                      className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shrink-0"
-                      style={{
-                        background: (s.accent || "#6366f1") + "20",
-                        border: `2px solid ${s.accent || "#6366f1"}`,
-                        color: s.accent || "#6366f1",
-                      }}
-                    >
-                      {s.isToday ? "🎂" : s.name[0]?.toUpperCase()}
-                    </div>
+                    {s.isToday && !s.image ? (
+                      <div
+                        className="w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl shrink-0 overflow-hidden relative"
+                        style={{
+                          background: (s.accent || "#6366f1") + "20",
+                          border: `2px solid ${s.accent || "#6366f1"}`,
+                          color: s.accent || "#6366f1",
+                        }}
+                      >
+                        🎂
+                      </div>
+                    ) : (
+                      <Avatar name={s.name} accent={s.accent} image={s.image} size="md" />
+                    )}
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-sm truncate">{s.name}</div>
                       <div className="text-xs text-base-content/40 font-mono">
-                        {s.birthdate || "لا يوجد تاريخ ميلاد"}
+                        {fmtDate(s.birthdate) || "لا يوجد تاريخ ميلاد"}
                       </div>
                     </div>
 

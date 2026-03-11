@@ -12,8 +12,11 @@ export const ACCENT_COLORS = [
 export const STORAGE_KEYS = {
   auth: "qrapp_auth",
   session: "qrapp_session",
+  currentUser: "qrapp_current_user",
   students: "qrapp_students",
   attendance: "qrapp_attendance",
   coupons: "qrapp_coupons",
   visits: "qrapp_visits",
+  users: "qrapp_users",
+  classes: "qrapp_classes",
 };

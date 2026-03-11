@@ -49,6 +49,20 @@ export function CouponsPage({ person, onBack }) {
     toast.show("🔄 تم تصفير الحساب");
   };
 
+  const handleSubtract = () => {
+    const val = parseInt(input.trim(), 10);
+    if (!input.trim() || isNaN(val) || val <= 0) {
+      setShake(true);
+      setTimeout(() => setShake(false), 400);
+      return;
+    }
+    couponsDB.add(person.qrId, buildCouponEntry(-val));
+    setLog(couponsDB.get(person.qrId));
+    setInput("");
+    toast.show(`❌ تم خصم ${val} كوبون`);
+    inputRef.current?.focus();
+  };
+
   if (!person) return null;
 
   return (
@@ -61,14 +75,14 @@ export function CouponsPage({ person, onBack }) {
 
         {/* Total */}
         <div
-          className={`card border-2 transition-all ${total > 0 ? "border-warning/40 bg-warning/5" : "bg-base-200 border-base-300"}`}
+          className={`card border-2 transition-all ${total > 0 ? "border-warning/40 bg-warning/5" : (total < 0 ? "border-error/40 bg-error/5" : "bg-base-200 border-base-300")}`}
         >
           <div className="card-body items-center py-6 gap-1">
             <div className="text-xs text-base-content/30 tracking-widest uppercase">
               إجمالي الكوبونات
             </div>
             <div
-              className={`text-6xl font-black transition-colors ${total > 0 ? "text-warning" : "text-base-content/10"}`}
+              className={`text-6xl font-black transition-colors ${total > 0 ? "text-warning" : (total < 0 ? "text-error" : "text-base-content/10")}`}
             >
               {total}
             </div>
@@ -78,6 +92,12 @@ export function CouponsPage({ person, onBack }) {
 
         {/* Input */}
         <div className={`join w-full ${shake ? "animate-shake" : ""}`}>
+          <button
+            onClick={handleSubtract}
+            className="btn btn-error join-item px-6 text-xl font-bold"
+          >
+            -
+          </button>
           <input
             ref={inputRef}
             type="number"
@@ -85,7 +105,7 @@ export function CouponsPage({ person, onBack }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-            placeholder="عدد الكوبونات"
+            placeholder="العدد"
             className="input input-bordered join-item flex-1 text-center text-lg font-mono"
           />
           <button
@@ -97,11 +117,11 @@ export function CouponsPage({ person, onBack }) {
         </div>
 
         {/* Log */}
-        {log.length > 0 ? (
+        {total !== 0 || log.length > 0 ? (
           <div className="card bg-base-200 border border-base-300 overflow-hidden">
             <div className="flex justify-between items-center px-4 py-3 border-b border-base-300">
               <span className="text-xs text-base-content/40 font-medium">
-                📋 السجل ({log.length} عملية)
+                📋 السجل ({log.length} عمليات)
               </span>
               <button
                 onClick={handleReset}
@@ -115,17 +135,18 @@ export function CouponsPage({ person, onBack }) {
                 const running = log
                   .slice(0, i + 1)
                   .reduce((s, e) => s + e.amount, 0);
+                const isPositive = entry.amount >= 0;
                 return (
                   <div
                     key={entry.id}
-                    className={`flex items-center gap-3 px-4 py-3 ${i === log.length - 1 ? "bg-warning/5" : ""}`}
+                    className={`flex items-center gap-3 px-4 py-3 ${i === log.length - 1 ? (isPositive ? "bg-warning/5" : "bg-error/5") : ""}`}
                   >
-                    <div className="badge badge-warning badge-outline shrink-0 font-mono text-sm w-14 justify-center">
-                      +{entry.amount}
+                    <div className={`badge ${isPositive ? 'badge-warning' : 'badge-error'} badge-outline shrink-0 font-mono text-sm w-14 justify-center`}>
+                      {isPositive ? '+' : ''}{entry.amount}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium">
-                        إضافة {entry.amount} كوبون
+                        {isPositive ? `إضافة ${entry.amount} كوبون` : `خصم ${Math.abs(entry.amount)} كوبون`}
                       </div>
                       <div className="text-xs font-mono text-base-content/30">
                         {entry.timestamp.slice(0, 10)} —{" "}
@@ -141,6 +162,7 @@ export function CouponsPage({ person, onBack }) {
               })}
             </div>
           </div>
+
         ) : (
           <div className="card bg-base-200 border border-base-300">
             <div className="card-body items-center text-base-content/20 py-8 text-sm">

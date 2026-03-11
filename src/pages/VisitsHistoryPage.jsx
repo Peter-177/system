@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { visitsDB, studentsDB } from "../data/storage";
 import { todayISO } from "../utils/helpers";
-import { Page, Navbar, Empty } from "../components/UI";
+import { Page, Navbar, Empty, Avatar } from "../components/UI";
 
 export function VisitsHistoryPage({ onBack }) {
   const [from, setFrom] = useState(todayISO());
@@ -86,16 +86,7 @@ export function VisitsHistoryPage({ onBack }) {
                 >
                   <div className="card-body p-4 gap-3">
                     <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center font-bold shrink-0"
-                        style={{
-                          background: s.accent + "20",
-                          border: `2px solid ${s.accent}`,
-                          color: s.accent,
-                        }}
-                      >
-                        {s.name[0].toUpperCase()}
-                      </div>
+                      <Avatar name={s.name} accent={s.accent} image={s.image} size="md" />
                       <div className="flex-1">
                         <div className="font-bold text-sm">{s.name}</div>
                         <div className="text-xs font-mono text-base-content/30">

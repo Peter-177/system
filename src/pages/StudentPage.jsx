@@ -2,9 +2,21 @@ import { useState } from "react";
 import { studentsDB, attendanceDB, visitsDB } from "../data/storage";
 import { Page, Avatar } from "../components/UI";
 
+/** Converts YYYY-MM-DD to d/m/y, or passes dd/mm/yyyy through */
+const fmtDate = (v) => {
+  if (!v) return v;
+  // Already in dd/mm/yyyy format
+  if (v.includes("/")) return v;
+  // Convert from YYYY-MM-DD
+  const parts = v.split("-");
+  if (parts.length !== 3) return v;
+  return `${parseInt(parts[2])}/${parseInt(parts[1])}/${parts[0]}`;
+};
+
 const FIELDS = [
+  { icon: "🆔", label: "الكود", key: "qrId" },
   { icon: "🏠", label: "العنوان", key: "address" },
-  { icon: "🎂", label: "تاريخ الميلاد", key: "birthdate" },
+  { icon: "🎂", label: "تاريخ الميلاد", key: "birthdate", fmt: fmtDate },
   { icon: "📚", label: "السنة الدراسية", key: "year" },
   { icon: "📱", label: "رقم التليفون", key: "phone" },
 ];
@@ -17,6 +29,7 @@ export function StudentPage({
   onGoCoupons,
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   const handleDelete = () => {
     studentsDB.remove(person.qrId);
@@ -54,7 +67,7 @@ export function StudentPage({
             onClick={onGoAttendance}
             className="btn btn-sm border-primary/30 text-primary hover:bg-primary/10 btn-outline"
           >
-            ✅ حضور
+            📋 سجل الحضور
           </button>
           <button
             onClick={onGoCoupons}
@@ -76,38 +89,44 @@ export function StudentPage({
           >
             <div className="card-body gap-5">
               {/* Top row */}
-              <div className="flex items-center gap-4 pb-5 border-b border-base-300">
-                <Avatar name={person.name} accent={person.accent} size="lg" />
-                <div className="flex-1">
-                  <h2 className="text-xl font-bold">{person.name}</h2>
-                  <div className="badge badge-ghost badge-sm font-mono mt-1">
-                    {person.qrId}
-                  </div>
-                </div>
+              <div className="flex flex-col items-center gap-3 pb-5 border-b border-base-300 relative">
                 <button
                   onClick={onGoEdit}
-                  className="btn btn-sm btn-ghost text-warning/60 hover:text-warning hover:bg-warning/10"
+                  className="btn btn-sm btn-ghost text-warning/60 hover:text-warning hover:bg-warning/10 absolute top-0 right-0"
                 >
                   ✏️ Edit
+                </button>
+                <Avatar name={person.name} accent={person.accent} image={person.image} size="xl" />
+                <h2 className="text-2xl font-bold mt-2">{person.name}</h2>
+              </div>
+              {/* Middle Section (Toggle Details) */}
+              <div className="flex justify-center -mt-2">
+                <button
+                  onClick={() => setShowDetails(!showDetails)}
+                  className="btn btn-outline btn-primary font-bold w-full max-w-[200px]"
+                >
+                  {showDetails ? "إخفاء التفاصيل ⬆️" : "تفاصيل أكتر ⬇️"}
                 </button>
               </div>
 
               {/* Info fields */}
-              <div className="divide-y divide-base-300">
-                {FIELDS.map(({ icon, label, key }) =>
-                  person[key] ? (
-                    <div
-                      key={key}
-                      className="flex justify-between items-center py-3 text-sm"
-                    >
-                      <span className="text-base-content/40">
-                        {icon} {label}
-                      </span>
-                      <span className="font-medium">{person[key]}</span>
-                    </div>
-                  ) : null,
-                )}
-              </div>
+              {showDetails && (
+                <div className="divide-y divide-base-300 origin-top animate-slideDown">
+                  {FIELDS.map(({ icon, label, key, fmt }) =>
+                    person[key] ? (
+                      <div
+                        key={key}
+                        className="flex justify-between items-center py-3 text-sm"
+                      >
+                        <span className="text-base-content/40">
+                          {icon} {label}
+                        </span>
+                        <span className="font-medium">{fmt ? fmt(person[key]) : person[key]}</span>
+                      </div>
+                    ) : null,
+                  )}
+                </div>
+              )}
 
               {/* Delete Button */}
               <div className="pt-4 border-t border-base-300">
