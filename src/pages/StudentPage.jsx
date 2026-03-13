@@ -64,14 +64,12 @@ export function StudentPage({
         </div>
         <div className="navbar-center"></div>
         <div className="navbar-end flex gap-2">
-          {currentUser?.role === "admin" && (
-            <button
-              onClick={onGoAttendance}
-              className="btn btn-sm border-primary/30 text-primary hover:bg-primary/10 btn-outline"
-            >
-              📋 سجل الحضور
-            </button>
-          )}
+          <button
+            onClick={onGoAttendance}
+            className="btn btn-sm border-primary/30 text-primary hover:bg-primary/10 btn-outline"
+          >
+            📋 حضور: {attendanceDB.get(person.qrId).length}
+          </button>
           <button
             onClick={onGoCoupons}
             className="btn btn-sm border-warning/30 text-warning hover:bg-warning/10 btn-outline"
@@ -132,36 +130,38 @@ export function StudentPage({
               )}
 
               {/* Delete Button */}
-              <div className="pt-4 border-t border-base-300">
-                {!confirmDelete ? (
-                  <button
-                    onClick={() => setConfirmDelete(true)}
-                    className="btn btn-outline btn-error btn-sm w-full"
-                  >
-                    🗑️ امسح الطفل
-                  </button>
-                ) : (
-                  <div className="flex flex-col gap-2 animate-fadeIn">
-                    <p className="text-sm text-error text-center font-bold">
-                      متأكد عايز تمسح {person.name}؟
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={handleDelete}
-                        className="btn btn-error btn-sm flex-1 text-white"
-                      >
-                        ✅ أيوة امسحه
-                      </button>
-                      <button
-                        onClick={() => setConfirmDelete(false)}
-                        className="btn btn-ghost btn-sm flex-1"
-                      >
-                        ❌ لا خلاص
-                      </button>
+              {(currentUser?.role === "admin" || currentUser?.permissions?.includes("perm_delete_student")) && (
+                <div className="pt-4 border-t border-base-300">
+                  {!confirmDelete ? (
+                    <button
+                      onClick={() => setConfirmDelete(true)}
+                      className="btn btn-outline btn-error btn-sm w-full"
+                    >
+                      🗑️ امسح الطفل
+                    </button>
+                  ) : (
+                    <div className="flex flex-col gap-2 animate-fadeIn">
+                      <p className="text-sm text-error text-center font-bold">
+                        متأكد عايز تمسح {person.name}؟
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleDelete}
+                          className="btn btn-error btn-sm flex-1 text-white"
+                        >
+                          ✅ أيوة امسحه
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(false)}
+                          className="btn btn-ghost btn-sm flex-1"
+                        >
+                          ❌ لا خلاص
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { attendanceDB, studentsDB, classesDB } from "../data/storage";
-import { buildAttendanceEntry, registeredToday } from "../utils/helpers";
+import { attendanceDB, studentsDB, classesDB, couponsDB } from "../data/storage";
+import { buildAttendanceEntry, registeredToday, buildCouponEntry } from "../utils/helpers";
 import { Page, Navbar, StudentMiniCard, Toast } from "../components/UI";
 import { useToast } from "../hooks/useToast";
 
@@ -31,7 +31,12 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
     if (!targetClass) return [];
     
     return allStudents.filter(s => targetClass.grades?.includes(s.year))
-      .sort((a, b) => a.name.localeCompare(b.name, "ar"));
+      .sort((a, b) => {
+        const countA = attendanceDB.get(a.qrId).length;
+        const countB = attendanceDB.get(b.qrId).length;
+        if (countB !== countA) return countB - countA;
+        return a.name.localeCompare(b.name, "ar");
+      });
   }, [selectedClass, allStudents, allClassesDB]);
 
   const addPerson = (student) => {
@@ -77,6 +82,7 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
       const log = attendanceDB.get(p.qrId);
       if (!registeredToday(log)) {
         attendanceDB.add(p.qrId, buildAttendanceEntry());
+        couponsDB.add(p.qrId, buildCouponEntry(50));
         registeredCount++;
       }
     });
@@ -91,6 +97,7 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
       const log = attendanceDB.get(p.qrId);
       if (!registeredToday(log)) {
         attendanceDB.add(p.qrId, buildAttendanceEntry());
+        couponsDB.add(p.qrId, buildCouponEntry(50));
         registeredCount++;
       }
     });

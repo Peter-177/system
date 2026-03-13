@@ -21,8 +21,7 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
 
   return (
     <Page>
-      <Navbar title="تدوير / Search" onBack={onBack} />
-      
+      <Navbar title="بحث / Search" onBack={onBack} />
       <div className="flex-1 max-w-md mx-auto w-full px-5 py-6 flex flex-col gap-6 animate-slideUp" dir="rtl">
         {/* Search Bar - Modern Floating Pill */}
         <div className="relative group">
@@ -40,7 +39,7 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
           />
         </div>
 
-        {currentUser?.role === "admin" && (
+        {(currentUser?.role === "admin" || currentUser?.permissions?.includes("perm_add_student")) && (
           <button
             onClick={onGoAdd}
             className="btn btn-outline border-dashed border-2 border-primary/30 text-primary w-full text-base font-bold rounded-2xl h-14 hover:bg-primary hover:border-primary hover:text-primary-content transition-all"
@@ -55,7 +54,7 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
             لقينا: {filtered.length}
           </div>
         )}
-
+        
         <div className="flex flex-col gap-3 pb-20">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-base-content/30 gap-3">

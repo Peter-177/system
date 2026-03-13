@@ -6,6 +6,7 @@ import {
   addVisitFB, removeVisitFB, resetVisitsFB,
   getAllStudentsFB, getAllAttendanceFB, getAllVisitsFB,
   getAllClassesFB, setClassFB, deleteClassFB,
+  getAppSettingsFB, setAppSettingsFB
 } from "../services/firestoreService";
 
 // ── In-memory data store (populated from Firebase on startup) ──
@@ -15,6 +16,11 @@ const mem = {
   [STORAGE_KEYS.coupons]:    {},
   [STORAGE_KEYS.visits]:     {},
   [STORAGE_KEYS.classes]:    {},
+  [STORAGE_KEYS.settings]:   {
+    nameTop: "SUNDAY",
+    nameBottom: "SCHOOL",
+    icon: "⛪"
+  },
 };
 
 const loadMem = (key, fb) => mem[key] ?? fb;
@@ -162,16 +168,33 @@ export const classesDB = {
     deleteClassFB(id).catch(console.error);
   },
 };
+
+// ── Settings (Global App Settings) ──
+export const settingsDB = {
+  get: () => loadMem(STORAGE_KEYS.settings, {
+    nameTop: "SUNDAY",
+    nameBottom: "SCHOOL",
+    icon: "⛪"
+  }),
+  set: (data) => {
+    const s = { ...settingsDB.get(), ...data };
+    saveMem(STORAGE_KEYS.settings, s);
+    setAppSettingsFB(s).catch(console.error);
+  },
+};
 export const syncFromFirebase = async () => {
   try {
     const students = await getAllStudentsFB();
     const attendance = await getAllAttendanceFB();
     const visits = await getAllVisitsFB();
     const classes = await getAllClassesFB();
+    const settings = await getAppSettingsFB();
+    
     saveMem(STORAGE_KEYS.students, students);
     saveMem(STORAGE_KEYS.attendance, attendance);
     saveMem(STORAGE_KEYS.visits, visits);
     saveMem(STORAGE_KEYS.classes, classes);
+    if (settings) saveMem(STORAGE_KEYS.settings, settings);
     return true;
   } catch (error) {
     console.error("Failed to sync from Firebase:", error);

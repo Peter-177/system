@@ -29,7 +29,7 @@ export function ClassesPage({ currentUser, onRefreshAuth, onBack, onGoCreate, on
               disabled={isRefreshing}
               className="btn btn-sm btn-ghost gap-2 text-primary hover:bg-primary/10 rounded-full font-bold transition-all px-4"
             >
-              {isRefreshing ? <span className="loading loading-spinner loading-xs"></span> : "🔄 هات الصلاحيات الجديدة"}
+              {isRefreshing ? <span className="loading loading-spinner loading-xs"></span> : "🔄 Refresh"}
             </button>
           )}
         </div>

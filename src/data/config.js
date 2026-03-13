@@ -19,4 +19,5 @@ export const STORAGE_KEYS = {
   visits: "qrapp_visits",
   users: "qrapp_users",
   classes: "qrapp_classes",
+  settings: "qrapp_settings",
 };

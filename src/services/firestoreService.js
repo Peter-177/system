@@ -196,6 +196,17 @@ export const setGlobalAdminKeyFB = async (username, password, secretKeyHash = nu
   await setDoc(doc(db, "system", "admin"), data, { merge: true });
 };
 
+export const getAppSettingsFB = async () => {
+  if (!db) return null;
+  const ds = await getDoc(doc(db, "system", "settings"));
+  return ds.exists() ? ds.data() : null;
+};
+
+export const setAppSettingsFB = async (data) => {
+  if (!db) return;
+  await setDoc(doc(db, "system", "settings"), data, { merge: true });
+};
+
 // --- USERS API --- //
 
 export const getUserFB = async (username) => {

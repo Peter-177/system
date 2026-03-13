@@ -22,11 +22,17 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
   const [pendingId,    setPendingId]    = useState("");
   const [activeClass,  setActiveClass]  = useState(null);
 
-  const setPage = useCallback((newPage, customPerson = activePerson) => {
-    // Custom setter to manipulate History API
-    window.history.pushState({ page: newPage, person: customPerson }, "");
+  const setPage = useCallback((newPage, customPerson = activePerson, replace = false) => {
+    // Guard: Don't push if already on the same page/person
+    if (!replace && newPage === page && JSON.stringify(customPerson) === JSON.stringify(activePerson)) return;
+
+    if (replace) {
+      window.history.replaceState({ page: newPage, person: customPerson }, "");
+    } else {
+      window.history.pushState({ page: newPage, person: customPerson }, "");
+    }
     setPageState(newPage);
-  }, [activePerson]);
+  }, [activePerson, page]);
 
   const setActivePerson = useCallback((newPerson) => {
     setActivePersonState(newPerson);
@@ -49,13 +55,20 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
-  const goStudent = (qrId) => {
+  const goStudent = (qrId, replace = false) => {
     const found = studentsDB.get(qrId);
     if (!found) return;
     const person = { qrId, ...found };
+
+    // Guard: Don't push if already on this student's page
+    if (!replace && page === "student" && activePerson?.qrId === qrId) return;
+
     setActivePersonState(person);
-    // Explicitly push sync because we are updating both at once
-    window.history.pushState({ page: "student", person: person }, "");
+    if (replace) {
+      window.history.replaceState({ page: "student", person: person }, "");
+    } else {
+      window.history.pushState({ page: "student", person: person }, "");
+    }
     setPageState("student");
   };
 
@@ -79,13 +92,12 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
     case "birthday":
       return <BirthdayPage onBack={()=>window.history.back()} />;
     case "classes":
-      return <ClassesPage currentUser={currentUser} onRefreshAuth={onRefreshAuth} onBack={()=>window.history.back()} onGoCreate={()=>setPage("create-class")} onGoClass={(id)=>{
+      return <ClassesPage currentUser={currentUser} onRefreshAuth={onRefreshAuth} onBack={()=>window.history.back()} onGoCreate={()=>setPage("create-class", activePerson, true)} onGoClass={(id)=>{
         setActiveClass(id);
-        window.history.pushState({ page: "class-detail", person: activePerson, activeClass: id }, "");
-        setPageState("class-detail");
+        setPage("class-detail", activePerson);
       }} />;
     case "create-class":
-      return <CreateClassPage onBack={()=>window.history.back()} onSaved={()=>setPage("classes")} />;
+      return <CreateClassPage onBack={()=>window.history.back()} onSaved={()=>setPage("classes", activePerson, true)} />;
     case "class-detail":
       return <ClassDetailPage classId={activeClass} currentUser={currentUser} onBack={()=>window.history.back()} onGoStudent={goStudent} onGoCoupons={(p)=>{setActivePerson(p);setPage("coupons");}} />;
     case "admin":
@@ -100,17 +112,17 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
         />
       );
     case "student":
-      return <StudentPage currentUser={currentUser} person={activePerson} onBack={()=>window.history.back()} onGoAttendance={()=>setPage("student-attendance")} onGoEdit={()=>setPage("edit")} onGoCoupons={()=>setPage("coupons")} />;
+      return <StudentPage currentUser={currentUser} person={activePerson} onBack={()=>window.history.back()} onGoAttendance={()=>setPage("student-attendance")} onGoEdit={()=>setPage("edit", activePerson, true)} onGoCoupons={()=>setPage("coupons")} />;
     case "add":
       return <AddIdPage onBack={()=>window.history.back()} onNext={id=>{setPendingId(id);setPage("add-form");}} />;
     case "add-form":
-      return <AddFormPage onBack={()=>window.history.back()} pendingId={pendingId} onGoAttendance={p=>{setActivePerson(p);setPage("student-attendance");}} onGoStudent={goStudent} />;
+      return <AddFormPage onBack={()=>window.history.back()} pendingId={pendingId} onGoAttendance={p=>{setActivePerson(p);setPage("student-attendance", p, true);}} onGoStudent={id => goStudent(id, true)} />;
     case "attendance":
       return <AttendancePage currentUser={currentUser} person={activePerson} onBack={()=>window.history.back()} onGoHistory={()=>setPage("history")} />;
     case "student-attendance":
       return <PersonalAttendancePage person={activePerson} onBack={()=>window.history.back()} />;
     case "edit":
-      return <EditPage person={activePerson} onBack={()=>window.history.back()} onSaved={p=>{setActivePerson(p);setPage("student");}} />;
+      return <EditPage person={activePerson} onBack={()=>window.history.back()} onSaved={p=>{setActivePerson(p);setPage("student", p, true);}} />;
     case "history":
       return <HistoryPage onBack={()=>window.history.back()} />;
     case "visits":
@@ -118,7 +130,7 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
     case "visits-history":
       return <VisitsHistoryPage onBack={()=>window.history.back()} />;
     case "coupons":
-      return <CouponsPage person={activePerson} onBack={()=>window.history.back()} />;
+      return <CouponsPage currentUser={currentUser} person={activePerson} onBack={()=>window.history.back()} />;
     default:
       return <HomePage {...homeProps} />;
   }
