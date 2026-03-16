@@ -1,9 +1,13 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Page, Navbar, StudentMiniCard } from "../components/UI";
 import { studentsDB } from "../data/storage";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, UserPlus, FileQuestion } from "lucide-react";
+import { gsap } from "gsap";
 
 export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
   const [query, setQuery] = useState("");
+  const inputRef = useRef(null);
   
   const allStudents = useMemo(() => {
     const db = studentsDB.getAll();
@@ -19,61 +23,116 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
     );
   }, [query, allStudents]);
 
+  // Input focus animation
+  useEffect(() => {
+    if (inputRef.current) {
+      gsap.fromTo(inputRef.current, 
+        { y: -20, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.8, ease: "power3.out", delay: 0.1 }
+      );
+    }
+  }, []);
+
+  const listVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.05 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  };
+
   return (
     <Page>
       <Navbar title="بحث / Search" onBack={onBack} />
-      <div className="flex-1 max-w-md mx-auto w-full px-5 py-6 flex flex-col gap-6 animate-slideUp" dir="rtl">
+      
+      <div className="flex-1 w-full max-w-4xl mx-auto px-6 py-8 flex flex-col gap-6" dir="rtl">
+        
         {/* Search Bar - Modern Floating Pill */}
-        <div className="relative group">
-          <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-base-content/40 group-focus-within:text-primary transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+        <div className="relative group w-full" ref={inputRef}>
+          <div className="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-base-content/40 group-focus-within:text-primary transition-colors">
+            <Search className="w-6 h-6" strokeWidth={2.5} />
           </div>
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="اكتب الاسم أو الكود هنا..."
-            className="input w-full bg-base-100 shadow-sm hover:shadow-md focus:shadow-md border-base-200 focus:border-primary/30 rounded-full pl-4 pr-11 h-14 text-[15px] transition-all duration-300"
+            className="input w-full bg-base-100/80 backdrop-blur-md shadow-sm hover:shadow-lg focus:shadow-xl border border-white/10 dark:border-white/5 focus:border-primary/50 rounded-full pl-6 pr-14 h-16 text-lg font-medium transition-all duration-300 placeholder:text-base-content/30"
             autoFocus
           />
+          
+          {/* subtle glow behind search bar */}
+          <div className="absolute inset-0 -z-10 bg-primary/5 blur-xl rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-500"></div>
         </div>
 
+        {/* Add Button */}
         {(currentUser?.role === "admin" || currentUser?.permissions?.includes("perm_add_student")) && (
-          <button
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
             onClick={onGoAdd}
-            className="btn btn-outline border-dashed border-2 border-primary/30 text-primary w-full text-base font-bold rounded-2xl h-14 hover:bg-primary hover:border-primary hover:text-primary-content transition-all"
+            className="btn w-full bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 border-dashed rounded-[1.5rem] h-16 font-bold text-lg flex items-center justify-center gap-3 transition-colors shadow-sm hover:shadow-md"
           >
-            <span className="text-xl mr-1">+</span> ضيف طفل جديد
-          </button>
+            <UserPlus className="w-6 h-6" strokeWidth={2.5} />
+            <span>ضيف طفل جديد</span>
+          </motion.button>
         )}
 
         {/* Results Info */}
-        {query.trim() && (
-          <div className="text-xs font-bold text-base-content/40 px-2 -mb-2">
-            لقينا: {filtered.length}
-          </div>
-        )}
+        <AnimatePresence>
+          {query.trim() && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="text-sm font-bold text-base-content/50 px-3 tracking-wide"
+            >
+              عدد النتائج: <span className="text-primary">{filtered.length}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
         
-        <div className="flex flex-col gap-3 pb-20">
+        {/* Results List */}
+        <div className="flex flex-col gap-4 pb-20 w-full relative">
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-base-content/30 gap-3">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-sm font-medium">ما لقيناش حد</span>
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex flex-col items-center justify-center py-20 text-base-content/40 gap-4"
+            >
+              <div className="w-20 h-20 rounded-full bg-base-200/50 flex items-center justify-center mb-2">
+                <FileQuestion className="w-10 h-10 opacity-50" strokeWidth={1.5} />
+              </div>
+              <span className="text-lg font-medium tracking-wider">لا توجد نتائج مطابقة</span>
+            </motion.div>
           ) : (
-            filtered.map((student, i) => (
-              <button
-                key={student.qrId}
-                onClick={() => onGoStudent(student.qrId)}
-                className="block text-right w-full animate-fadeIn"
-                style={{ animationDelay: `${i * 30}ms` }}
-              >
-                <StudentMiniCard person={student} />
-              </button>
-            ))
+            <motion.div 
+              variants={listVariants}
+              initial="hidden"
+              animate="show"
+              className="w-full grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
+              {filtered.map((student) => (
+                <motion.button
+                  key={student.qrId}
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.02, x: -5 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => onGoStudent(student.qrId)}
+                  className="block text-right w-full bg-base-100/60 backdrop-blur-sm border border-base-200/50 hover:border-primary/30 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300"
+                >
+                  <StudentMiniCard person={student} />
+                </motion.button>
+              ))}
+            </motion.div>
           )}
         </div>
       </div>

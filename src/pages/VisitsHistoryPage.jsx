@@ -54,7 +54,7 @@ export function VisitsHistoryPage({ onBack }) {
               ))}
             </div>
             <button onClick={search} className="btn btn-primary w-full text-lg">
-              🔍 دور
+              🔍 بحث
             </button>
           </div>
         </div>
@@ -73,7 +73,7 @@ export function VisitsHistoryPage({ onBack }) {
             </div>
 
             {results.length === 0 ? (
-              <Empty icon="📭" message="مافيش عيال اتزارت في الوقت ده" />
+              <Empty icon="📭" message="مافيش اطفال اتزارت في الوقت ده" />
             ) : (
               results.map((s, i) => (
                 <div

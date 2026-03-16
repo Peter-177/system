@@ -1,8 +1,11 @@
-import { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { visitsDB, studentsDB } from "../data/storage";
 import { buildVisitEntry, visitedToday } from "../utils/helpers";
 import { Page, Navbar, StudentMiniCard, Toast } from "../components/UI";
 import { useToast } from "../hooks/useToast";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, CalendarDays, X, Users, Home as HomeIcon, CheckCircle2 } from "lucide-react";
+import { gsap } from "gsap";
 
 export function VisitsPage({ onBack, onGoVisitsHistory }) {
   const [query, setQuery] = useState("");
@@ -61,7 +64,7 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
         count++;
       }
     });
-    toast.show(`✅ تمام، سجلنا زيارة ${count} عيل`);
+    toast.show(`✅ تمام، سجلنا زيارة ${count} مخدوم`);
     setPendingList([]);
   };
 
@@ -77,87 +80,154 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
       .slice(0, 5);
   }, [query, allStudents]);
 
+  // Framer Motion Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  };
+
   return (
     <Page>
       <Toast msg={toast.msg} />
-      <Navbar onBack={onBack} title="🏠 تسجيل الزيارات" />
+      <Navbar onBack={onBack} title="تسجيل الزيارات" />
 
-      <div className="flex-1 max-w-md mx-auto w-full px-4 py-6 flex flex-col gap-4 animate-slideUp">
-        {/* Top Controls */}
-        <div className="flex gap-2">
-          <input
-            ref={inputRef}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="دور بالاسم أو الكود..."
-            className="input input-bordered flex-1 shadow-sm font-mono text-sm"
-            autoFocus
-          />
-          <button
-            onClick={onGoVisitsHistory}
-            className="btn btn-outline btn-info px-4 whitespace-nowrap"
-            title="تاريخ الزيارات"
-          >
-            📅 تاريخ الزيارات
-          </button>
+      <div className="flex-1 w-full max-w-4xl mx-auto px-6 py-8 flex flex-col gap-6" dir="rtl">
+        
+        {/* Top Controls Box */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col gap-4 bg-base-100/60 backdrop-blur-md p-6 rounded-[2rem] border border-white/5 shadow-sm"
+        >
+          <div className="flex gap-3 relative">
+            <div className="flex-1 relative group rounded-2xl">
+              <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-base-content/40 group-focus-within:text-info transition-colors">
+                <Search className="w-5 h-5" />
+              </div>
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="دور بالاسم أو الكود..."
+                className="input w-full bg-base-100 shadow-inner focus:shadow-md border-base-200 focus:border-info/30 rounded-2xl pl-4 pr-11 h-14 font-medium transition-all duration-300"
+                autoFocus
+              />
+            </div>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onGoVisitsHistory}
+              className="btn bg-info/10 hover:bg-info text-info hover:text-info-content border-none shadow-sm rounded-2xl px-5 h-14 flex gap-2"
+              title="تاريخ الزيارات"
+            >
+              <CalendarDays className="w-5 h-5" />
+              <span className="hidden sm:inline font-bold">السجل</span>
+            </motion.button>
+          </div>
+
+          {/* Suggestions Dropdown */}
+          <AnimatePresence>
+            {suggestions.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="absolute top-[80px] left-6 right-6 mt-2 bg-base-100/90 backdrop-blur-xl rounded-2xl shadow-xl border border-base-200 p-2 flex flex-col gap-1 z-30"
+              >
+                {suggestions.map((s) => (
+                  <button
+                    key={s.qrId}
+                    className="btn btn-ghost justify-start font-bold h-12 rounded-xl text-base hover:bg-base-200 transition-colors"
+                    onClick={() => addPerson(s)}
+                  >
+                    {s.name} <span className="opacity-40 text-xs ml-auto font-mono bg-base-200 px-2 py-1 rounded-md">{s.qrId}</span>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Pending List Section */}
+        <div className="flex items-center gap-4 mt-2 px-2">
+          <div className="h-px bg-base-300 flex-1"></div>
+          <span className="text-xs font-bold text-base-content/40 uppercase tracking-widest px-2 py-1 bg-base-200/50 rounded-full">
+            قائمة الزيارة {pendingList.length > 0 && <span className="text-info ml-1">({pendingList.length})</span>}
+          </span>
+          <div className="h-px bg-base-300 flex-1"></div>
         </div>
 
-        {/* Suggestions */}
-        {suggestions.length > 0 && (
-          <div className="bg-base-200 rounded-xl shadow-lg border border-base-300 p-2 flex flex-col gap-1 -mt-2 z-10">
-            {suggestions.map((s) => (
-              <button
-                key={s.qrId}
-                className="btn btn-ghost btn-sm justify-start font-normal"
-                onClick={() => addPerson(s)}
-              >
-                {s.name} <span className="opacity-40 text-xs ml-auto font-mono">{s.qrId}</span>
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className="divider my-0" />
-
-        {/* Pending List */}
         <div className="flex-1 flex flex-col gap-3 min-h-[300px]">
           {pendingList.length === 0 ? (
-            <div className="text-center text-base-content/40 py-10 text-sm">
-              اكتب اسم الطفل أو الكود ودوس Enter عشان تسجل الزيارة
-            </div>
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
+              className="flex flex-col items-center justify-center text-base-content/30 py-20 gap-4 bg-base-100/30 rounded-3xl border border-dashed border-base-200"
+            >
+              <HomeIcon className="w-16 h-16 opacity-20" />
+              <span className="text-base font-medium">اختر مخدومين لإضافتهم للقائمة</span>
+            </motion.div>
           ) : (
-            pendingList.map((p) => (
-              <div
-                key={p.qrId}
-                className="flex items-center gap-2 animate-fadeIn bg-base-100 p-1 pr-2 rounded-2xl border border-base-300 shadow-sm"
-              >
-                <div className="flex-1 min-w-0 pr-2">
-                  <StudentMiniCard person={p} />
-                </div>
-                <div className="flex-none px-2">
-                  <button
-                    onClick={() => removePerson(p.qrId)}
-                    className="btn btn-ghost btn-circle text-error hover:bg-error/20"
-                    title="امسحه"
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            ))
+            <motion.div 
+              variants={containerVariants}
+              initial="hidden"
+              animate="show"
+              className="grid grid-cols-1 md:grid-cols-2 gap-3"
+            >
+              {pendingList.map((p) => (
+                <motion.div
+                  variants={itemVariants}
+                  layout
+                  key={p.qrId}
+                  className="flex items-center gap-2 bg-base-100/90 backdrop-blur p-2 pr-3 rounded-2xl border border-info/20 shadow-sm group"
+                >
+                  <div className="flex-1 min-w-0 pr-2 pointer-events-none scale-[0.85] origin-right -ml-4">
+                    <StudentMiniCard person={p} />
+                  </div>
+                  <div className="flex-none px-2 z-10">
+                    <motion.button
+                      whileHover={{ scale: 1.1, rotate: 90 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => removePerson(p.qrId)}
+                      className="btn btn-ghost btn-circle btn-sm text-base-content/40 hover:text-error hover:bg-error/10"
+                      title="إزالة"
+                    >
+                      <X className="w-5 h-5" />
+                    </motion.button>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
           )}
         </div>
 
         {/* Save Button */}
-        {pendingList.length > 0 && (
-          <button
-            onClick={handleSave}
-            className="btn btn-info btn-lg w-full text-xl shadow-lg mt-auto text-white sticky bottom-6 animate-slideUp"
-          >
-            🏠 تسجيل الزيارة ({pendingList.length})
-          </button>
-        )}
+        <AnimatePresence>
+          {pendingList.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50, transition: { duration: 0.2 } }}
+              className="sticky bottom-6 mt-auto pt-4 z-40"
+            >
+              <button
+                onClick={handleSave}
+                className="btn btn-info btn-lg w-full text-xl shadow-xl shadow-info/20 rounded-2xl text-white group overflow-hidden relative"
+              >
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                <CheckCircle2 className="w-6 h-6 mr-2" />
+                تسجيل زيارة لـ {pendingList.length} مخدوم
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </Page>
   );

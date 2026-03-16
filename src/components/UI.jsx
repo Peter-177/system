@@ -16,17 +16,17 @@ export function Toast({ msg }) {
   );
 }
 
-export function Page({ children, className = "" }) {
+export function Page({ children, className = "", noScrollLock = false }) {
   return (
     <div
-      className={`min-h-screen relative bg-linear-to-br from-base-100 via-base-100 to-base-200/50 text-base-content flex flex-col overflow-x-hidden ${className}`}
+      className={`${noScrollLock ? "w-full min-h-screen" : "min-h-screen flex flex-col overflow-x-hidden"} relative bg-linear-to-br from-base-100 via-base-100 to-base-200/50 text-base-content ${className}`}
       dir="rtl"
     >
       {/* Subtle background grain/texture overlay */}
       <div className="absolute inset-0 opacity-[0.015] pointer-events-none mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
       
       {/* Content wrapper to ensure z-index over absolute background */}
-      <div className="relative z-10 flex flex-col flex-1">
+      <div className={`relative z-10 ${noScrollLock ? "w-full" : "flex flex-col flex-1"}`}>
         {children}
       </div>
     </div>
