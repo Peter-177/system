@@ -70,7 +70,7 @@ export function SummerSection({ onGoHome }) {
         <button
           className="mt-12 px-10 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full font-black text-xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all outline-none focus:ring-4 focus:ring-orange-300 font-arabic"
         >
-          اشترك الآن
+          اشترك 
         </button>
         
       </div>
