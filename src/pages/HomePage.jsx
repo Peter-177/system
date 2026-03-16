@@ -186,7 +186,7 @@ export function HomePage({ currentUser, onGoSearch, onGoSummer, onGoAttendance, 
       show: currentUser?.role !== "admin"
     },
     {
-      label: "الإعدادات",
+      label: "الإدادات",
       subLabel: "Admin",
       icon: <Settings className="w-8 h-8" strokeWidth={2.5} stroke="currentColor" />,
       onClick: onGoAdmin,
