@@ -30,45 +30,43 @@ export function VisitsHistoryPage({ onBack }) {
 
       <div className="flex-1 max-w-lg mx-auto w-full px-5 py-6 flex flex-col gap-5 animate-slideUp">
         {/* Date picker card */}
-        <div className="card bg-base-200 border border-base-300">
-          <div className="card-body p-5 gap-4">
-            
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { label: "من", val: from, set: setFrom },
-                { label: "إلى", val: to, set: setTo },
-              ].map(({ label, val, set }) => (
-                <div key={label}>
-                  <label className="label py-1">
-                    <span className="label-text text-xs text-base-content/40">
-                      {label}
-                    </span>
-                  </label>
-                  <input
-                    type="date"
-                    value={val}
-                    onChange={(e) => set(e.target.value)}
-                    className="input input-bordered w-full text-sm"
-                  />
-                </div>
-              ))}
-            </div>
-            <button onClick={search} className="btn btn-primary w-full text-lg">
-              🔍 بحث
-            </button>
+        <div className="bg-[#0F2545] border border-[#1A3D63]/40 rounded-[3rem] shadow-2xl overflow-hidden p-8 gap-8 flex flex-col">
+          <div className="grid grid-cols-2 gap-6">
+            {[
+              { label: "من تاريخ", val: from, set: setFrom },
+              { label: "إلى تاريخ", val: to, set: setTo },
+            ].map(({ label, val, set }) => (
+              <div key={label} className="flex flex-col gap-3">
+                <span className="text-[10px] font-black text-[#B3CFE5]/70 uppercase tracking-[0.3em] px-2 text-right">
+                  {label}
+                </span>
+                <input
+                  type="date"
+                  value={val}
+                  onChange={(e) => set(e.target.value)}
+                  className="bg-[#1A3D63]/30 border border-[#1A3D63]/40 rounded-2xl px-5 h-14 text-sm font-black text-[#F6FAFD] outline-none focus:border-[#4A7FA7] transition-all text-center"
+                />
+              </div>
+            ))}
           </div>
+          <button
+            onClick={search}
+            className="w-full h-16 bg-[#1A3D63] hover:bg-[#4A7FA7] text-[#F6FAFD] rounded-[2rem] text-xl font-black shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-4"
+          >
+            🔍 بحث
+          </button>
         </div>
 
         {/* Results */}
         {results !== null && (
           <div className="flex flex-col gap-3 animate-fadeIn">
             <div className="flex justify-between items-center">
-              <span className="text-xs text-base-content/40">
-                من <span className="text-base-content/70">{from}</span> لـ{" "}
-                <span className="text-base-content/70">{to}</span>
+              <span className="text-xs text-[#B3CFE5]/60 font-bold">
+                من <span className="text-[#F6FAFD]/90">{from}</span> لـ{" "}
+                <span className="text-[#F6FAFD]/90">{to}</span>
               </span>
-              <div className="badge badge-info badge-outline">
-                {results.length} 
+              <div className="px-3 py-1 rounded-lg text-xs font-black bg-[#1A3D63]/50 text-[#4A7FA7] border border-[#1A3D63]/40">
+                {results.length}
               </div>
             </div>
 
@@ -78,41 +76,51 @@ export function VisitsHistoryPage({ onBack }) {
               results.map((s, i) => (
                 <div
                   key={s.qrId}
-                  className="card bg-base-200 border animate-fadeIn"
+                  className="bg-[#0F2545] border border-[#1A3D63]/40 rounded-3xl p-6 shadow-2xl animate-fadeIn flex flex-col gap-4 group"
                   style={{
-                    borderColor: s.accent + "25",
                     animationDelay: `${i * 40}ms`,
                   }}
                 >
-                  <div className="card-body p-4 gap-3">
+                  <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-3">
-                      <Avatar name={s.name} accent={s.accent} image={s.image} size="md" />
+                      <Avatar
+                        name={s.name}
+                        accent={s.accent}
+                        image={s.image}
+                        size="md"
+                      />
                       <div className="flex-1">
-                        <div className="font-bold text-sm">{s.name}</div>
-                        <div className="text-xs font-mono text-base-content/30">
+                        <div className="font-black text-lg text-[#F6FAFD] leading-none mb-1">
+                          {s.name}
+                        </div>
+                        <div className="text-[10px] font-black tracking-widest text-[#B3CFE5]/60 uppercase opacity-50">
                           {s.qrId}
                         </div>
                       </div>
                       <div
-                        className="badge badge-sm"
+                        className="px-4 py-1.5 rounded-xl text-xs font-black shadow-[0_0_15px_rgba(0,0,0,0.3)] border border-white/5"
                         style={{
-                          background: s.accent + "20",
-                          border: `1px solid ${s.accent}40`,
+                          background: s.accent + "25",
                           color: s.accent,
                         }}
                       >
-                        {s.sessions.length}{" "}
-                        {s.sessions.length === 1 ? "زيارة" : "زيارات"}
+                        <span className="text-[10px] opacity-60 ml-0.5">
+                          عدد المرات:
+                        </span>{" "}
+                        {s.sessions.length}
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-base-300">
+                    <div className="flex flex-wrap gap-2 pt-4 border-t border-[#1A3D63]/20">
                       {s.sessions.map((sess) => (
                         <div
                           key={sess.id}
-                          className="badge badge-ghost badge-sm font-mono gap-1"
+                          className="px-3 py-2 bg-[#1A3D63]/50 text-[#F6FAFD] rounded-xl text-[11px] font-black border border-[#1A3D63]/40 flex items-center gap-2 shadow-sm"
                         >
-                          {sess.timestamp.slice(0, 10)}
-                          <span className="opacity-40">{sess.time}</span>
+                          <span className="text-[#4A7FA7]">📍</span>
+                          <span>{sess.timestamp.slice(0, 10)}</span>
+                          <span className="text-[#B3CFE5]/60 ml-1">
+                            {sess.time}
+                          </span>
                         </div>
                       ))}
                     </div>

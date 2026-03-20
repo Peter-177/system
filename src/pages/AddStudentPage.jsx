@@ -2,8 +2,49 @@ import { useState, useRef, useEffect } from "react";
 import { studentsDB } from "../data/storage";
 import { randomAccent } from "../utils/helpers";
 import { Page, Navbar, ImageCropperModal } from "../components/UI";
+import { 
+  Plus, 
+  User, 
+  MapPin, 
+  Phone, 
+  GraduationCap, 
+  Calendar,
+  Camera,
+  Check,
+  Sparkles,
+  ArrowRight,
+  ArrowLeft,
+  Fingerprint,
+  CalendarDays,
+  UserCheck,
+  AlertCircle,
+  X
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Fingerprint, Camera, Trash2, CalendarDays, CheckCircle2, UserCheck, AlertCircle, Sparkles } from "lucide-react";
+
+const FORM_FIELDS = [
+  { key: "name", label: "الاسم", type: "text", placeholder: "اكتب الاسم بالكامل", full: true, required: true, icon: User },
+  { key: "phone", label: "رقم التليفون", type: "text", placeholder: "01xxxxxxxxx", full: true, icon: Phone },
+  { key: "address", label: "العنوان", type: "text", placeholder: "المنطقة - الشارع - رقم البيت", full: true, icon: MapPin },
+  { 
+    key: "year", 
+    label: "الفصل / المرحلة", 
+    type: "select", 
+    full: true, 
+    icon: GraduationCap,
+    options: [
+      "حضانة",
+      "أولى ابتدائي",
+      "تانية ابتدائي",
+      "تالتة ابتدائي",
+      "رابعة ابتدائي",
+      "خامسة ابتدائي",
+      "ستة ابتدائي",
+      
+    ] 
+  },
+];
+
 export function AddIdPage({ onBack, onNext }) {
   const [id, setId] = useState("");
   const [error, setError] = useState("");
@@ -26,75 +67,94 @@ export function AddIdPage({ onBack, onNext }) {
 
   return (
     <Page>
-      <Navbar onBack={onBack} title="إضافة طفل" />
-      <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full px-6 py-10" dir="rtl">
-        <motion.div 
+      <div className="navbar bg-slate-950/60 backdrop-blur-xl border-b border-white/5 px-6 min-h-20 sticky top-0 z-50">
+        <div className="navbar-start">
+          <button
+            onClick={onBack}
+            className="w-12 h-12 rounded-2xl bg-slate-900 border border-white/5 flex items-center justify-center transition-all hover:border-sky-500/30 hover:bg-slate-800"
+          >
+            <ArrowRight className="w-5 h-5 text-slate-400" />
+          </button>
+        </div>
+        <div className="navbar-center flex flex-col items-center text-center">
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-1">New Registration</span>
+          <div className="font-black text-white text-lg tracking-tight">إضافة طفل جديد</div>
+        </div>
+        <div className="navbar-end"></div>
+      </div>
+
+      <div
+        className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full px-6 py-10"
+        dir="rtl"
+      >
+        <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
           className="w-full relative"
         >
-          {/* Decorative Background */}
-          <div className="absolute -inset-4 bg-gradient-to-tr from-primary/20 to-secondary/20 rounded-[3rem] blur-xl opacity-50 pointer-events-none z-0"></div>
-          
-          <div className="bg-base-100/90 backdrop-blur-xl border border-white/10 shadow-2xl rounded-[2.5rem] p-8 flex flex-col items-center gap-6 relative z-10">
+          <div className="bg-slate-900/40 backdrop-blur-2xl border-2 border-white/5 shadow-2xl rounded-[3rem] p-10 flex flex-col items-center gap-10 relative z-10 transition-all">
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-sky-500/20 to-transparent"></div>
             
-            <div className="w-24 h-24 rounded-[2rem] bg-gradient-to-br from-primary/20 to-transparent flex items-center justify-center text-primary mb-2 shadow-inner border border-primary/30 relative overflow-hidden group">
-               <Fingerprint className="w-12 h-12 relative z-10 group-hover:scale-110 transition-transform" />
-               <motion.div 
-                 animate={{ scale: [1, 1.5], opacity: [0.8, 0] }}
-                 transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
-                 className="absolute inset-0 rounded-[2rem] border-2 border-primary/50"
-               ></motion.div>
+            <div className="w-24 h-24 rounded-[2rem] bg-slate-950 border border-white/10 flex items-center justify-center text-sky-400 mb-2 relative overflow-hidden group shadow-inner">
+              <Fingerprint className="w-12 h-12 relative z-10 group-hover:scale-110 transition-transform" />
+              <motion.div
+                animate={{ scale: [1, 1.4], opacity: [0.2, 0] }}
+                transition={{ repeat: Infinity, duration: 2, ease: "easeOut" }}
+                className="absolute inset-0 rounded-[2rem] border-2 border-sky-500/30"
+              ></motion.div>
+              <div className="absolute inset-0 bg-gradient-to-br from-sky-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
 
             <div className="text-center">
-              <h2 className="text-3xl font-black text-base-content tracking-tight">اكتب الـ ID هنا</h2>
-              <p className="text-sm text-base-content/50 mt-2 font-bold tracking-wide">كود الطفل</p>
+              <h2 className="text-3xl font-black text-white tracking-tight mb-2">
+                اكتب (ID)
+              </h2>
+              <p className="text-[10px] text-slate-500 font-black tracking-[0.3em] uppercase">
+                Student Identification Code
+              </p>
             </div>
 
-            <div className="w-full relative mt-4">
-              <div className="relative flex items-center">
-                <input
-                  ref={ref}
-                  value={id}
-                  onChange={(e) => {
-                    setId(e.target.value);
-                    setError("");
-                  }}
-                  onKeyDown={(e) => e.key === "Enter" && go()}
-                  placeholder="Student ID"
-                  className={`input w-full h-16 bg-base-200/80 backdrop-blur-md shadow-inner text-center font-mono text-xl tracking-widest rounded-2xl border-2 transition-all duration-300 focus:outline-none placeholder:font-sans placeholder:tracking-normal ${error ? "border-error/50 focus:border-error focus:ring-4 focus:ring-error/20 text-error" : "border-transparent focus:border-success/50 focus:ring-4 focus:ring-success/20"}`}
-                  dir="ltr"
-                />
-                
-                {/* Submit Button inside Input (left side for RTL) */}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={go}
-                  className={`absolute left-2 w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-md transition-colors ${error ? 'bg-error' : 'bg-primary hover:bg-primary/90'} ${!id.trim() ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
-                  disabled={!id.trim()}
-                >
-                  <ArrowLeft className="w-6 h-6" />
-                </motion.button>
-              </div>
+            <div className="relative flex items-center w-full group">
+              <input
+                ref={ref}
+                value={id}
+                onChange={(e) => {
+                  setId(e.target.value);
+                  setError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && go()}
+                placeholder="Ex: 90909"
+                className={`w-full h-24 bg-slate-950/50 border-2 border-white/5 text-center font-mono text-3xl tracking-[0.2em] rounded-3xl text-white placeholder:text-slate-800 focus:border-sky-500/40 focus:bg-slate-950 transition-all outline-none shadow-inner ${error ? "border-red-500/40 text-red-400" : ""}`}
+                dir="ltr"
+              />
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={go}
+                className={`absolute left-3 w-16 h-16 rounded-2xl flex items-center justify-center text-slate-950 transition-all shadow-xl ${error ? "bg-red-500" : "bg-sky-500 hover:bg-sky-400"} ${!id.trim() ? "opacity-20 cursor-not-allowed" : ""}`}
+                disabled={!id.trim()}
+              >
+                <ArrowLeft className="w-7 h-7 font-bold" />
+              </motion.button>
             </div>
 
             <AnimatePresence>
               {error && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, height: 0, y: -10 }}
-                  animate={{ opacity: 1, height: 'auto', y: 0 }}
+                  animate={{ opacity: 1, height: "auto", y: 0 }}
                   exit={{ opacity: 0, height: 0, y: -10 }}
-                  className="w-full bg-error/10 border border-error/20 text-error rounded-xl p-4 flex items-center gap-3 mt-2 overflow-hidden"
+                  className="w-full bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl p-5 flex items-center gap-4 mt-2 overflow-hidden"
                 >
                   <AlertCircle className="w-6 h-6 shrink-0" />
-                  <span className="text-sm font-bold leading-tight">{error}</span>
+                  <span className="text-sm font-bold leading-tight">
+                    {error}
+                  </span>
                 </motion.div>
               )}
             </AnimatePresence>
-
           </div>
         </motion.div>
       </div>
@@ -103,18 +163,6 @@ export function AddIdPage({ onBack, onNext }) {
 }
 
 // ── Step 2: Form ───────────────────────────────
-const FORM_FIELDS = [
-  { key: "name", label: "الاسم", type: "text", full: true, required: true },
-  { key: "phone", label: "التليفون", type: "text" },
-  { key: "address", label: "السكن", type: "text", full: true },
-  {
-    key: "year",
-    label: "الفصل",
-    type: "select",
-    options: ["حضانه", "أولى ابتدائي", "تانية ابتدائي", "تالتة ابتدائي", "رابعة ابتدائي", "خامسة ابتدائي", "ستة ابتدائي"],
-  },
-];
-
 export function AddFormPage({
   onBack,
   pendingId,
@@ -134,8 +182,7 @@ export function AddFormPage({
   const [errors, setErrors] = useState({});
   const [saved, setSaved] = useState(false);
   const [savedPerson, setSavedPerson] = useState(null);
-  
-  // Cropper state
+
   const [cropImageSrc, setCropImageSrc] = useState(null);
 
   const upd = (k, v) => {
@@ -146,14 +193,9 @@ export function AddFormPage({
   const handleImageSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    // Read the file as a data URL so the cropper can use it
     const reader = new FileReader();
-    reader.onload = () => {
-      setCropImageSrc(reader.result);
-    };
+    reader.onload = () => setCropImageSrc(reader.result);
     reader.readAsDataURL(file);
-    // Reset file input so the same file could be selected again if needed
     e.target.value = null;
   };
 
@@ -167,12 +209,18 @@ export function AddFormPage({
       setErrors({ name: "لازم تكتب اسم الطفل" });
       return;
     }
-    const bd = (form.birthdate_d && form.birthdate_m && form.birthdate_y)
-      ? `${form.birthdate_d}/${form.birthdate_m}/${form.birthdate_y}`
-      : "";
+    const bd =
+      form.birthdate_d && form.birthdate_m && form.birthdate_y
+        ? `${form.birthdate_d}/${form.birthdate_m}/${form.birthdate_y}`
+        : "";
 
     const { ...restForm } = form;
-    const data = { ...restForm, birthdate: bd, name: restForm.name.trim(), accent: randomAccent() };
+    const data = {
+      ...restForm,
+      birthdate: bd,
+      name: restForm.name.trim(),
+      accent: randomAccent(),
+    };
     studentsDB.set(pendingId, data);
     setSavedPerson({ qrId: pendingId, ...data });
     setSaved(true);
@@ -180,80 +228,90 @@ export function AddFormPage({
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+    show: { opacity: 1, transition: { staggerChildren: 0.05 } },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0 }
+    show: { opacity: 1, y: 0 },
   };
 
   return (
     <Page>
-      {/* Premium Navbar for Add Form */}
-      <div className="navbar bg-base-100/80 backdrop-blur-md border-b border-white/5 px-4 min-h-16 sticky top-0 z-50">
+      <div className="navbar bg-slate-950/60 backdrop-blur-xl border-b border-white/5 px-6 min-h-20 sticky top-0 z-50">
         <div className="navbar-start">
           <button
             onClick={onBack}
-            className="btn btn-ghost btn-circle hover:bg-base-200"
+            className="w-12 h-12 rounded-2xl bg-slate-900 border border-white/5 flex items-center justify-center transition-all hover:border-sky-500/30 hover:bg-slate-800"
           >
-            <ArrowRight className="w-5 h-5 text-base-content/70" />
+            <ArrowRight className="w-5 h-5 text-slate-400" />
           </button>
         </div>
         <div className="navbar-center flex flex-col items-center">
-          <div className="font-black text-base-content/90">بيانات الطفل</div>
-          <div className="font-mono text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-md mt-0.5">
-            ID: {pendingId}
-          </div>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-1">Student Profile</span>
+          <div className="font-black text-white text-lg tracking-tight">بيانات الطفل</div>
         </div>
         <div className="navbar-end">
           <AnimatePresence>
             {saved && (
               <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, scale: 0.8, x: 20 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
                 onClick={() => onGoAttendance(savedPerson)}
-                className="btn btn-sm bg-success/10 text-success hover:bg-success hover:text-success-content border-none shadow-sm rounded-full px-4"
+                className="w-12 h-12 rounded-2xl bg-sky-500 text-slate-950 flex items-center justify-center shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:bg-sky-400 transition-all font-black"
               >
-                <CheckCircle2 className="w-4 h-4 mr-1" />
-                حضور
+                <UserCheck className="w-5 h-5" />
               </motion.button>
             )}
           </AnimatePresence>
         </div>
       </div>
 
-      <div className="flex-1 w-full max-w-lg mx-auto px-5 py-8" dir="rtl">
+      <div className="flex-1 w-full max-w-lg mx-auto px-6 py-10" dir="rtl">
+        <div className="mb-8 flex flex-col items-center">
+            <div className="font-mono text-[10px] text-sky-400 bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20 mb-2">
+                ID: {pendingId}
+            </div>
+        </div>
         <AnimatePresence mode="wait">
           {saved && (
-            <motion.div 
-              initial={{ opacity: 0, y: -20, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: 'auto' }}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
               className="mb-8"
             >
-              <div className="bg-success/10 border border-success/30 rounded-3xl p-6 flex flex-col items-center text-center gap-3 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-success/20 to-transparent opacity-50 pointer-events-none"></div>
-                <div className="w-16 h-16 bg-success/20 rounded-full flex items-center justify-center text-success shadow-inner relative z-10 mb-2">
-                  <Sparkles className="w-8 h-8" />
+              <div className="bg-emerald-500/10 border-2 border-emerald-500/20 rounded-[2.5rem] p-8 flex flex-col items-center text-center gap-4 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent"></div>
+                <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center text-slate-950 shadow-[0_10px_30px_rgba(16,185,129,0.3)] relative z-10 mb-2">
+                  <Check className="w-8 h-8" />
                 </div>
                 <div className="relative z-10">
-                  <div className="text-xl font-black text-success drop-shadow-sm mb-1">تم حفظ البيانات بنجاح! 🎉</div>
-                  <div className="text-success/80 text-sm font-medium">يمكنك الآن تسجيل حضوره أو زيارة ملفه الشخصي.</div>
+                  <div className="text-2xl font-black text-white mb-2 tracking-tight">
+                    تم الحفظ بنجاح!
+                  </div>
+                  <div className="text-emerald-400/80 text-[10px] font-black uppercase tracking-[0.2em]">
+                     Student Added to Database
+                  </div>
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <motion.div 
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="show"
-          className="flex flex-col gap-6"
+          className="flex flex-col gap-8"
         >
           {/* Image Uploader */}
-          <motion.div variants={itemVariants} className="flex flex-col items-center justify-center gap-3">
-            <label className={`relative cursor-pointer group ${saved ? "pointer-events-none opacity-50" : ""}`}>
+          <motion.div
+            variants={itemVariants}
+            className="flex flex-col items-center justify-center gap-4"
+          >
+            <label
+              className={`relative cursor-pointer group transition-all duration-500 ${saved ? "pointer-events-none opacity-50 scale-90" : "hover:scale-105"}`}
+            >
               <input
                 type="file"
                 accept="image/*"
@@ -261,36 +319,46 @@ export function AddFormPage({
                 onChange={handleImageSelect}
                 disabled={saved}
               />
-              <div className="w-32 h-32 rounded-[2.5rem] border-2 border-dashed border-primary/40 flex flex-col items-center justify-center bg-base-100 shadow-inner overflow-hidden hover:bg-base-200 transition-all duration-300 group-hover:border-primary group-hover:shadow-md relative">
+              <div className="w-40 h-40 rounded-[3rem] border-2 border-dashed border-white/10 flex flex-col items-center justify-center bg-slate-900 shadow-2xl overflow-hidden group-hover:bg-slate-800 group-hover:border-sky-500/30 transition-all relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-sky-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 {form.image ? (
-                  <img src={form.image} alt="Preview" className="w-full h-full object-cover" />
+                  <img
+                    src={form.image}
+                    alt="Preview"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
                 ) : (
                   <>
-                    <Camera className="w-10 h-10 text-primary/50 mb-1 group-hover:text-primary transition-colors" />
-                    <span className="text-xs font-bold text-primary/50">اختر صورة</span>
+                    <Camera className="w-12 h-12 text-slate-700 mb-2 group-hover:text-sky-400 transition-all duration-300" />
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] group-hover:text-sky-300">
+                      إضافة صورة
+                    </span>
                   </>
                 )}
-                
+
                 {form.image && !saved && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="w-8 h-8 text-white" />
+                  <div className="absolute inset-0 bg-slate-950/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm">
+                    <div className="bg-white/10 p-4 rounded-full border border-white/20">
+                        <Camera className="w-6 h-6 text-white" />
+                    </div>
                   </div>
                 )}
               </div>
             </label>
-            
+
             <AnimatePresence>
-               {form.image && !saved && (
-                 <motion.button
-                   initial={{ opacity: 0, scale: 0.8 }}
-                   animate={{ opacity: 1, scale: 1 }}
-                   exit={{ opacity: 0, scale: 0.8 }}
-                   onClick={() => upd("image", null)}
-                   className="btn btn-sm btn-ghost text-error hover:bg-error/10 rounded-full px-4"
-                 >
-                   <Trash2 className="w-4 h-4 mr-1" /> مسح الصورة
-                 </motion.button>
-               )}
+              {form.image && !saved && (
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  onClick={() => upd("image", null)}
+                  className="flex items-center gap-2 text-red-400/60 text-[10px] font-black uppercase tracking-[0.2em] hover:text-red-400 transition-all bg-slate-900 px-4 py-2 rounded-xl mt-2 border border-white/5"
+                >
+                  <X size={12} />
+                  مسح الصورة
+                </motion.button>
+              )}
             </AnimatePresence>
           </motion.div>
 
@@ -306,16 +374,18 @@ export function AddFormPage({
           </AnimatePresence>
 
           {/* Form Fields Card */}
-          <motion.div variants={itemVariants} className="bg-base-100/60 backdrop-blur-md rounded-[2rem] border border-white/5 shadow-sm p-6 grid grid-cols-2 gap-x-4 gap-y-5">
+          <motion.div variants={itemVariants} className="bg-slate-900/40 backdrop-blur-2xl border-2 border-white/5 rounded-[3rem] p-8 md:p-10 space-y-10 shadow-2xl relative">
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-sky-500/20 to-transparent"></div>
+            
             {/* Custom Birthday Field */}
             <div className="col-span-2">
-              <label className="text-xs font-bold text-base-content/60 uppercase tracking-widest mb-2 flex items-center gap-2">
-                <CalendarDays className="w-4 h-4" />
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 flex items-center gap-3">
+                <CalendarDays className="w-4 h-4 text-sky-400" />
                 تاريخ الميلاد
               </label>
-              <div className="flex gap-2 w-full mt-1" dir="rtl">
+              <div className="grid grid-cols-3 gap-3 w-full" dir="rtl">
                 <select
-                  className={`select select-bordered flex-1 bg-base-200/50 focus:bg-base-100 font-bold ${saved ? "cursor-not-allowed opacity-50" : ""}`}
+                  className={`tech-input h-16 w-full text-center bg-slate-950/50 ${saved ? "cursor-not-allowed opacity-50" : ""}`}
                   value={form.birthdate_d}
                   disabled={saved}
                   onChange={(e) => upd("birthdate_d", e.target.value)}
@@ -327,7 +397,7 @@ export function AddFormPage({
                 </select>
 
                 <select
-                  className={`select select-bordered flex-1 bg-base-200/50 focus:bg-base-100 font-bold ${saved ? "cursor-not-allowed opacity-50" : ""}`}
+                  className={`tech-input h-16 w-full text-center bg-slate-950/50 ${saved ? "cursor-not-allowed opacity-50" : ""}`}
                   value={form.birthdate_m}
                   disabled={saved}
                   onChange={(e) => upd("birthdate_m", e.target.value)}
@@ -339,7 +409,7 @@ export function AddFormPage({
                 </select>
 
                 <select
-                  className={`select select-bordered flex-1 bg-base-200/50 focus:bg-base-100 font-bold ${saved ? "cursor-not-allowed opacity-50" : ""}`}
+                  className={`tech-input h-16 w-full text-center bg-slate-950/50 ${saved ? "cursor-not-allowed opacity-50" : ""}`}
                   value={form.birthdate_y}
                   disabled={saved}
                   onChange={(e) => upd("birthdate_y", e.target.value)}
@@ -352,60 +422,93 @@ export function AddFormPage({
               </div>
             </div>
 
-            {FORM_FIELDS.map(({ key, label, type, options, placeholder, full, required }) => (
-              <div key={key} className={full ? "col-span-2" : ""}>
-                <label className="text-xs font-bold text-base-content/60 uppercase tracking-widest flex items-center justify-between mb-2">
-                  {label}
-                  {required && <span className="text-error text-[10px] bg-error/10 px-1.5 py-0.5 rounded">required</span>}
-                  {errors[key] && <span className="text-error text-[10px] animate-pulse">{errors[key]}</span>}
-                </label>
-                {type === "select" ? (
-                  <select
-                    className={`select select-bordered w-full bg-base-200/50 focus:bg-base-100 font-bold transition-colors ${errors[key] ? "select-error bg-error/5" : ""} ${saved ? "cursor-not-allowed opacity-50" : ""}`}
-                    value={form[key]}
-                    disabled={saved}
-                    onChange={(e) => upd(key, e.target.value)}
-                  >
-                    <option value="" disabled>اختر...</option>
-                    {options.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    className={`input input-bordered w-full bg-base-200/50 focus:bg-base-100 font-bold transition-colors ${errors[key] ? "input-error bg-error/5" : ""} ${saved ? "cursor-not-allowed opacity-50" : ""}`}
-                    type={type}
-                    placeholder={placeholder}
-                    value={form[key]}
-                    disabled={saved}
-                    onChange={(e) => upd(key, e.target.value)}
-                  />
-                )}
-              </div>
-            ))}
+            {FORM_FIELDS.map(
+              ({ key, label, type, options, placeholder, full, required, icon: Icon }) => (
+                <div key={key} className={full ? "col-span-2" : ""}>
+                   <div className="flex justify-between items-center mb-4">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-3">
+                        <Icon className="w-4 h-4 text-sky-400" />
+                        {label}
+                    </label>
+                    {required && (
+                      <span className="text-[8px] bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded-md font-black uppercase">
+                        Required
+                      </span>
+                    )}
+                  </div>
+
+                  {errors[key] && (
+                    <motion.div 
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="text-[9px] text-red-400 font-bold mb-2 flex items-center gap-1"
+                    >
+                        <AlertCircle size={10} />
+                        {errors[key]}
+                    </motion.div>
+                  )}
+
+                  <div className="relative group">
+                    {type === "select" ? (
+                        <select
+                        className={`tech-input h-16 w-full bg-slate-950/50 pr-12 focus:border-sky-500/40 focus:bg-slate-950 transition-all ${errors[key] ? "border-red-500/40" : ""} ${saved ? "cursor-not-allowed opacity-50" : ""}`}
+                        value={form[key]}
+                        disabled={saved}
+                        onChange={(e) => upd(key, e.target.value)}
+                        >
+                        <option value="" disabled>اختر {label}...</option>
+                        {options.map((opt) => (
+                            <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                        </select>
+                    ) : (
+                        <input
+                        className={`tech-input h-16 w-full bg-slate-950/50 pr-12 focus:border-sky-500/40 focus:bg-slate-950 transition-all ${errors[key] ? "border-red-500/40 text-red-400" : ""} ${saved ? "cursor-not-allowed opacity-50" : ""}`}
+                        type={type}
+                        placeholder={placeholder}
+                        value={form[key]}
+                        disabled={saved}
+                        onChange={(e) => upd(key, e.target.value)}
+                        />
+                    )}
+                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-700 group-focus-within:text-sky-500/40 transition-colors">
+                        <Icon size={18} />
+                    </div>
+                  </div>
+                </div>
+              ),
+            )}
           </motion.div>
 
           {/* Action Buttons */}
-          <motion.div variants={itemVariants} className="mt-4 pb-10">
+          <motion.div variants={itemVariants} className="mt-4 pb-16">
             {!saved ? (
-              <button 
-                onClick={handleSave} 
-                className="btn btn-primary w-full h-16 rounded-[1.5rem] text-xl font-black shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all group overflow-hidden relative"
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleSave}
+                className="relative w-full h-20 rounded-3xl overflow-hidden group shadow-[0_20px_40px_rgba(14,165,233,0.15)] border border-white/5"
               >
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                حفظ بيانات الطفل
-              </button>
+                <div className="absolute inset-0 bg-gradient-to-r from-sky-600 to-indigo-600 transition-all group-hover:scale-110"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.2)_0%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="relative z-10 flex items-center justify-center gap-4 text-white">
+                  <Sparkles className="w-6 h-6 animate-pulse" />
+                  <span className="font-black text-lg tracking-tight">حفظ بيانات الطفل</span>
+                </div>
+              </motion.button>
             ) : (
-              <button
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
                 onClick={() => onGoStudent(pendingId)}
-                className="btn btn-info text-white w-full h-16 rounded-[1.5rem] text-xl font-black shadow-lg shadow-info/20 hover:shadow-xl transition-all group overflow-hidden relative"
+                className="w-full h-20 rounded-3xl bg-slate-900 border border-white/10 text-white font-black hover:bg-slate-800 transition-all shadow-2xl flex items-center justify-center gap-4 group"
               >
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                <UserCheck className="w-6 h-6 mr-2" />
-                الذهاب للبروفايل
-              </button>
+                <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <UserCheck className="w-5 h-5" />
+                </div>
+                <span className="text-lg">الذهاب لملف الطفل</span>
+                <ArrowRight className="w-5 h-5 text-slate-500 group-hover:translate-x-[-10px] transition-transform" />
+              </motion.button>
             )}
           </motion.div>
         </motion.div>

@@ -1,104 +1,136 @@
 import { useState, useMemo } from "react";
 import { classesDB } from "../data/storage";
 import { Page, Navbar, Empty } from "../components/UI";
+import { Plus, RefreshCcw, Lock, ChevronLeft, Users } from "lucide-react";
+import { motion } from "framer-motion";
 
-export function ClassesPage({ currentUser, onRefreshAuth, onBack, onGoCreate, onGoClass }) {
+export function ClassesPage({
+  currentUser,
+  onRefreshAuth,
+  onBack,
+  onGoCreate,
+  onGoClass,
+}) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const classes = classesDB.getAll();
-  const classList = Object.entries(classes).map(([id, cls]) => ({ id, ...cls }));
+  const classList = useMemo(
+    () => Object.entries(classes).map(([id, cls]) => ({ id, ...cls })),
+    [classes],
+  );
 
-  // Filter allowed classes:
-  // Admin sees all. Normal user sees all, but can only ENTER permitted ones.
   const isAdmin = currentUser?.role === "admin";
   const userPerms = currentUser?.permissions || [];
 
   return (
     <Page>
-      <Navbar title="الفصول" onBack={onBack} />
+      <Navbar title="إدارة الفصول" onBack={onBack} />
 
-      <div className="flex-1 px-5 py-6 space-y-5 animate-slideUp max-w-lg mx-auto w-full pb-20">
-        <div className="flex items-center justify-between" dir="rtl">
-          <h2 className="text-xl font-extrabold text-base-content tracking-tight">إدارة الفصول</h2>
+      <div
+        className="flex-1 px-8 py-10 space-y-10 max-w-5xl mx-auto w-full pb-24"
+        dir="rtl"
+      >
+        <header className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+              الفصول الدراسية
+            </h2>
+            <p className="text-slate-500 font-medium text-sm mt-1">
+              إدارة مجموعات المخدومين والمراحل
+            </p>
+          </div>
           {!isAdmin && (
-            <button 
+            <button
               onClick={async () => {
                 setIsRefreshing(true);
                 if (onRefreshAuth) await onRefreshAuth();
                 setIsRefreshing(false);
               }}
               disabled={isRefreshing}
-              className="btn btn-sm btn-ghost gap-2 text-primary hover:bg-primary/10 rounded-full font-bold transition-all px-4"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-600 border border-slate-200 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all"
             >
-              {isRefreshing ? <span className="loading loading-spinner loading-xs"></span> : "🔄 Refresh"}
+              {isRefreshing ? (
+                <RefreshCcw className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCcw className="w-4 h-4" />
+              )}
+              <span>تحديث</span>
             </button>
           )}
-        </div>
+        </header>
 
-        {isAdmin && (
-          <button
-            onClick={onGoCreate}
-            className="btn btn-outline border-dashed border-2 border-primary/40 text-primary w-full text-base font-bold rounded-[1.25rem] h-14 hover:bg-primary hover:border-primary hover:text-primary-content transition-all mb-2"
-          >
-            <span className="text-xl mr-2">+</span> فصل جديد
-          </button>
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {isAdmin && (
+            <button
+              onClick={onGoCreate}
+              className="group h-full min-h-[200px] rounded-[2.5rem] border-2 border-dashed border-slate-200 text-slate-400 flex flex-col items-center justify-center gap-4 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all duration-300"
+            >
+              <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                <Plus className="w-8 h-8" />
+              </div>
+              <span className="font-black text-lg">إضافة فصل جديد</span>
+            </button>
+          )}
 
-        {classList.length === 0 ? (
-          <Empty message="مافيش فصول لغاية دلوقتي" icon="📚" />
-        ) : (
-          <div className="grid grid-cols-1 gap-4 mt-2" dir="rtl">
-            {classList.map((cls, idx) => {
+          {classList.length === 0 ? (
+            <div className="md:col-span-2 lg:col-span-2">
+              <Empty message="مافيش فصول لغاية دلوقتي" icon="📚" />
+            </div>
+          ) : (
+            classList.map((cls, idx) => {
               const hasAccess = isAdmin || userPerms.includes(cls.id);
               return (
-                <button
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
                   key={cls.id}
                   onClick={() => hasAccess && onGoClass(cls.id)}
-                  className={`group relative text-right flex flex-col p-5 rounded-[1.5rem] border shadow-sm transition-all duration-300 overflow-hidden ${
-                    hasAccess
-                      ? "bg-base-100 hover:shadow-md hover:-translate-y-1 hover:border-primary/30 border-base-200"
-                      : "bg-base-200/50 grayscale opacity-75 cursor-not-allowed border-base-300"
+                  className={`tech-panel p-8 text-right flex flex-col items-start gap-6 group transition-all duration-300 h-full ${
+                    !hasAccess
+                      ? "opacity-50 grayscale cursor-not-allowed border-slate-100 bg-slate-50/50"
+                      : "hover:border-indigo-200 hover:shadow-indigo-600/5"
                   }`}
-                  style={{ animationDelay: `${idx * 40}ms` }}
                 >
-                  {/* Decorative Gradient Background */}
-                  {hasAccess && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                  )}
-
-                  <div className="flex justify-between items-start relative z-10 w-full mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-inner ${hasAccess ? 'bg-primary/10 text-primary' : 'bg-base-300 text-base-content/50'}`}>
-                        📚
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-[17px] text-base-content mb-0.5">{cls.name}</h3>
-                        <div className="text-xs text-base-content/40 font-mono">{cls.id.slice(0, 8)}...</div>
-                      </div>
+                  <div className="flex justify-between items-start w-full">
+                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                      <Users className="w-7 h-7" />
                     </div>
-                    
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${hasAccess ? 'bg-base-200 group-hover:bg-primary group-hover:text-primary-content text-base-content/40' : 'bg-base-300 text-base-content/50'}`}>
-                      {!hasAccess ? (
-                        <span className="text-sm">🔒</span>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </div>
+                    {!hasAccess && (
+                      <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
+                        <Lock className="w-4 h-4" />
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex flex-wrap gap-1.5 relative z-10">
-                    {cls.grades?.map((g) => (
-                      <span key={g} className={`px-2.5 py-1 text-[10px] font-bold rounded-md ${hasAccess ? 'bg-base-200 text-base-content/70 border border-base-300' : 'bg-base-300 text-base-content/40'}`}>
+                  <div className="space-y-1">
+                    <h3 className="font-black text-xl text-slate-900 group-hover:text-indigo-600 transition-colors">
+                      {cls.name}
+                    </h3>
+                    <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">
+                      {cls.id.slice(0, 8)}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mt-auto pt-4">
+                    {cls.grades?.slice(0, 3).map((g) => (
+                      <span
+                        key={g}
+                        className="px-3 py-1 bg-slate-100 text-[10px] font-black text-slate-500 rounded-lg border border-slate-200 uppercase tracking-tight"
+                      >
                         {g}
                       </span>
                     ))}
+                    {cls.grades?.length > 3 && (
+                      <span className="px-2 py-1 bg-slate-50 text-[10px] font-black text-slate-400 rounded-lg">
+                        +{cls.grades.length - 3}
+                      </span>
+                    )}
                   </div>
-                </button>
+                </motion.button>
               );
-            })}
-          </div>
-        )}
+            })
+          )}
+        </div>
       </div>
     </Page>
   );
@@ -153,19 +185,31 @@ export function CreateClassPage({ onBack, onSaved }) {
 
   return (
     <Page>
-      <Navbar title="فصل جديد" onBack={onBack} />
-      <div className="p-5 animate-slideUp" dir="rtl">
-        <div className="card bg-base-200 border border-base-300 shadow-xl">
-          <div className="card-body gap-4">
-            <h2 className="card-title text-xl mb-2 text-primary">📝 بيانات الفصل</h2>
+      <Navbar title="إضافة فصل جديد" onBack={onBack} />
+      <div className="max-w-2xl mx-auto px-8 py-12" dir="rtl">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="tech-panel p-10 space-y-10"
+        >
+          <header>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-4">
+              <span className="w-1.5 h-6 bg-indigo-600 rounded-full"></span>
+              بيانات الفصل الجديد
+            </h2>
+            <p className="text-slate-500 text-sm mt-2">
+              حدد اسم الفصل والمراحل الدراسية التابعة له
+            </p>
+          </header>
 
-            <div className="form-control w-full">
-              <label className="label">
-                <span className="label-text font-bold">اسم الفصل</span>
+          <div className="space-y-8">
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mr-1">
+                اسم الفصل
               </label>
               <input
                 type="text"
-                className="input input-bordered w-full"
+                className="tech-input h-16 w-full text-lg"
                 placeholder="مثال: أولى وتانية ابتدائي"
                 value={name}
                 onChange={(e) => {
@@ -175,43 +219,51 @@ export function CreateClassPage({ onBack, onSaved }) {
               />
             </div>
 
-            <div className="form-control w-full mt-2">
-              <label className="label">
-                <span className="label-text font-bold">السنين اللي في الفصل ده</span>
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mr-1">
+                المراحل الدراسية
               </label>
-              <div className="bg-base-100 p-3 rounded-box border border-base-300 space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {GRADES.map((grade) => (
-                  <label key={grade} className="label cursor-pointer justify-start gap-3 p-1">
+                  <label
+                    key={grade}
+                    className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${selectedGrades.includes(grade) ? "bg-indigo-50 border-indigo-200 text-indigo-700 font-bold" : "bg-white border-slate-100 text-slate-600 hover:border-slate-300"}`}
+                  >
                     <input
                       type="checkbox"
-                      className="checkbox checkbox-primary checkbox-sm"
+                      className="checkbox checkbox-primary checkbox-sm rounded-lg"
                       checked={selectedGrades.includes(grade)}
                       onChange={() => {
                         handleToggle(grade);
                         setError("");
                       }}
                     />
-                    <span className="label-text">{grade}</span>
+                    <span className="text-sm">{grade}</span>
                   </label>
                 ))}
               </div>
             </div>
-
-            {error && (
-              <div className="alert alert-error text-sm py-2 mt-2">
-                <span>{error}</span>
-              </div>
-            )}
-
-            <button
-              className="btn btn-primary w-full mt-4 text-lg"
-              onClick={submit}
-              disabled={loading}
-            >
-              {loading ? <span className="loading loading-spinner"></span> : "سجل الفصل"}
-            </button>
           </div>
-        </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-100 text-red-600 p-5 rounded-2xl text-sm font-bold flex items-center gap-3">
+              <span>⚠️</span>
+              {error}
+            </div>
+          )}
+
+          <button
+            className="tech-btn-primary w-full h-16 shadow-indigo-600/10"
+            onClick={submit}
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="loading loading-spinner"></span>
+            ) : (
+              <span>إنشاء الفصل الآن</span>
+            )}
+          </button>
+        </motion.div>
       </div>
     </Page>
   );

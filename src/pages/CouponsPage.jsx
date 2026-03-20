@@ -9,10 +9,23 @@ import {
   DeleteBtn,
 } from "../components/UI";
 import { useToast } from "../hooks/useToast";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Plus, 
+  Minus, 
+  RotateCcw, 
+  History, 
+  Ticket, 
+  Lock,
+  ArrowRight,
+  TrendingUp,
+  TrendingDown
+} from "lucide-react";
 
 export function CouponsPage({ currentUser, person, onBack }) {
   const [log, setLog] = useState(() => couponsDB.get(person?.qrId));
-  const [selectedAmount, setSelectedAmount] = useState(50);
+  const [selectedAmount, setSelectedAmount] = useState(0);
+  const [inputValue, setInputValue] = useState("");
   const [shake, setShake] = useState(false);
   const toast = useToast();
 
@@ -89,14 +102,18 @@ export function CouponsPage({ currentUser, person, onBack }) {
     toast.show(`❌ خصمنا ${amountToSubtract} كوبون`);
   };
 
-  const handleScroll = (e) => {
-    const scrollTop = e.target.scrollTop;
-    const itemHeight = 40; // matches h-10
-    const index = Math.round(scrollTop / itemHeight);
-    const amount = (index + 1) * 50;
-    if (amount >= 50 && amount <= 500 && amount !== selectedAmount) {
-      setSelectedAmount(amount);
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    if (val === "" || /^\d+$/.test(val)) {
+      setInputValue(val);
+      const num = parseInt(val) || 0;
+      setSelectedAmount(num);
     }
+  };
+
+  const handleQuickSelect = (amt) => {
+    setInputValue(amt.toString());
+    setSelectedAmount(amt);
   };
 
   if (!person) return null;
@@ -106,160 +123,227 @@ export function CouponsPage({ currentUser, person, onBack }) {
       <Toast msg={toast.msg} />
       <Navbar onBack={onBack} title="🎟️ حساب الكوبونات" />
 
-      <div className={`flex-1 max-w-md mx-auto w-full px-5 py-6 flex flex-col gap-6 animate-slideUp overflow-x-hidden ${shake ? "animate-shake" : ""}`}>
+      <div className={`flex-1 max-w-2xl mx-auto w-full px-6 py-8 flex flex-col gap-8 ${shake ? "animate-shake" : ""}`}>
         <StudentMiniCard person={person} />
 
-        {/* Total */}
-        <div
-          className={`card border-2 transition-all ${total > 0 ? "border-warning/40 bg-warning/5" : "bg-base-200 border-base-300"}`}
-        >
-          <div className="card-body items-center py-6 gap-1">
-            <div className="text-xs text-base-content/30 tracking-widest uppercase">
-              مجموع الكوبونات
-            </div>
-            <div
-              className={`text-6xl font-black transition-colors ${total > 0 ? "text-warning" : "text-base-content/10"}`}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main Controls - Left Side on Desktop */}
+          <div className="lg:col-span-12 flex flex-col gap-8">
+            {/* Total Balance Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`relative overflow-hidden rounded-[2.5rem] p-1 border-2 transition-all duration-500 ${
+                total > 0 
+                  ? "border-sky-500/30 bg-slate-900/40 shadow-[0_0_50px_rgba(14,165,233,0.15)]" 
+                  : "bg-slate-950 border-white/5"
+              }`}
             >
-              {total}
-            </div>
-            <div className="text-xs text-base-content/30 font-bold">کوبون</div>
+              <div className="absolute inset-0 bg-gradient-to-br from-sky-500/10 via-transparent to-transparent opacity-50"></div>
+              
+              <div className="relative z-10 p-8 flex flex-col items-center">
+                <div className="flex items-center gap-2 mb-4">
+                  <Ticket className={`w-4 h-4 ${total > 0 ? "text-sky-400" : "text-slate-600"}`} />
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">
+                    إجمالي الرصيد الحالي
+                  </span>
+                </div>
+
+                <div className="flex items-baseline gap-4">
+                  <motion.span 
+                    key={total}
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className={`text-7xl font-black tracking-tighter ${
+                      total > 0 ? "text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]" : "text-slate-800"
+                    }`}
+                  >
+                    {total}
+                  </motion.span>
+                  <span className={`text-sm font-bold uppercase tracking-widest ${total > 0 ? "text-sky-400/60" : "text-slate-700"}`}>
+                    كوبون
+                  </span>
+                </div>
+
+                {total > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-6 flex items-center gap-2 px-4 py-1.5 bg-sky-500/10 rounded-full border border-sky-500/20"
+                  >
+                    <TrendingUp className="w-3 h-3 text-sky-400" />
+                    <span className="text-[10px] font-black text-sky-400 uppercase tracking-widest">Active Balance</span>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+
+            {canManage ? (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="flex flex-col gap-6"
+              >
+                {/* Amount Input Section */}
+                <div className="flex flex-col gap-4">
+                  <div className="flex justify-between items-end px-2">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mr-1">
+                      حدد القيمة المراد إضافتها أو خصمها
+                    </label>
+                    <span className="text-[10px] font-bold text-sky-400 uppercase">Input Amount Manually</span>
+                  </div>
+
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 right-6 flex items-center pointer-events-none transition-colors group-focus-within:text-sky-400 text-slate-500">
+                      <Ticket className="w-6 h-6" />
+                    </div>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={inputValue}
+                      onChange={handleInputChange}
+                      placeholder="0"
+                      className="w-full bg-slate-900/50 border-2 border-white/5 rounded-3xl py-8 px-16 text-4xl font-black text-white text-center focus:border-sky-500/40 focus:bg-slate-900 transition-all outline-none shadow-inner"
+                    />
+                    <div className="absolute inset-y-0 left-6 flex items-center">
+                      <span className="text-xs font-black text-slate-600 uppercase tracking-widest group-focus-within:text-sky-400/40 transition-colors">Coupons</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Main Action Buttons */}
+                <div className="grid grid-cols-2 gap-4">
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleSubtract}
+                    className="relative group h-20 rounded-3xl overflow-hidden shadow-2xl shadow-red-500/10 border border-red-500/20 bg-slate-950"
+                  >
+                    <div className="absolute inset-0 bg-red-500/5 group-hover:bg-red-500/10 transition-colors"></div>
+                    <div className="relative z-10 flex flex-col items-center justify-center gap-1">
+                      <Minus className="w-5 h-5 text-red-500 group-hover:scale-125 transition-transform" />
+                      <span className="text-[10px] font-black text-white uppercase tracking-widest">
+                        خصم {selectedAmount}
+                      </span>
+                    </div>
+                  </motion.button>
+
+                  <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleAdd}
+                    className="relative group h-20 rounded-3xl overflow-hidden shadow-2xl shadow-sky-500/10 border border-sky-500/20 bg-slate-950"
+                  >
+                    <div className="absolute inset-0 bg-sky-500/10 group-hover:bg-sky-500/20 transition-colors"></div>
+                    <div className="relative z-10 flex flex-col items-center justify-center gap-1">
+                      <Plus className="w-5 h-5 text-sky-400 group-hover:scale-125 transition-transform" />
+                      <span className="text-[10px] font-black text-white uppercase tracking-widest">
+                        إضافة {selectedAmount}
+                      </span>
+                    </div>
+                  </motion.button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-slate-900/50 border-2 border-white/5 rounded-[2.5rem] p-8 flex flex-col items-center gap-4 text-center"
+              >
+                <div className="w-16 h-16 rounded-2xl bg-slate-950 flex items-center justify-center text-slate-700">
+                  <Lock className="w-8 h-8" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="font-black text-sm text-slate-300">للمشاهدة فقط</span>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest max-w-[200px] leading-relaxed">
+                    عذراً، لا تمتلك الصلاحية لتعديل كوبونات هذا الطفل
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Transaction History - Bottom or Right Side */}
+          <div className="lg:col-span-12">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-col gap-4"
+            >
+              <div className="flex justify-between items-center px-4">
+                <div className="flex items-center gap-2">
+                  <History className="w-4 h-4 text-slate-500" />
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">
+                    سجل آخر العمليات
+                  </span>
+                </div>
+                {canManage && log.length > 0 && (
+                  <button
+                    onClick={handleReset}
+                    className="flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-red-500/10 text-red-500/40 hover:text-red-400 transition-all group"
+                  >
+                    <RotateCcw className="w-3 h-3 group-hover:rotate-180 transition-transform duration-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">تصفير السجل</span>
+                  </button>
+                )}
+              </div>
+
+              {log.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  <AnimatePresence mode="popLayout">
+                    {[...log].reverse().map((entry, idx) => {
+                      const isPositive = entry.amount >= 0;
+                      return (
+                        <motion.div
+                          layout
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          key={entry.id}
+                          className="group relative bg-slate-900/40 border border-white/5 hover:border-white/10 rounded-2xl p-4 flex items-center gap-4 transition-all"
+                        >
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                            isPositive ? 'bg-sky-500/10 text-sky-400' : 'bg-red-500/10 text-red-400'
+                          }`}>
+                            {isPositive ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start mb-1">
+                              <span className="text-sm font-black text-slate-200">
+                                {isPositive ? `إضافة ${entry.amount}` : `خصم ${Math.abs(entry.amount)}`}
+                              </span>
+                              <span className="text-[10px] font-mono text-slate-600 bg-slate-950 px-2 py-0.5 rounded-md border border-white/5">
+                                = {log.slice(0, log.length - idx).reduce((s, e) => s + e.amount, 0)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tight">
+                                    {entry.timestamp.slice(0, 10)}
+                                </span>
+                                <span className="text-[10px] font-bold text-slate-600">{formatTime(entry.timestamp)}</span>
+                            </div>
+                          </div>
+
+                          {canManage && (
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <DeleteBtn onClick={() => handleRemove(entry.id)} />
+                            </div>
+                          )}
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <div className="py-12 flex flex-col items-center justify-center bg-slate-900/40 border border-white/5 rounded-[2.5rem] border-dashed">
+                  <Ticket className="w-12 h-12 text-slate-800 mb-4 opacity-50" />
+                  <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em]">مفيش كوبونات لسه</span>
+                </div>
+              )}
+            </motion.div>
           </div>
         </div>
-
-        {canManage ? (
-          <>
-            {/* Amount Selector */}
-            <div className="flex flex-col gap-3 items-center">
-              <label className="text-[10px] font-black text-base-content/30 uppercase tracking-[0.2em] px-1 text-center">
-                اسحب أو دوس Enter للإضافة
-              </label>
-              <div className="relative h-[120px] w-48 flex flex-col items-center bg-base-200/30 rounded-3xl overflow-hidden border border-base-300/50">
-                {/* Selection Overlay */}
-                <div className="absolute inset-x-2 top-[40px] h-10 bg-warning rounded-xl shadow-lg shadow-warning/20 pointer-events-none z-0"></div>
-                
-                <style>{`
-                  .no-scrollbar::-webkit-scrollbar { display: none; }
-                  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; overflow-x: hidden !important; }
-                `}</style>
-
-                <div 
-                  onScroll={handleScroll}
-                  className="w-full h-full overflow-y-auto overflow-x-hidden snap-y snap-mandatory no-scrollbar flex flex-col z-10"
-                >
-                  {/* Padding for scrolling - exactly one item height */}
-                  <div className="h-10 shrink-0" />
-                  
-                  {Array.from({ length: 10 }, (_, i) => (i + 1) * 50).map((amt) => (
-                    <button
-                      key={amt}
-                      onClick={() => setSelectedAmount(amt)}
-                      className={`flex-none h-10 flex items-center justify-center snap-center w-full transition-all duration-300 select-none ${
-                        selectedAmount === amt
-                          ? "text-black font-black"
-                          : "text-base-content/30 hover:text-base-content/60 font-bold"
-                      }`}
-                    >
-                      <span className={`transition-transform duration-300 ${selectedAmount === amt ? 'scale-125' : 'scale-100'}`}>
-                        {amt}
-                      </span>
-                    </button>
-                  ))}
-
-                  {/* Padding for scrolling - exactly one item height */}
-                  <div className="h-10 shrink-0" />
-                </div>
-                
-                {/* Gradient Mask */}
-                <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-base-100/90 via-transparent to-base-100/90 z-20"></div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={handleSubtract}
-                className="btn btn-error btn-lg gap-2 shadow-lg shadow-error/10 h-16 group rounded-2xl"
-              >
-                 <span className="text-2xl font-bold group-active:scale-90 transition-transform">-</span>
-                 <span className="font-bold">خصم {selectedAmount}</span>
-              </button>
-              <button
-                onClick={handleAdd}
-                className="btn btn-warning btn-lg gap-2 shadow-lg shadow-warning/10 h-16 group rounded-2xl text-warning-content"
-              >
-                 <span className="text-2xl font-bold group-active:scale-90 transition-transform">+</span>
-                 <span className="font-bold">إضافة {selectedAmount}</span>
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="bg-warning/10 border border-warning/20 rounded-2xl p-4 flex items-center gap-3 text-warning shadow-sm">
-            <span className="text-2xl">🔒</span>
-            <div className="flex flex-col">
-              <span className="font-black text-sm">للمشاهدة فقط</span>
-              <span className="text-[10px] font-bold opacity-70 uppercase tracking-tight">ما ينفعش تعدل كوبونات أطفال مش في فصولك</span>
-            </div>
-          </div>
-        )}
-
-        {/* Log */}
-        {total !== 0 || log.length > 0 ? (
-          <div className="card bg-base-200 border border-base-300 overflow-hidden">
-            <div className="flex justify-between items-center px-4 py-3 border-b border-base-300">
-              <span className="text-xs text-base-content/40 font-medium">
-                📋 السجل ({log.length} عمليات حصلت)
-              </span>
-              {canManage && (
-                <button
-                  onClick={handleReset}
-                  className="btn btn-ghost btn-xs text-error/50 hover:text-error hover:bg-error/10"
-                >
-                  صفر الحساب
-                </button>
-              )}
-            </div>
-            <div className="divide-y divide-base-300">
-              {log.map((entry, i) => {
-                const running = log
-                  .slice(0, i + 1)
-                  .reduce((s, e) => s + e.amount, 0);
-                const isPositive = entry.amount >= 0;
-                return (
-                  <div
-                    key={entry.id}
-                    className={`flex items-center gap-3 px-4 py-3 ${i === log.length - 1 ? (isPositive ? "bg-warning/5" : "bg-error/5") : ""}`}
-                  >
-                    <div className={`badge ${isPositive ? 'badge-warning' : 'badge-error'} badge-outline shrink-0 font-mono text-sm w-14 justify-center`}>
-                      {isPositive ? '+' : ''}{entry.amount}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium">
-                        {isPositive ? `ضيفنا ${entry.amount}` : `خصمنا ${Math.abs(entry.amount)}`}
-                      </div>
-                      <div className="text-xs font-mono text-base-content/30">
-                        {entry.timestamp.slice(0, 10)} —{" "}
-                        {formatTime(entry.timestamp)}
-                      </div>
-                    </div>
-                    <div className="text-xs font-mono text-base-content/30 shrink-0">
-                      = {running}
-                    </div>
-                    {canManage && (
-                      <DeleteBtn onClick={() => handleRemove(entry.id)} />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-        ) : (
-          <div className="card bg-base-200 border border-base-300">
-            <div className="card-body items-center text-base-content/20 py-8 text-sm">
-              مفيش كوبونات لسه
-            </div>
-          </div>
-        )}
       </div>
     </Page>
   );

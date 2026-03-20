@@ -1,11 +1,27 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { attendanceDB, studentsDB, classesDB, couponsDB } from "../data/storage";
-import { buildAttendanceEntry, registeredToday, buildCouponEntry } from "../utils/helpers";
-import { Page, Navbar, StudentMiniCard, Toast } from "../components/UI";
+import {
+  attendanceDB,
+  studentsDB,
+  classesDB,
+  couponsDB,
+} from "../data/storage";
+import {
+  buildAttendanceEntry,
+  registeredToday,
+  buildCouponEntry,
+} from "../utils/helpers";
+import { Page, Navbar, StudentMiniCard, Toast, Avatar } from "../components/UI";
 import { useToast } from "../hooks/useToast";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Search, CalendarDays, X, Users, UserCheck } from "lucide-react";
-import { gsap } from "gsap";
+import {
+  CheckCircle2,
+  Search,
+  CalendarDays,
+  X,
+  Users,
+  UserCheck,
+  Save,
+} from "lucide-react";
 
 export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
   const [query, setQuery] = useState("");
@@ -15,7 +31,10 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
   const inputRef = useRef(null);
 
   const allClassesDB = classesDB.getAll();
-  const classList = Object.entries(allClassesDB).map(([id, cls]) => ({ id, ...cls }));
+  const classList = Object.entries(allClassesDB).map(([id, cls]) => ({
+    id,
+    ...cls,
+  }));
 
   useEffect(() => {
     if (person && !pendingList.find((p) => p.qrId === person.qrId)) {
@@ -32,8 +51,9 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
     if (!selectedClass) return [];
     const targetClass = allClassesDB[selectedClass];
     if (!targetClass) return [];
-    
-    return allStudents.filter(s => targetClass.grades?.includes(s.year))
+
+    return allStudents
+      .filter((s) => targetClass.grades?.includes(s.year))
       .sort((a, b) => {
         const countA = attendanceDB.get(a.qrId).length;
         const countB = attendanceDB.get(b.qrId).length;
@@ -45,7 +65,7 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
   const addPerson = (student) => {
     if (!student) return;
     if (pendingList.find((p) => p.qrId === student.qrId)) {
-      toast.show("ده متسجل في القائمة أصلاً");
+      toast.show(`⚠️ ${person.name} متسجل النهارده فعلاً!`);
       setQuery("");
       return;
     }
@@ -114,256 +134,306 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
       .filter(
         (s) =>
           s.qrId.toLowerCase().includes(q) ||
-          (s.name && s.name.toLowerCase().includes(q))
+          (s.name && s.name.toLowerCase().includes(q)),
       )
       .slice(0, 5);
   }, [query, allStudents]);
 
-  // Framer Motion Variants
   const containerVariants = {
     hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+    show: { opacity: 1, transition: { staggerChildren: 0.03 } },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { type: "spring", stiffness: 300, damping: 24 },
+    },
   };
+
+  const saveBtn = pendingList.length > 0 && (
+    <button
+      onClick={handleSave}
+      className="btn btn-sm bg-indigo-600 text-white border-none hover:bg-indigo-700 px-4 flex items-center gap-2 shadow-lg shadow-indigo-600/20"
+    >
+      <Save className="w-4 h-4" />
+      <span>حفظ ({pendingList.length})</span>
+    </button>
+  );
 
   return (
     <Page>
       <Toast msg={toast.msg} />
-      <Navbar onBack={onBack} title="تسجيل الحضور" />
+      <Navbar onBack={onBack} title="تسجيل الحضور" right={saveBtn} />
 
-      <div className="flex-1 w-full max-w-4xl mx-auto px-6 py-6 flex flex-col gap-6" dir="rtl">
-        
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col gap-4 bg-base-100/60 backdrop-blur-md p-6 rounded-[2rem] border border-white/5 shadow-sm"
-        >
-          {/* Class Selection Dropdown */}
-          <div className="w-full relative">
-            <Users className="absolute right-4 top-1/2 -translate-y-1/2 text-base-content/40 w-5 h-5 pointer-events-none" />
-            <select 
-              className="select w-full bg-base-200/50 border-base-300 focus:border-primary/50 text-base font-bold pr-12 rounded-2xl h-14"
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-            >
-              <option value="">اختار الفصل...</option>
-              {classList.map(cls => (
-                <option key={cls.id} value={cls.id}>{cls.name}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Search Bar */}
-          <div className="flex gap-3 relative">
-            <div className="flex-1 relative group rounded-2xl">
-              <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-base-content/40 group-focus-within:text-primary transition-colors">
-                <Search className="w-5 h-5" />
+      <div
+        className="flex-1 w-full max-w-5xl mx-auto px-6 py-10 flex flex-col gap-10"
+        dir="rtl"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+          <div className="lg:col-span-12 space-y-10">
+            <header className="flex flex-col md:flex-row md:items-end justify-between items-start gap-4">
+              <div>
+                <h2 className="text-3xl font-black text-slate-900 tracking-tight">
+                  إضافة للقائمة
+                </h2>
+                <p className="text-slate-500 font-medium text-sm mt-1">
+                  سجل المخدومين الحاضرين اليوم
+                </p>
               </div>
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="دور بالاسم أو الكود..."
-                className="input w-full bg-base-100 shadow-inner focus:shadow-md border-base-200 focus:border-primary/30 rounded-2xl pl-4 pr-11 h-14 font-medium transition-all duration-300"
-              />
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={onGoHistory}
+                className="flex items-center gap-3 px-6 py-3 bg-slate-50 text-slate-900 border border-slate-200 rounded-2xl font-black text-xs hover:bg-slate-100 transition-all uppercase tracking-widest"
+              >
+                <CalendarDays className="w-5 h-5 text-indigo-600" />
+                سجل الحضور
+              </motion.button>
+            </header>
+
+            <div className="admin-panel shadow-admin-lg grid grid-cols-1 md:grid-cols-4 gap-6 p-8">
+              {/* Quick Search - Now First (Right in RTL) and Larger (75%) */}
+              <div className="md:col-span-3 space-y-2 relative">
+                <label className="text-[10px] font-black text-sky-300/60 uppercase tracking-widest flex items-center gap-2 mr-1">
+                  <Search className="w-4 h-4 text-sky-500" />
+                  بحث سريع
+                </label>
+                <div className="relative">
+                  <input
+                    ref={inputRef}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="دور بالاسم أو الكود..."
+                    className="admin-input h-14 pl-4 pr-12 w-full"
+                  />
+                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-300">
+                    <Search className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {suggestions.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl shadow-admin-xl border border-slate-100 p-2 flex flex-col gap-1 z-50"
+                    >
+                      {suggestions.map((s) => (
+                        <button
+                          key={s.qrId}
+                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-indigo-50 transition-all text-right group"
+                          onClick={() => addPerson(s)}
+                        >
+                          <Avatar name={s.name} size="sm" />
+                          <div className="flex flex-col">
+                            <span className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                              {s.name}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              {s.qrId}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Class Filter - Now Second (Left in RTL) and Smaller (25%) */}
+              <div className="md:col-span-1 space-y-2">
+                <label className="text-[10px] font-black text-sky-300/60 uppercase tracking-widest flex items-center gap-2 mr-1">
+                  <Users className="w-4 h-4 text-sky-500" />
+                  تحضير فصل محدد
+                </label>
+                <select
+                  className="admin-input h-14"
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                >
+                  <option value="">اختار الفصل...</option>
+                  {classList.map((cls) => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onGoHistory}
-              className="btn bg-info/10 hover:bg-info text-info hover:text-info-content border-none shadow-sm rounded-2xl px-5 h-14 flex gap-2"
-              title="تاريخ الحضور"
-            >
-              <CalendarDays className="w-5 h-5" />
-              <span className="hidden sm:inline font-bold">السجل</span>
-            </motion.button>
-          </div>
 
-          {/* Suggestions Dropdown */}
-          <AnimatePresence>
-            {suggestions.length > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="absolute top-full left-6 right-6 mt-2 bg-base-100/90 backdrop-blur-xl rounded-2xl shadow-xl border border-base-200 p-2 flex flex-col gap-1 z-30"
-              >
-                {suggestions.map((s) => (
-                  <button
-                    key={s.qrId}
-                    className="btn btn-ghost justify-start font-bold h-12 rounded-xl text-base hover:bg-base-200 transition-colors"
-                    onClick={() => addPerson(s)}
-                  >
-                    {s.name} <span className="opacity-40 text-xs ml-auto font-mono bg-base-200 px-2 py-1 rounded-md">{s.qrId}</span>
-                  </button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              {/* Attendance List - Now First (Right in RTL) */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="w-1.5 h-5 bg-orange-500 rounded-full"></span>
+                  <h3 className="text-lg font-black text-white">
+                    قائمة التحضير
+                  </h3>
+                  <span className="text-xs bg-sky-500/20 border border-sky-500/30 px-2 py-0.5 rounded-full text-sky-300 font-black">
+                    {pendingList.length}
+                  </span>
+                </div>
 
-        {/* Class Roster */}
-        <AnimatePresence mode="wait">
-          {selectedClass && (
-            <motion.div 
-              key="roster"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="flex flex-col gap-3"
-            >
-              <div className="flex items-center justify-between px-2">
-                <h3 className="text-sm font-bold text-base-content/50 uppercase tracking-widest flex items-center gap-2">
-                  <UserCheck className="w-4 h-4" />
-                  أطفال {allClassesDB[selectedClass]?.name} <span className="badge badge-sm badge-neutral">{classRoster.length}</span>
-                </h3>
-                
-                {currentUser?.role === "admin" && classRoster.some(s => !registeredToday(attendanceDB.get(s.qrId))) && (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleSaveClass}
-                    className="btn btn-sm bg-success/10 hover:bg-success text-success hover:text-white border-0 rounded-lg text-xs font-bold"
-                  >
-                    تسجيل الكل
-                  </motion.button>
-                )}
-              </div>
-
-              <motion.div 
-                variants={containerVariants}
-                initial="hidden"
-                animate="show"
-                className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar"
-              >
-                {classRoster.length === 0 ? (
-                  <div className="col-span-full text-center py-8 text-base-content/30 bg-base-200/30 rounded-2xl border border-dashed border-base-300">
-                    لا يوجد مخدومين في هذا الفصل
+                {pendingList.length === 0 ? (
+                  <div className="py-20 border-2 border-dashed border-slate-100 rounded-[2.5rem] flex flex-col items-center justify-center text-center space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300">
+                      <UserCheck className="w-8 h-8 opacity-40" />
+                    </div>
+                    <p className="font-bold text-slate-400 text-sm max-w-[200px]">
+                      أضف اطفال من القائمة أو عبر البحث للتحضير
+                    </p>
                   </div>
                 ) : (
-                  classRoster.map(s => {
-                    const hasAttended = registeredToday(attendanceDB.get(s.qrId));
-                    const isPending = pendingList.some(p => p.qrId === s.qrId);
-                    
-                    return (
-                      <motion.button
+                  <motion.div
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="show"
+                    className="space-y-3"
+                  >
+                    {pendingList.map((p) => (
+                      <motion.div
+                        key={p.qrId}
                         variants={itemVariants}
-                        key={s.qrId}
-                        disabled={hasAttended}
-                        onClick={() => addPerson(s)}
-                        className={`group flex relative items-center justify-between p-4 rounded-2xl border transition-all text-right overflow-hidden ${
-                          hasAttended 
-                            ? "bg-success/5 border-success/20 opacity-60 grayscale-[50%]" 
-                            : (isPending 
-                                ? "bg-primary/10 border-primary/30" 
-                                : "bg-base-100/80 backdrop-blur-sm border-base-200/50 hover:border-primary/40 hover:shadow-md")
-                        }`}
+                        layout
+                        className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between group"
                       >
-                        {isPending && !hasAttended && (
-                          <div className="absolute inset-0 bg-primary/5 animate-pulse pointer-events-none" />
-                        )}
-                        
-                        <div className="flex items-center gap-4 relative z-10 w-full">
-                          <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg shadow-inner transition-colors ${hasAttended ? 'bg-success text-success-content' : 'bg-base-200/80 group-hover:bg-primary/10 group-hover:text-primary'}`}>
-                            {hasAttended ? <CheckCircle2 className="w-6 h-6" /> : s.name.charAt(0)}
+                        <div className="flex items-center gap-4">
+                          <Avatar name={p.name} size="sm" />
+                          <div className="flex flex-col">
+                            <span className="font-bold text-slate-900">
+                              {p.name}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono uppercase">
+                              {p.qrId}
+                            </span>
                           </div>
-                          <div className="flex flex-col flex-1 min-w-0">
-                            <span className={`font-bold truncate text-base ${hasAttended ? 'text-success' : 'text-base-content'}`}>{s.name}</span>
-                            <span className="text-xs opacity-50 font-mono tracking-wider">{s.qrId}</span>
-                          </div>
-                          
-                          {isPending && !hasAttended && (
-                            <div className="badge badge-primary badge-sm font-bold shadow-sm">في القائمة</div>
-                          )}
                         </div>
-                      </motion.button>
-                    );
-                  })
-                )}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                        <button
+                          onClick={() => removePerson(p.qrId)}
+                          className="w-8 h-8 rounded-full hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all flex items-center justify-center"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </motion.div>
+                    ))}
 
-        {/* Pending List Section */}
-        <div className="flex items-center gap-4 mt-4 px-2">
-          <div className="h-px bg-base-300 flex-1"></div>
-          <span className="text-xs font-bold text-base-content/40 uppercase tracking-widest px-2 py-1 bg-base-200/50 rounded-full">
-            قائمة التحضير {pendingList.length > 0 && <span className="text-primary ml-1">({pendingList.length})</span>}
-          </span>
-          <div className="h-px bg-base-300 flex-1"></div>
-        </div>
-
-        <div className="flex-1 flex flex-col gap-3 min-h-[150px]">
-          {pendingList.length === 0 ? (
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
-              className="flex flex-col items-center justify-center text-base-content/30 py-12 gap-3 bg-base-100/30 rounded-3xl border border-dashed border-base-200"
-            >
-              <Users className="w-12 h-12 opacity-20" />
-              <span className="text-sm font-medium">اختر مخدومين لإضافتهم للقائمة</span>
-            </motion.div>
-          ) : (
-            <motion.div 
-              variants={containerVariants}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-1 md:grid-cols-2 gap-3"
-            >
-              {pendingList.map((p) => (
-                <motion.div
-                  variants={itemVariants}
-                  layout
-                  key={p.qrId}
-                  className="flex items-center gap-2 bg-base-100/90 backdrop-blur p-2 pr-3 rounded-2xl border border-primary/20 shadow-sm group"
-                >
-                  <div className="flex-1 min-w-0 pr-2 pointer-events-none scale-[0.85] origin-right -ml-4">
-                    <StudentMiniCard person={p} />
-                  </div>
-                  <div className="flex-none px-2 z-10">
-                    <motion.button
-                      whileHover={{ scale: 1.1, rotate: 90 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => removePerson(p.qrId)}
-                      className="btn btn-ghost btn-circle btn-sm text-base-content/40 hover:text-error hover:bg-error/10"
-                      title="إزالة"
+                    <button
+                      onClick={handleSave}
+                      className="admin-btn-primary w-full h-16 mt-6 shadow-indigo-600/20"
                     >
-                      <X className="w-5 h-5" />
-                    </motion.button>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </div>
+                      <Save className="w-6 h-6" />
+                      <span>تأكيد تحضير {pendingList.length} طفل</span>
+                    </button>
+                  </motion.div>
+                )}
+              </div>
 
-        {/* Save Button */}
-        <AnimatePresence>
-          {pendingList.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50, transition: { duration: 0.2 } }}
-              className="sticky bottom-6 mt-auto pt-4 z-40"
-            >
-              <button
-                onClick={handleSave}
-                className="btn btn-primary btn-lg w-full text-xl shadow-xl shadow-primary/20 rounded-2xl text-white group overflow-hidden relative"
-              >
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                <CheckCircle2 className="w-6 h-6 mr-2" />
-                تحضير {pendingList.length} مخدوم
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              {/* Class Roster - Now Second (Left in RTL) */}
+              <div className="space-y-6">
+                <AnimatePresence mode="wait">
+                  {selectedClass ? (
+                    <motion.div
+                      key="roster"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="space-y-4"
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <span className="w-1.5 h-5 bg-indigo-600 rounded-full"></span>
+                          <h3 className="text-lg font-black text-white">
+                            أطفال {allClassesDB[selectedClass]?.name}
+                          </h3>
+                          <span className="text-xs bg-sky-500/20 border border-sky-500/30 px-2 py-0.5 rounded-full text-sky-300 font-black">
+                            {classRoster.length}
+                          </span>
+                        </div>
+                        {currentUser?.role === "admin" &&
+                          classRoster.some(
+                            (s) => !registeredToday(attendanceDB.get(s.qrId)),
+                          ) && (
+                            <button
+                              onClick={handleSaveClass}
+                              className="px-4 py-1.5 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-sky-500/20 transition-all shadow-sm"
+                            >
+                              تسجيل الكل
+                            </button>
+                          )}
+                      </div>
+
+                      <motion.div
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="show"
+                        className="grid grid-cols-1 gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar"
+                      >
+                        {classRoster.length === 0 ? (
+                          <div className="py-12 border-2 border-dashed border-white/5 rounded-2xl text-center text-slate-400 font-bold text-sm">
+                            لا يوجد اطفال في هذا الفصل
+                          </div>
+                        ) : (
+                          classRoster.map((s) => {
+                            const hasAttended = registeredToday(
+                              attendanceDB.get(s.qrId),
+                            );
+                            const isPending = pendingList.some(
+                              (p) => p.qrId === s.qrId,
+                            );
+                            return (
+                              <button
+                                key={s.qrId}
+                                disabled={hasAttended}
+                                onClick={() => addPerson(s)}
+                                className={`flex items-center justify-between p-4 rounded-2xl border transition-all text-right group ${hasAttended ? "bg-emerald-50 border-emerald-100" : isPending ? "bg-indigo-50 border-indigo-200" : "bg-white border-slate-100 hover:border-slate-300"}`}
+                              >
+                                <div className="flex items-center gap-4">
+                                  <Avatar
+                                    name={s.name}
+                                    size="sm"
+                                    accent={hasAttended ? "emerald" : "indigo"}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span
+                                      className={`font-bold ${hasAttended ? "text-emerald-700" : "text-slate-900"}`}
+                                    >
+                                      {s.name}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-mono uppercase">
+                                      {s.qrId}
+                                    </span>
+                                  </div>
+                                </div>
+                                {hasAttended && (
+                                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                                )}
+                                {isPending && !hasAttended && (
+                                  <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+                                )}
+                              </button>
+                            );
+                          })
+                        )}
+                      </motion.div>
+                    </motion.div>
+                  ) : (
+                    <div className="py-20 flex flex-col items-center justify-center text-center space-y-4 opacity-30 grayscale">
+                      <Users className="w-16 h-16 text-slate-900" />
+                      <p className="font-black text-slate-900">
+                        اختار فصل لعرض القائمة
+                      </p>
+                    </div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </Page>
   );

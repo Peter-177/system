@@ -1,0 +1,105 @@
+﻿
+> sundayschool@0.0.0 build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+/*! ≡اî╝ daisyUI 5.5.19 */
+[32mظ£ô[39m 3 modules transformed.
+node.exe : 
+[31mظ£ù[39m Build 
+failed in 219ms
+At line:1 char:1
++ & "C:\Program File
+s\nodejs/node.exe" 
+"C:\Program Files\no
+dejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo  
+            : NotS  
+  pecified: ([31   
+ mظ£ù[39m Build    
+ failed in 219m    
+s:String) [], R    
+emoteException
+    + FullyQualifie 
+   dErrorId : Nati  
+  veCommandError
+ 
+[31merror during 
+build:
+[31m[@tailwindcss/v
+ite:generate:build] 
+Cannot apply 
+unknown utility 
+class 
+`btn-saas`[31m
+file: [36mC:/Users/
+Peter/Desktop/Sunday
+School/src/index.css
+[31m
+    at 
+onInvalidCandidate (
+file:///C:/Users/Pet
+er/Desktop/SundaySch
+ool/node_modules/tai
+lwindcss/dist/chunk-
+L5IEUH3R.mjs:21:1511
+)
+    at $e (file:///C
+:/Users/Peter/Deskto
+p/SundaySchool/node_
+modules/tailwindcss/
+dist/chunk-L5IEUH3R.
+mjs:16:36740)
+    at file:///C:/Us
+ers/Peter/Desktop/Su
+ndaySchool/node_modu
+les/tailwindcss/dist
+/chunk-L5IEUH3R.mjs:
+21:355
+    at Ar (file:///C
+:/Users/Peter/Deskto
+p/SundaySchool/node_
+modules/tailwindcss/
+dist/chunk-L5IEUH3R.
+mjs:3:1733)
+    at I (file:///C:
+/Users/Peter/Desktop
+/SundaySchool/node_m
+odules/tailwindcss/d
+ist/chunk-L5IEUH3R.m
+js:3:1377)
+    at Ce (file:///C
+:/Users/Peter/Deskto
+p/SundaySchool/node_
+modules/tailwindcss/
+dist/chunk-L5IEUH3R.
+mjs:21:172)
+    at Gi (file:///C
+:/Users/Peter/Deskto
+p/SundaySchool/node_
+modules/tailwindcss/
+dist/chunk-L5IEUH3R.
+mjs:38:294)
+    at async ao (fil
+e:///C:/Users/Peter/
+Desktop/SundaySchool
+/node_modules/tailwi
+ndcss/dist/chunk-L5I
+EUH3R.mjs:38:631)
+    at async vf (fil
+e:///C:/Users/Peter/
+Desktop/SundaySchool
+/node_modules/tailwi
+ndcss/dist/chunk-L5I
+EUH3R.mjs:38:1406)
+    at async uu (fil
+e:///C:/Users/Peter/
+Desktop/SundaySchool
+/node_modules/@tailw
+indcss/node/dist/ind
+ex.mjs:10:3458)[39m

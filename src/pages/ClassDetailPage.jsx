@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { studentsDB, classesDB,} from "../data/storage";
+import { studentsDB, classesDB } from "../data/storage";
 import { Page, Navbar, Empty, Avatar, Toast } from "../components/UI";
 import { useToast } from "../hooks/useToast";
 
@@ -94,7 +94,7 @@ export function ClassDetailPage({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="دور بالاسم أو الكود..."
-            className="input w-full bg-base-100 shadow-sm hover:shadow-md focus:shadow-md border-base-200 focus:border-primary/30 rounded-full pl-4 pr-11 h-14 text-[15px] transition-all duration-300"
+            className="input w-full bg-[#0F2545] shadow-inner hover:shadow-md focus:shadow-md border-[#1A3D63]/40 focus:border-[#4A7FA7] rounded-full pl-4 pr-11 h-14 text-[15px] font-bold text-[#F6FAFD] transition-all duration-300 placeholder:text-[#B3CFE5]/30 outline-none"
           />
         </div>
 

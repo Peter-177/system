@@ -1,7 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { AppRouter } from "./router/AppRouter";
-import { SetupPage, LoginPage, RegisterPage, ResetPage } from "./pages/AuthPages";
+const SetupPage = lazy(() => import("./pages/AuthPages").then(m => ({ default: m.SetupPage })));
+const LoginPage = lazy(() => import("./pages/AuthPages").then(m => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import("./pages/AuthPages").then(m => ({ default: m.RegisterPage })));
+const ResetPage = lazy(() => import("./pages/AuthPages").then(m => ({ default: m.ResetPage })));
 import { syncFromFirebase } from "./data/storage";
 
 function LoginFlow({ auth }) {
@@ -71,5 +74,14 @@ export default function App() {
     );
   }
 
-  return <AppRouter onLogout={auth.logout} currentUser={auth.currentUser} onRefreshAuth={auth.refreshUser} onUpdateSecret={auth.updateSecretKey} />;
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex flex-col items-center justify-center bg-base-100">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+        <p className="mt-4 text-base-content/60">جاري تحميل الصفحة...</p>
+      </div>
+    }>
+      <AppRouter onLogout={auth.logout} currentUser={auth.currentUser} onRefreshAuth={auth.refreshUser} onUpdateSecret={auth.updateSecretKey} />
+    </Suspense>
+  );
 }

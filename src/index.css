@@ -1,45 +1,182 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Cairo:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 @plugin "daisyui";
 
+:root {
+  color-scheme: dark;
+}
+
 @theme {
-  --animate-blob: blob 10s infinite;
+  --font-heading: "Outfit", "Cairo", sans-serif;
+  --font-body: "IBM Plex Sans Arabic", sans-serif;
+
+  /* Strictly Blue Tech Palette (No Purple/Indigo) */
+  --color-slate-950: #020617;
+  --color-slate-900: #0f172a;
+  --color-slate-800: #1e293b;
+  --color-sky-500: #0ea5e9;
+  --color-sky-400: #38bdf8;
+  --color-sky-300: #7dd3fc;
+  --color-azure-600: #0056D2;
+
+  /* Abstracted Variables (Prefixed for Tailwind v4 Utility Registration) */
+  --color-tech-bg: var(--color-slate-950);
+  --color-tech-surface: var(--color-slate-900);
+  --color-tech-card: var(--color-slate-800);
+  --color-tech-accent: var(--color-sky-400);
+  --color-tech-brand: var(--color-azure-600);
+  --color-tech-ghost: #e0f2fe; /* sky-50ish */
+  --color-tech-border: rgba(56, 189, 248, 0.1);
+  --color-tech-glow: rgba(56, 189, 248, 0.3);
+
+  --color-primary: var(--color-tech-accent);
+  --color-secondary: var(--color-tech-brand);
+  --color-tech-highlight: var(--color-sky-300);
+  --color-accent: var(--color-tech-highlight);
+  --color-base-100: var(--color-tech-bg);
+  --color-base-content: var(--color-tech-ghost);
+
+  /* Legacy Compat with Blue Twist */
+  --color-admin-bg: var(--color-tech-bg);
+  --color-admin-surface: var(--color-tech-surface);
+  --color-admin-primary: var(--color-tech-accent);
+  --color-admin-secondary: var(--color-tech-brand);
+  --color-admin-text: var(--color-tech-ghost);
+  --color-admin-border: var(--color-tech-border);
+
+  /* Custom Shadows (Tailwind v4 Registration) */
+  --shadow-admin-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-admin-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-admin-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+
+  /* Animations from UI-UX Skill */
+  @keyframes reveal {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+}
+
+@layer base {
+  html {
+    font-family: var(--font-body);
+    background-color: var(--color-tech-bg);
+    color: var(--color-tech-ghost);
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply select-none; /* Modern SaaS feels */
+    background-image: 
+      radial-gradient(circle at 0% 0%, rgba(0, 86, 210, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, rgba(14, 165, 233, 0.1) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
   
-  @keyframes blob {
-    0% { transform: translate(0px, 0px) scale(1); }
-    33% { transform: translate(30px, -50px) scale(1.1); }
-    66% { transform: translate(-20px, 20px) scale(0.9); }
-    100% { transform: translate(0px, 0px) scale(1); }
+  /* NOISE OVERLAY */
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    opacity: 0.03;
+    z-index: 9999;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   }
 
-  --animate-slideUp: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(40px); }
-    to { opacity: 1; transform: translateY(0); }
+  h1, h2, h3 {
+    @apply font-black tracking-tighter;
+    font-family: var(--font-heading);
+  }
+}
+
+@layer components {
+  /* Premium SaaS Tech Buttons */
+  .tech-btn-primary {
+    @apply relative px-8 py-3.5 text-white font-black rounded-2xl transition-all duration-300 active:scale-95 shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:shadow-[0_0_35px_rgba(14,165,233,0.5)] overflow-hidden border-0;
+    background: linear-gradient(135deg, #0056D2 0%, #0ea5e9 100%);
+  }
+  .tech-btn-primary::after {
+    content: "";
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: rotate(45deg);
+    transition: 0.5s;
+    left: -100%;
+  }
+  .tech-btn-primary:hover::after {
+    left: 100%;
   }
 
-  --animate-fadeIn: fadeIn 0.4s ease-out forwards;
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  .tech-btn-secondary {
+    @apply bg-slate-800/50 backdrop-blur-md border border-sky-400/20 px-8 py-3.5 rounded-2xl font-black transition-all hover:bg-slate-800 hover:border-sky-400/50;
+    color: var(--color-tech-accent);
   }
 
-  --animate-zoomIn: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  @keyframes zoomIn {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+  /* Glassmorphism Cards */
+  .tech-card {
+    @apply bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-3xl p-8 shadow-2xl transition-all duration-500 hover:border-sky-400/20 hover:shadow-sky-400/5;
   }
 
-  --animate-pop: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  @keyframes pop {
-    from { transform: scale(0.9); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+  .tech-panel {
+    @apply bg-slate-900/60 backdrop-blur-2xl border border-white/5 rounded-[3rem] p-12 shadow-admin-xl;
   }
 
-  --animate-shake: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-  @keyframes shake {
-    10%, 90% { transform: translate3d(-1px, 0, 0); }
-    20%, 80% { transform: translate3d(2px, 0, 0); }
-    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-    40%, 60% { transform: translate3d(4px, 0, 0); }
+  /* Inputs */
+  .tech-input {
+    @apply w-full h-14 bg-slate-950/50 border border-white/10 rounded-2xl px-6 font-bold outline-none focus:border-sky-500/50 focus:ring-8 focus:ring-sky-500/5 transition-all;
+    color: var(--color-tech-ghost);
   }
+
+  /* Sidebar Items */
+  .tech-sidebar-item {
+    @apply flex items-center gap-4 px-6 py-4 rounded-2xl transition-all duration-300 font-black text-slate-500 hover:bg-slate-800/50;
+  }
+  .tech-sidebar-item.active {
+    @apply bg-sky-500/10 text-sky-400 border border-sky-500/20;
+  }
+
+  /* Badge */
+  .tech-badge {
+    @apply bg-sky-500/10 text-sky-400 border border-sky-500/20 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest;
+  }
+
+  /* Text Effects */
+  .gradient-blue {
+    @apply bg-gradient-to-br from-sky-300 to-sky-600 bg-clip-text text-transparent;
+  }
+
+
+  /* Legacy Aliases */
+  .admin-panel { @apply bg-slate-900/60 backdrop-blur-2xl border border-white/5 rounded-[3rem] p-12 shadow-admin-xl; }
+  .admin-input { @apply w-full h-14 bg-slate-950/50 border border-white/10 rounded-2xl px-6 font-bold outline-none focus:border-sky-500/50 focus:ring-8 focus:ring-sky-500/5 transition-all; }
+  .admin-btn-primary { @apply relative px-8 py-3.5 text-white font-black rounded-2xl transition-all duration-300 active:scale-95 shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:shadow-[0_0_35px_rgba(14,165,233,0.5)] overflow-hidden border-0; background: linear-gradient(135deg, #0056D2 0%, #0ea5e9 100%); }
+  .admin-btn-secondary { @apply bg-slate-800/50 backdrop-blur-md border border-sky-400/20 px-8 py-3.5 rounded-2xl font-black transition-all hover:bg-slate-800 hover:border-sky-400/50; color: var(--color-tech-accent); }
+}
+
+@layer utilities {
+  .animate-reveal {
+    animation: reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .stagger-1 { animation-delay: 0.1s; }
+  .stagger-2 { animation-delay: 0.2s; }
+  .stagger-3 { animation-delay: 0.3s; }
+  
+  .glass-glow {
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.1);
+  }
+}
+
+/* Custom Scrollbar for Tech vibe */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-slate-950;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-800 rounded-full hover:bg-sky-500 transition-colors;
 }

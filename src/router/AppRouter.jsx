@@ -15,6 +15,8 @@ import { BirthdayPage }             from "../pages/BirthdayPage";
 import { ClassesPage, CreateClassPage } from "../pages/ClassesPage";
 import { ClassDetailPage }          from "../pages/ClassDetailPage";
 import { AdminPage }                from "../pages/AdminPage";
+import { GamePage }                 from "../pages/GamePage";
+
 
 export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret }) {
   const [page,         setPageState]         = useState("home");
@@ -23,7 +25,6 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
   const [activeClass,  setActiveClass]  = useState(null);
 
   const setPage = useCallback((newPage, customPerson = activePerson, replace = false) => {
-    // Guard: Don't push if already on the same page/person
     if (!replace && newPage === page && JSON.stringify(customPerson) === JSON.stringify(activePerson)) return;
 
     if (replace) {
@@ -36,12 +37,10 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
 
   const setActivePerson = useCallback((newPerson) => {
     setActivePersonState(newPerson);
-    // Sync current history state with the new person
     window.history.replaceState({ page, person: newPerson }, "");
   }, [page]);
 
   useEffect(() => {
-    // Make sure we have an initial state
     window.history.replaceState({ page: "home", person: null }, "");
 
     const onPopState = (e) => {
@@ -60,7 +59,6 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
     if (!found) return;
     const person = { qrId, ...found };
 
-    // Guard: Don't push if already on this student's page
     if (!replace && page === "student" && activePerson?.qrId === qrId) return;
 
     setActivePersonState(person);
@@ -76,12 +74,28 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
     onGoSearch:     () => setPage("search"),
     onGoAttendance: () => { setActivePerson(null); setPage("attendance"); },
     onGoHistory:    () => setPage("history"),
+    onGoSummer:     () => {
+      if (page !== "home") {
+        setPage("home");
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            const portal = document.getElementById("summer-portal");
+            if (portal) portal.scrollIntoView({ behavior: "smooth" });
+          }, 300);
+        });
+      } else {
+        const portal = document.getElementById("summer-portal");
+        if (portal) portal.scrollIntoView({ behavior: "smooth" });
+      }
+    },
     onGoVisits:     () => setPage("visits"),
     onGoBirthday:   () => setPage("birthday"),
     onGoClasses:    () => setPage("classes"),
     onGoAdmin:      () => setPage("admin"),
+    onGoGame:       () => setPage("game"),
     currentUser,
     onLogout
+
   };
 
   switch (page) {
@@ -131,9 +145,10 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
       return <VisitsHistoryPage onBack={()=>window.history.back()} />;
     case "coupons":
       return <CouponsPage currentUser={currentUser} person={activePerson} onBack={()=>window.history.back()} />;
+    case "game":
+      return <GamePage {...homeProps} onBack={() => window.history.back()} />;
+
     default:
       return <HomePage {...homeProps} />;
   }
 }
-
-

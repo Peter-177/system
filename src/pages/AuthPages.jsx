@@ -1,35 +1,55 @@
 import { useState } from "react";
 
 // ── Shared Premium Layout ──────────────────────────────────────
-function PremiumAuthLayout({ children, icon, title, subtitle, shake, dir = "ltr" }) {
+function PremiumAuthLayout({
+  children,
+  icon,
+  title,
+  subtitle,
+  shake,
+  dir = "ltr",
+}) {
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 sm:p-8 overflow-hidden bg-base-300" dir={dir}>
-      {/* Dynamic Background with glowing blobs */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-primary/30 rounded-full mix-blend-multiply filter blur-[120px] animate-blob"></div>
-        <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-secondary/30 rounded-full mix-blend-multiply filter blur-[100px] animate-blob" style={{animationDelay: '2s'}}></div>
-        <div className="absolute bottom-[-20%] left-[20%] w-[600px] h-[600px] bg-accent/20 rounded-full mix-blend-multiply filter blur-[120px] animate-blob" style={{animationDelay: '4s'}}></div>
-        <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+    <div
+      className="min-h-screen relative flex items-center justify-center p-4 sm:p-8 overflow-hidden bg-[#050714]"
+      dir={dir}
+    >
+      {/* Dynamic Aurora Background */}
+      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none flex items-center justify-center">
+        <div className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full mix-blend-screen filter blur-[120px] animate-pulse duration-10000"></div>
+        <div 
+          className="absolute bottom-[20%] right-[10%] w-[600px] h-[600px] bg-purple-600/20 rounded-full mix-blend-screen filter blur-[120px] animate-pulse duration-10000"
+          style={{ animationDelay: "3s" }}
+        ></div>
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.15] mix-blend-overlay"></div>
       </div>
 
-      <div className={`relative w-full max-w-[420px] z-10 flex flex-col items-center ${shake ? "animate-shake" : "animate-slideUp"}`}>
-        <div className="backdrop-blur-2xl bg-base-100/70 shadow-[0_8px_32px_0_rgba(0,0,0,0.1)] border border-base-content/5 rounded-[2.5rem] p-8 sm:p-10 w-full relative overflow-hidden">
-          {/* Subtle top edge highlight */}
-          <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
-          
+      <div
+        className={`relative w-full max-w-md z-10 flex flex-col items-center ${
+          shake ? "animate-shake" : "animate-in fade-in zoom-in duration-700"
+        }`}
+      >
+        <div className="bg-[#0b0f24]/80 backdrop-blur-xl shadow-2xl shadow-black/60 border border-white/[0.05] rounded-[2rem] p-8 sm:p-12 w-full relative overflow-hidden group">
+          {/* Subtle Top Border Glow */}
+          <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent"></div>
+          {/* Subtle Bottom Border Glow */}
+          <div className="absolute bottom-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+
           <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-[4.5rem] h-[4.5rem] rounded-[1.25rem] bg-gradient-to-br from-primary to-secondary shadow-xl mb-6 transform transition hover:-translate-y-1 hover:shadow-2xl duration-300 border border-white/20">
-              <span className="text-3xl">{icon}</span>
+            <div className="inline-flex items-center justify-center w-[5rem] h-[5rem] rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/25 mb-8 transform transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
+              <span className="text-4xl drop-shadow-md">{icon}</span>
             </div>
-            <h1 className="text-3xl font-extrabold text-base-content tracking-tight mb-2 leading-tight">{title}</h1>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
+              {title}
+            </h1>
             {subtitle && (
-              <p className="text-base-content/60 font-medium tracking-wide text-sm px-2 leading-relaxed">{subtitle}</p>
+              <p className="text-indigo-200/60 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
+                {subtitle}
+              </p>
             )}
           </div>
 
-          <div className="space-y-4">
-            {children}
-          </div>
+          <div className="space-y-5">{children}</div>
         </div>
       </div>
     </div>
@@ -37,43 +57,82 @@ function PremiumAuthLayout({ children, icon, title, subtitle, shake, dir = "ltr"
 }
 
 // ── Shared Sleek Input Field ──────────────────────────────────────
-function SleekInput({ label, type, value, onChange, placeholder, onKeyDown, error, rightElement, dir="ltr" }) {
+function SleekInput({
+  label,
+  type,
+  value,
+  onChange,
+  placeholder,
+  onKeyDown,
+  error,
+  rightElement,
+  dir = "ltr",
+}) {
   return (
-    <div className="form-control w-full" dir={dir}>
-      <div className="flex justify-between items-center py-1.5 px-1">
-        <label className="label py-0">
-          <span className="label-text text-sm font-bold text-base-content/70 uppercase tracking-widest">{label}</span>
+    <div className="w-full flex flex-col gap-1.5" dir={dir}>
+      <div className="flex justify-between items-center px-1">
+        <label className="text-[10px] font-bold text-indigo-300/70 uppercase tracking-[0.2em]">
+          {label}
         </label>
         {rightElement && <div>{rightElement}</div>}
       </div>
-      <div className="relative group">
+      <div className="relative group/input">
         <input
-          className={`input h-[3.5rem] bg-base-200/50 border-2 ${error ? "border-error/50 focus:border-error focus:ring-error/20" : "border-transparent focus:border-primary focus:ring-primary/20"} hover:bg-base-200 focus:bg-base-100 rounded-2xl transition-all duration-300 w-full shadow-inner ${type === "password" ? "tracking-widest" : "tracking-wide"}`}
+          className={`w-full h-14 bg-[#111736]/50 border ${
+            error
+              ? "border-red-500/50 focus:border-red-500"
+              : "border-white/5 focus:border-indigo-500/50"
+          } hover:bg-[#111736] focus:bg-[#111736] rounded-xl px-4 outline-none transition-all duration-300 text-white placeholder:text-slate-500/60 font-medium ${
+            type === "password" ? "tracking-[0.3em]" : "tracking-wide"
+          }`}
           type={type}
           placeholder={placeholder}
           value={value}
           onChange={onChange}
           onKeyDown={onKeyDown}
         />
-        {/* Input border glow */}
-        <div className="absolute inset-0 rounded-2xl opacity-0 group-focus-within:opacity-100 pointer-events-none ring-4 ring-primary/10 transition-opacity duration-300"></div>
+        {/* Subtle input background glow */}
+        <div className="absolute inset-0 -z-10 rounded-xl opacity-0 group-focus-within/input:opacity-100 ring-2 ring-indigo-500/20 blur-[2px] pointer-events-none transition-opacity duration-300"></div>
       </div>
       {error && (
-        <div className="mt-2 flex items-center gap-1.5 text-error px-1 animate-fadeIn">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+        <div className="flex items-center gap-1.5 text-red-500 px-1 mt-1 animate-in slide-in-from-top-1 fade-in duration-300">
+          <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
-          <span className="text-xs font-bold">{error}</span>
+          <span className="text-[11px] font-bold">{error}</span>
         </div>
       )}
     </div>
   );
 }
 
+// ── Shared Submit Button ──────────────────────────────────────────
+function SubmitButton({ onClick, loading, text, loadingText }) {
+  return (
+    <button
+      className="w-full h-14 mt-8 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white rounded-xl text-sm font-bold uppercase tracking-[0.15em] shadow-lg shadow-indigo-500/25 transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
+      onClick={onClick}
+      disabled={loading}
+    >
+      <span>{loading ? loadingText : text}</span>
+      {!loading && (
+        <span className="opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300">
+          →
+        </span>
+      )}
+    </button>
+  );
+}
+
 
 // ── Setup Page ──────────────────────────────────────
 export function SetupPage({ onDone, onGoLogin }) {
-  const [form, setForm] = useState({ username: "", password: "", confirm: "", secret: "" });
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+    confirm: "",
+    secret: "",
+  });
   const [errors, setErrors] = useState({});
   const [globalError, setGlobalError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -98,7 +157,11 @@ export function SetupPage({ onDone, onGoLogin }) {
       return;
     }
     setLoading(true);
-    const result = await onDone(form.username.trim(), form.password, form.secret.trim());
+    const result = await onDone(
+      form.username.trim(),
+      form.password,
+      form.secret.trim(),
+    );
     setLoading(false);
     if (result && !result.ok) {
       setGlobalError(result.error);
@@ -111,7 +174,7 @@ export function SetupPage({ onDone, onGoLogin }) {
     <PremiumAuthLayout
       icon="🚀"
       title="Admin Setup"
-      subtitle="Only one admin account"
+      subtitle="Initialize Master Account"
       shake={shake}
       dir="ltr"
     >
@@ -145,7 +208,7 @@ export function SetupPage({ onDone, onGoLogin }) {
       <SleekInput
         label="Secret Reset Key"
         type="password"
-        placeholder="Choose a secret word"
+        placeholder="Store this safely"
         value={form.secret}
         onChange={(e) => upd("secret", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
@@ -153,25 +216,23 @@ export function SetupPage({ onDone, onGoLogin }) {
       />
 
       {globalError && (
-        <div className="alert alert-error shadow-lg py-3 rounded-xl animate-fadeIn bg-error/10 text-error border-error/20 mt-2">
-          <span className="text-sm font-bold">{globalError}</span>
+        <div className="px-4 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 mt-2 text-[13px] font-bold text-center">
+          {globalError}
         </div>
       )}
 
-      <button 
-        className="btn btn-primary w-full h-14 rounded-2xl text-[1.1rem] shadow-[0_8px_20px_-6px_rgba(var(--p),0.5)] hover:shadow-[0_12px_24px_-8px_rgba(var(--p),0.7)] hover:-translate-y-0.5 transition-all duration-300 font-extrabold tracking-wide mt-6 relative overflow-hidden group border-none"
+      <SubmitButton 
         onClick={submit} 
-        disabled={loading}
-      >
-        <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-[0%] transition-transform duration-300 pointer-events-none"></div>
-        {loading ? <span className="loading loading-spinner loading-md"></span> : "Save Admin"}
-      </button>
+        loading={loading} 
+        text="Save Admin" 
+        loadingText="Processing..." 
+      />
 
-      <div className="text-center pt-6 mt-4 border-t border-base-content/10">
-        <p className="text-sm text-base-content/60 font-medium">
+      <div className="text-center pt-8 mt-4 border-t border-white/[0.05]">
+        <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest">
           Already have an account?{" "}
           <button
-            className="font-bold text-primary hover:text-primary-focus transition-colors underline-offset-4 hover:underline"
+            className="text-indigo-400 hover:text-indigo-300 transition-colors font-bold hover:underline underline-offset-4"
             onClick={onGoLogin}
           >
             Log in
@@ -181,7 +242,6 @@ export function SetupPage({ onDone, onGoLogin }) {
     </PremiumAuthLayout>
   );
 }
-
 
 // ── Login Page ──────────────────────────────────────
 export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
@@ -208,20 +268,15 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
 
   const forgotButton = (
     <button
-      className="text-xs font-bold text-primary hover:text-primary-focus transition-colors"
+      className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest"
       onClick={onForgot}
     >
-      Forgot?
+      Recover
     </button>
   );
 
   return (
-    <PremiumAuthLayout
-      icon="👋"
-      title=" Log In"
-      shake={shake}
-      dir="rtl"
-    >
+    <PremiumAuthLayout icon="👋" title="Welcome Back" subtitle="Log in to continue" shake={shake} dir="rtl">
       <SleekInput
         label="Username"
         type="text"
@@ -229,6 +284,7 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
         value={form.username}
         onChange={(e) => upd("username", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
+        dir="ltr"
       />
       <SleekInput
         label="Password"
@@ -238,32 +294,31 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
         onChange={(e) => upd("password", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
         rightElement={forgotButton}
+        dir="ltr"
       />
-      
+
       {error && (
-        <div className="alert alert-error shadow-lg py-3 rounded-xl animate-fadeIn bg-error/10 text-error border-error/20 mt-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+        <div className="px-4 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 mt-2 text-[13px] font-bold text-center flex items-center justify-center gap-2">
+          <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
-          <span className="text-sm font-bold">{error}</span>
+          {error}
         </div>
       )}
 
-      <button 
-        className="btn btn-primary w-full h-14 rounded-2xl text-[1.1rem] shadow-[0_8px_20px_-6px_rgba(var(--p),0.5)] hover:shadow-[0_12px_24px_-8px_rgba(var(--p),0.7)] hover:-translate-y-0.5 transition-all duration-300 font-extrabold tracking-wide mt-6 relative overflow-hidden group border-none"
+      <SubmitButton 
         onClick={submit} 
-        disabled={loading}
-      >
-        <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-[0%] transition-transform duration-300 pointer-events-none"></div>
-        {loading ? <span className="loading loading-spinner loading-md"></span> : "Log In"}
-      </button>
+        loading={loading} 
+        text="Log In" 
+        loadingText="Authenticating..." 
+      />
 
       {(onGoSetup || onGoRegister) && (
-        <div className="text-center pt-6 mt-4 border-t border-base-content/10">
-          <p className="text-sm text-base-content/60 font-medium">
+        <div className="text-center pt-8 mt-4 border-t border-white/[0.05]">
+          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest" dir="ltr">
             Don't have an account?{" "}
             <button
-              className="font-bold text-primary hover:text-primary-focus transition-colors underline-offset-4 hover:underline"
+              className="text-indigo-400 hover:text-indigo-300 transition-colors font-bold hover:underline underline-offset-4"
               onClick={onGoSetup || onGoRegister}
             >
               Sign up
@@ -311,12 +366,7 @@ export function RegisterPage({ onDone, onGoLogin }) {
   };
 
   return (
-    <PremiumAuthLayout
-      icon="✨"
-      title="Create Account"
-      shake={shake}
-      dir="ltr"
-    >
+    <PremiumAuthLayout icon="✨" title="Create Account" subtitle="Join our platform" shake={shake} dir="ltr">
       <SleekInput
         label="Username"
         type="text"
@@ -346,25 +396,23 @@ export function RegisterPage({ onDone, onGoLogin }) {
       />
 
       {globalError && (
-        <div className="alert alert-error shadow-lg py-3 rounded-xl animate-fadeIn bg-error/10 text-error border-error/20 mt-2">
-          <span className="text-sm font-bold">{globalError}</span>
+        <div className="px-4 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 mt-2 text-[13px] font-bold text-center">
+          {globalError}
         </div>
       )}
 
-      <button 
-        className="btn btn-primary w-full h-14 rounded-2xl text-[1.1rem] shadow-[0_8px_20px_-6px_rgba(var(--p),0.5)] hover:shadow-[0_12px_24px_-8px_rgba(var(--p),0.7)] hover:-translate-y-0.5 transition-all duration-300 font-extrabold tracking-wide mt-6 relative overflow-hidden group border-none"
+      <SubmitButton 
         onClick={submit} 
-        disabled={loading}
-      >
-        <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-[0%] transition-transform duration-300 pointer-events-none"></div>
-        {loading ? <span className="loading loading-spinner loading-md"></span> : "Sign Up"}
-      </button>
+        loading={loading} 
+        text="Sign Up" 
+        loadingText="Creating..." 
+      />
 
-      <div className="text-center pt-6 mt-4 border-t border-base-content/10">
-        <p className="text-sm text-base-content/60 font-medium">
+      <div className="text-center pt-8 mt-4 border-t border-white/[0.05]">
+        <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest">
           Already have an account?{" "}
           <button
-            className="font-bold text-primary hover:text-primary-focus transition-colors underline-offset-4 hover:underline"
+            className="text-indigo-400 hover:text-indigo-300 transition-colors font-bold hover:underline underline-offset-4"
             onClick={onGoLogin}
           >
             Log in
@@ -383,12 +431,12 @@ export function ResetPage({ onVerify, onReset, onBack }) {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
-  
+
   const doShake = () => {
     setShake(true);
     setTimeout(() => setShake(false), 500);
   };
-  
+
   const upd = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }));
     setErrors((e) => ({ ...e, [k]: "" }));
@@ -423,12 +471,16 @@ export function ResetPage({ onVerify, onReset, onBack }) {
     <PremiumAuthLayout
       icon={step === "verify" ? "🔑" : "🔓"}
       title={step === "verify" ? "Reset Password" : "New Password"}
-      subtitle={step === "verify" ? "Enter your secret key to verify your identity" : "Create a strong new password"}
+      subtitle={
+        step === "verify"
+          ? "Verify identity"
+          : "Secure your account"
+      }
       shake={shake}
       dir="ltr"
     >
       <button
-        className="absolute top-8 left-8 btn btn-ghost btn-sm btn-circle text-base-content/50 hover:bg-base-200 hover:text-base-content"
+        className="absolute top-6 left-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all border border-white/5"
         onClick={onBack}
         title="Back"
       >
@@ -438,11 +490,16 @@ export function ResetPage({ onVerify, onReset, onBack }) {
       </button>
 
       {/* Steps Indicator */}
-      <div className="flex justify-center mb-6">
-        <ul className="steps steps-horizontal text-xs font-bold tracking-widest uppercase">
-          <li className={`step ${step === "verify" || step === "newpass" ? "step-primary" : ""}`}>Verify</li>
-          <li className={`step ${step === "newpass" ? "step-primary" : ""}`}>Password</li>
-        </ul>
+      <div className="flex justify-center mb-8">
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold ${step === "verify" || step === "newpass" ? "bg-indigo-500 text-white" : "bg-white/5 text-white/30"}`}>
+            1
+          </div>
+          <div className={`h-[2px] w-8 ${step === "newpass" ? "bg-indigo-500" : "bg-white/10"}`}></div>
+          <div className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold ${step === "newpass" ? "bg-indigo-500 text-white" : "bg-white/5 text-white/30"}`}>
+            2
+          </div>
+        </div>
       </div>
 
       {step === "verify" && (
@@ -459,13 +516,12 @@ export function ResetPage({ onVerify, onReset, onBack }) {
             onKeyDown={(e) => e.key === "Enter" && handleVerify()}
             error={errors.secret}
           />
-          <button
-            className="btn btn-warning w-full h-14 rounded-2xl text-[1.1rem] shadow-[0_8px_20px_-6px_rgba(var(--wa),0.5)] hover:shadow-[0_12px_24px_-8px_rgba(var(--wa),0.7)] hover:-translate-y-0.5 transition-all duration-300 font-extrabold tracking-wide mt-6 border-none text-warning-content"
-            onClick={handleVerify}
-            disabled={loading}
-          >
-            {loading ? <span className="loading loading-spinner loading-md"></span> : "Verify Key"}
-          </button>
+          <SubmitButton 
+            onClick={handleVerify} 
+            loading={loading} 
+            text="Verify Key" 
+            loadingText="Verifying..." 
+          />
         </>
       )}
 
@@ -489,12 +545,12 @@ export function ResetPage({ onVerify, onReset, onBack }) {
             onKeyDown={(e) => e.key === "Enter" && handleReset()}
             error={errors.confirm}
           />
-          <button
-            className="btn btn-primary w-full h-14 rounded-2xl text-[1.1rem] shadow-[0_8px_20px_-6px_rgba(var(--p),0.5)] hover:shadow-[0_12px_24px_-8px_rgba(var(--p),0.7)] hover:-translate-y-0.5 transition-all duration-300 font-extrabold tracking-wide mt-6 border-none"
-            onClick={handleReset}
-          >
-            Save Password
-          </button>
+          <SubmitButton 
+            onClick={handleReset} 
+            loading={false} 
+            text="Save Password" 
+            loadingText="" 
+          />
         </>
       )}
     </PremiumAuthLayout>

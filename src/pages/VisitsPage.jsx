@@ -4,7 +4,14 @@ import { buildVisitEntry, visitedToday } from "../utils/helpers";
 import { Page, Navbar, StudentMiniCard, Toast } from "../components/UI";
 import { useToast } from "../hooks/useToast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, CalendarDays, X, Users, Home as HomeIcon, CheckCircle2 } from "lucide-react";
+import {
+  Search,
+  CalendarDays,
+  X,
+  Users,
+  Home as HomeIcon,
+  CheckCircle2,
+} from "lucide-react";
 import { gsap } from "gsap";
 
 export function VisitsPage({ onBack, onGoVisitsHistory }) {
@@ -75,7 +82,7 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
       .filter(
         (s) =>
           s.qrId.toLowerCase().includes(q) ||
-          (s.name && s.name.toLowerCase().includes(q))
+          (s.name && s.name.toLowerCase().includes(q)),
       )
       .slice(0, 5);
   }, [query, allStudents]);
@@ -83,12 +90,16 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
   // Framer Motion Variants
   const containerVariants = {
     hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+    show: { opacity: 1, transition: { staggerChildren: 0.05 } },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { type: "spring", stiffness: 300, damping: 24 },
+    },
   };
 
   return (
@@ -96,18 +107,20 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
       <Toast msg={toast.msg} />
       <Navbar onBack={onBack} title="تسجيل الزيارات" />
 
-      <div className="flex-1 w-full max-w-4xl mx-auto px-6 py-8 flex flex-col gap-6" dir="rtl">
-        
+      <div
+        className="flex-1 w-full max-w-4xl mx-auto px-6 py-8 flex flex-col gap-6"
+        dir="rtl"
+      >
         {/* Top Controls Box */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col gap-4 bg-base-100/60 backdrop-blur-md p-6 rounded-[2rem] border border-white/5 shadow-sm"
+          className="flex flex-col gap-4 bg-[#0F2545] backdrop-blur-md p-6 rounded-[2rem] border border-[#1A3D63]/30 shadow-2xl relative"
         >
           <div className="flex gap-3 relative">
             <div className="flex-1 relative group rounded-2xl">
-              <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-base-content/40 group-focus-within:text-info transition-colors">
+              <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-[#B3CFE5]/40 group-focus-within:text-[#4A7FA7] transition-colors">
                 <Search className="w-5 h-5" />
               </div>
               <input
@@ -116,96 +129,122 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="دور بالاسم أو الكود..."
-                className="input w-full bg-base-100 shadow-inner focus:shadow-md border-base-200 focus:border-info/30 rounded-2xl pl-4 pr-11 h-14 font-medium transition-all duration-300"
+                className="input w-full bg-[#0A1931] shadow-inner focus:shadow-md border-[#1A3D63]/40 focus:border-[#4A7FA7] rounded-2xl pl-4 pr-11 h-14 font-black text-[#F6FAFD] transition-all duration-300 placeholder:text-[#B3CFE5]/30 outline-none"
                 autoFocus
               />
+
+              {/* Suggestions Dropdown - Moved inside relative container */}
+              <AnimatePresence>
+                {suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="absolute top-full left-0 right-0 mt-2 bg-[#0F2545]/98 backdrop-blur-2xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-[#1A3D63]/50 p-2 flex flex-col gap-1 z-[100]"
+                  >
+                    {suggestions.map((s) => (
+                      <button
+                        key={s.qrId}
+                        className="btn btn-ghost justify-start font-black h-14 rounded-xl text-[15px] text-[#F6FAFD] hover:bg-[#1A3D63]/60 transition-all flex items-center gap-3 px-4 border-none"
+                        onClick={() => addPerson(s)}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-[#1A3D63] flex items-center justify-center text-xs opacity-80 border border-[#4A7FA7]/20 uppercase">
+                          {s.name?.[0] || "؟"}
+                        </div>
+                        <span>{s.name}</span>
+                        <span className="opacity-40 text-[10px] ml-auto font-mono bg-[#0A1931] px-2 py-1 rounded-md tracking-tighter">
+                          {s.qrId}
+                        </span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-            
+
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onGoVisitsHistory}
-              className="btn bg-info/10 hover:bg-info text-info hover:text-info-content border-none shadow-sm rounded-2xl px-5 h-14 flex gap-2"
+              className="btn bg-[#1A3D63] hover:bg-[#4A7FA7] text-[#F6FAFD] border border-[#1A3D63]/40 shadow-2xl rounded-2xl px-5 h-14 flex items-center gap-2 font-black transition-all duration-300"
               title="تاريخ الزيارات"
             >
               <CalendarDays className="w-5 h-5" />
-              <span className="hidden sm:inline font-bold">السجل</span>
+              <span className="hidden sm:inline">السجل</span>
             </motion.button>
           </div>
+        </motion.div>
 
-          {/* Suggestions Dropdown */}
-          <AnimatePresence>
-            {suggestions.length > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
+        {/* Pending List Section Header */}
+        <div className="flex items-center gap-4 mt-2 px-2">
+          <div className="h-px bg-[#1A3D63]/30 flex-1"></div>
+          <span className="text-[10px] font-black text-[#B3CFE5]/40 uppercase tracking-[0.3em] px-4 py-1.5 bg-[#1A3D63]/20 rounded-full border border-[#1A3D63]/30">
+            قائمة الزيارة{" "}
+            {pendingList.length > 0 && (
+              <span className="text-secondary ml-1">
+                ({pendingList.length})
+              </span>
+            )}
+          </span>
+          <div className="h-px bg-[#1A3D63]/30 flex-1"></div>
+        </div>
+
+        {/* List Content */}
+        <div className="flex-1 flex flex-col gap-3 min-h-[300px]">
+          <AnimatePresence mode="popLayout">
+            {pendingList.length === 0 ? (
+              <motion.div
+                key="empty-state"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="absolute top-[80px] left-6 right-6 mt-2 bg-base-100/90 backdrop-blur-xl rounded-2xl shadow-xl border border-base-200 p-2 flex flex-col gap-1 z-30"
+                className="flex flex-col items-center justify-center text-[#B3CFE5]/20 py-20 gap-4 bg-[#0F2545]/30 rounded-[2.5rem] border border-dashed border-[#1A3D63]/40"
               >
-                {suggestions.map((s) => (
-                  <button
-                    key={s.qrId}
-                    className="btn btn-ghost justify-start font-bold h-12 rounded-xl text-base hover:bg-base-200 transition-colors"
-                    onClick={() => addPerson(s)}
+                <div className="w-20 h-20 rounded-full bg-[#1A3D63]/10 flex items-center justify-center border border-[#1A3D63]/20">
+                  <HomeIcon className="w-10 h-10 opacity-30" />
+                </div>
+                <span className="text-sm font-black uppercase tracking-wider text-center">
+                  اختر مخدومين لإضافتهم للقائمة
+                </span>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="active-list"
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              >
+                {pendingList.map((p) => (
+                  <motion.div
+                    key={p.qrId}
+                    variants={itemVariants}
+                    layout
+                    className="bg-[#0F2545] p-1 pr-1 rounded-[2.5rem] border border-[#1A3D63]/50 shadow-2xl group relative overflow-hidden flex items-center"
                   >
-                    {s.name} <span className="opacity-40 text-xs ml-auto font-mono bg-base-200 px-2 py-1 rounded-md">{s.qrId}</span>
-                  </button>
+                    <div
+                      className="absolute inset-y-0 right-0 w-2"
+                      style={{ backgroundColor: p.accent || "#4A7FA7" }}
+                    ></div>
+                    <div className="flex-1 min-w-0 pointer-events-none pr-1">
+                      <StudentMiniCard person={p} />
+                    </div>
+                    <div className="pr-4 z-10">
+                      <motion.button
+                        whileHover={{ scale: 1.1, rotate: 90 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => removePerson(p.qrId)}
+                        className="btn btn-ghost btn-circle btn-sm text-[#B3CFE5]/40 hover:text-error hover:bg-error/10 border-none transition-all"
+                        title="إزالة"
+                      >
+                        <X className="w-5 h-5" />
+                      </motion.button>
+                    </div>
+                  </motion.div>
                 ))}
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.div>
-
-        {/* Pending List Section */}
-        <div className="flex items-center gap-4 mt-2 px-2">
-          <div className="h-px bg-base-300 flex-1"></div>
-          <span className="text-xs font-bold text-base-content/40 uppercase tracking-widest px-2 py-1 bg-base-200/50 rounded-full">
-            قائمة الزيارة {pendingList.length > 0 && <span className="text-info ml-1">({pendingList.length})</span>}
-          </span>
-          <div className="h-px bg-base-300 flex-1"></div>
-        </div>
-
-        <div className="flex-1 flex flex-col gap-3 min-h-[300px]">
-          {pendingList.length === 0 ? (
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
-              className="flex flex-col items-center justify-center text-base-content/30 py-20 gap-4 bg-base-100/30 rounded-3xl border border-dashed border-base-200"
-            >
-              <HomeIcon className="w-16 h-16 opacity-20" />
-              <span className="text-base font-medium">اختر مخدومين لإضافتهم للقائمة</span>
-            </motion.div>
-          ) : (
-            <motion.div 
-              variants={containerVariants}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-1 md:grid-cols-2 gap-3"
-            >
-              {pendingList.map((p) => (
-                <motion.div
-                  variants={itemVariants}
-                  layout
-                  key={p.qrId}
-                  className="flex items-center gap-2 bg-base-100/90 backdrop-blur p-2 pr-3 rounded-2xl border border-info/20 shadow-sm group"
-                >
-                  <div className="flex-1 min-w-0 pr-2 pointer-events-none scale-[0.85] origin-right -ml-4">
-                    <StudentMiniCard person={p} />
-                  </div>
-                  <div className="flex-none px-2 z-10">
-                    <motion.button
-                      whileHover={{ scale: 1.1, rotate: 90 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => removePerson(p.qrId)}
-                      className="btn btn-ghost btn-circle btn-sm text-base-content/40 hover:text-error hover:bg-error/10"
-                      title="إزالة"
-                    >
-                      <X className="w-5 h-5" />
-                    </motion.button>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
         </div>
 
         {/* Save Button */}
@@ -219,11 +258,11 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
             >
               <button
                 onClick={handleSave}
-                className="btn btn-info btn-lg w-full text-xl shadow-xl shadow-info/20 rounded-2xl text-white group overflow-hidden relative"
+                className="w-full h-16 bg-[#1A3D63] hover:bg-[#4A7FA7] text-[#F6FAFD] text-xl font-black shadow-[0_20px_50px_rgba(0,0,0,0.4)] rounded-2xl group overflow-hidden relative border border-[#4A7FA7]/30 flex items-center justify-center gap-3 transition-all"
               >
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                <CheckCircle2 className="w-6 h-6 mr-2" />
-                تسجيل زيارة لـ {pendingList.length} مخدوم
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                <CheckCircle2 className="w-6 h-6" />
+                <span>سجلنا {pendingList.length} زيارات</span>
               </button>
             </motion.div>
           )}
