@@ -4,7 +4,6 @@ import {
   ChevronLeft,
 } from "lucide-react";
 
-import { motion } from "framer-motion";
 import bgImage from "../assets/studium.png";
 
 export function SummerSection({ onGoHome }) {
