@@ -177,10 +177,7 @@ export function HomePage({
               </h1>
 
               <div className="pt-10 flex flex-col items-start gap-4">
-                <p className="text-lg font-bold text-slate-500 max-w-lg leading-relaxed">
-                  نظام الإدارة المتطور، صُمم ليجمع بين الفاعلية والسهولة في
-                  تنظيم بيانات مدارس الأحد.
-                </p>
+                
                 {currentUser?.name && (
                   <div className="mt-4 px-6 py-3 bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl flex items-center gap-4 group hover:border-sky-400/30 transition-all">
                     <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
