@@ -201,13 +201,13 @@ export function GamePage({ onBack, onGoHome }) {
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-y-auto pr-2 flex flex-col gap-4 custom-scrollbar lg:max-h-[35vh]">
                       {teams.map(team => (
                         <div key={team.id} className={`bg-slate-900/40 border ${team.theme.border} rounded-xl p-4 flex flex-col gap-3 group/team`}>
-                          <div className="flex justify-between items-center">
-                            <span className={`font-bold text-sm ${team.theme.accent}`}>{team.name}</span>
-                            <div className="flex gap-1">
-                               <button onClick={() => { setAddingToTeam(addingToTeam === team.id ? null : team.id); setNewMemberName(""); }} className="w-7 h-7 rounded-lg flex items-center justify-center bg-slate-800 text-slate-400 hover:text-sky-400 border border-white/5">
+                          <div className="flex justify-between items-start gap-3">
+                            <span className={`font-bold text-sm leading-snug min-w-0 flex-1 text-right ${team.theme.accent}`}>{team.name}</span>
+                            <div className="flex shrink-0 items-center gap-1.5">
+                               <button type="button" onClick={() => { setAddingToTeam(addingToTeam === team.id ? null : team.id); setNewMemberName(""); }} className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 text-slate-400 hover:text-sky-400 border border-white/5" title="عضو">
                                  {addingToTeam === team.id ? <Minus size={12} strokeWidth={3} /> : <Plus size={12} strokeWidth={3} />}
                                </button>
-                               <button onClick={() => { if(window.confirm(`حذف ${team.name}؟`)) handleRemoveTeam(team.id) }} className="w-7 h-7 rounded-lg flex items-center justify-center bg-slate-800 text-rose-400 hover:bg-rose-500 transition-colors border border-rose-500/20">
+                               <button type="button" onClick={() => { if(window.confirm(`حذف ${team.name}؟`)) handleRemoveTeam(team.id) }} className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors border border-rose-500/20" title="حذف الفريق">
                                  <Minus size={12} strokeWidth={2} />
                                </button>
                             </div>
@@ -360,10 +360,12 @@ const TeamCard = ({ team, games, handleRemoveTeam, delay }) => {
       <div className={`tech-panel !p-6 flex-1 flex flex-col relative overflow-hidden h-full border ${border} hover:border-white/10 transition-all duration-500`}>
         <div className={`absolute top-0 inset-x-0 h-1 bg-gradient-to-r ${glow}`} />
         
-        {/* Delete button (on hover) */}
-        <button 
-           onClick={() => { if(window.confirm(`حذف ${team.name}؟`)) handleRemoveTeam(team.id) }} 
-           className="absolute -top-3 -left-3 w-10 h-10 rounded-full bg-slate-900 border border-white/5 flex items-center justify-center text-slate-600 hover:text-rose-500 transition-all z-20 opacity-0 group-hover:opacity-100"
+        {/* حذف الفريق — داخل البطاقة (كان -top/-left يُقصّ بسبب overflow-hidden) */}
+        <button
+           type="button"
+           onClick={() => { if(window.confirm(`حذف ${team.name}؟`)) handleRemoveTeam(team.id) }}
+           className="absolute top-4 end-4 z-30 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-slate-950/90 text-slate-500 shadow-lg backdrop-blur-sm transition-all hover:border-rose-500/40 hover:text-rose-500 opacity-0 group-hover:opacity-100"
+           title="حذف الفريق"
         >
            <Minus size={18} strokeWidth={3} />
         </button>
