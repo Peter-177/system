@@ -20,4 +20,6 @@ export const STORAGE_KEYS = {
   users: "qrapp_users",
   classes: "qrapp_classes",
   settings: "qrapp_settings",
+  /** ساحة الألعاب — فرق، جولات، نقاط (محلي فقط) */
+  gameArena: "qrapp_game_arena",
 };

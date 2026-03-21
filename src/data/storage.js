@@ -2,7 +2,7 @@ import { STORAGE_KEYS } from "./config";
 import {
   addStudentFB, updateStudentFB, deleteStudentFB,
   addAttendanceFB, removeAttendanceFB, resetAttendanceFB,
-  addCouponFB, removeCouponFB, resetCouponsFB,
+  addCouponFB, removeCouponFB, resetCouponsFB, getAllCouponsFB,
   addVisitFB, removeVisitFB, resetVisitsFB,
   getAllStudentsFB, getAllAttendanceFB, getAllVisitsFB,
   getAllClassesFB, setClassFB, deleteClassFB,
@@ -36,6 +36,27 @@ export const authStorage = {
   get: () => loadLocal(STORAGE_KEYS.auth, null),
   set: (d) => localStorage.setItem(STORAGE_KEYS.auth, JSON.stringify(d)),
   exists: () => !!localStorage.getItem(STORAGE_KEYS.auth),
+};
+
+/** ساحة الألعاب — حفظ محلي (لا Firebase) */
+export const gameArenaDB = {
+  get: () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.gameArena);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  },
+  set: (data) => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.gameArena, JSON.stringify(data));
+    } catch (e) {
+      console.error("gameArenaDB.set failed:", e);
+    }
+  },
+  clear: () => localStorage.removeItem(STORAGE_KEYS.gameArena),
 };
 
 export const sessionStore = {
@@ -188,12 +209,14 @@ export const syncFromFirebase = async () => {
     const attendance = await getAllAttendanceFB();
     const visits = await getAllVisitsFB();
     const classes = await getAllClassesFB();
+    const coupons = await getAllCouponsFB();
     const settings = await getAppSettingsFB();
     
     saveMem(STORAGE_KEYS.students, students);
     saveMem(STORAGE_KEYS.attendance, attendance);
     saveMem(STORAGE_KEYS.visits, visits);
     saveMem(STORAGE_KEYS.classes, classes);
+    saveMem(STORAGE_KEYS.coupons, coupons);
     if (settings) saveMem(STORAGE_KEYS.settings, settings);
     return true;
   } catch (error) {

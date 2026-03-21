@@ -1,29 +1,106 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Plus, Search, Minus, Trophy, Users, Settings, X } from "lucide-react";
-import { studentsDB } from "../data/storage";
+import { studentsDB, gameArenaDB } from "../data/storage";
 import { Page, Navbar } from "../components/UI";
 import { motion, AnimatePresence } from "framer-motion";
 
+const GAME_TEAM_COLORS = [
+  { name: "blue", glow: "from-[#4A7FA7] to-[#011C40]", accent: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20" },
+  { name: "emerald", glow: "from-emerald-400 to-teal-600", accent: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+  { name: "rose", glow: "from-rose-400 to-pink-600", accent: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20" },
+  { name: "amber", glow: "from-amber-400 to-orange-600", accent: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" },
+  { name: "violet", glow: "from-violet-400 to-purple-600", accent: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/20" },
+  { name: "fuchsia", glow: "from-fuchsia-400 to-pink-600", accent: "text-fuchsia-400", bg: "bg-fuchsia-500/10", border: "border-fuchsia-500/20" },
+];
+
+const DEFAULT_TEAMS = () => [
+  { id: "T1", name: "الفريق الأول", members: ["peter"], theme: GAME_TEAM_COLORS[0] },
+  { id: "T2", name: "الفريق الثاني", members: ["dany"], theme: GAME_TEAM_COLORS[1] },
+];
+
+const DEFAULT_GAMES = (teamIds) => {
+  const scores = {};
+  teamIds.forEach((id) => {
+    scores[id] = "";
+  });
+  return [{ id: 1, name: "الجولة الأولى", scores }];
+};
+
+function mergeTeamTheme(theme, index) {
+  if (
+    theme &&
+    typeof theme === "object" &&
+    typeof theme.name === "string" &&
+    typeof theme.glow === "string"
+  ) {
+    return theme;
+  }
+  return GAME_TEAM_COLORS[index % GAME_TEAM_COLORS.length];
+}
+
+/** تحميل من localStorage مع مزامنة نقاط الجولات مع معرفات الفرق */
+function loadPersistedGameArena() {
+  const raw = gameArenaDB.get();
+  if (!raw || !Array.isArray(raw.teams) || !Array.isArray(raw.games)) return null;
+  if (raw.teams.length < 1 || raw.games.length < 1) return null;
+
+  const teams = raw.teams.map((t, i) => ({
+    id: String(t.id ?? `T${i}`),
+    name: typeof t.name === "string" && t.name.trim() ? t.name : `فريق ${i + 1}`,
+    members: Array.isArray(t.members) ? t.members.map(String) : [],
+    theme: mergeTeamTheme(t.theme, i),
+  }));
+
+  const teamIds = new Set(teams.map((t) => t.id));
+
+  const games = raw.games.map((g, i) => {
+    const scores = {
+      ...(g.scores && typeof g.scores === "object" ? g.scores : {}),
+    };
+    for (const k of Object.keys(scores)) {
+      if (!teamIds.has(k)) delete scores[k];
+    }
+    for (const tid of teamIds) {
+      if (!(tid in scores)) scores[tid] = "";
+    }
+    const gid = g.id;
+    const id =
+      typeof gid === "number" && !Number.isNaN(gid)
+        ? gid
+        : typeof gid === "string" && /^\d+$/.test(gid)
+          ? Number(gid)
+          : Date.now() + i;
+    return {
+      id,
+      name:
+        typeof g.name === "string" && g.name.trim()
+          ? g.name
+          : `الجولة ${i + 1}`,
+      scores,
+    };
+  });
+
+  return {
+    teams,
+    games,
+    showMembers: Boolean(raw.showMembers),
+  };
+}
+
 export function GamePage({ onBack, onGoHome }) {
-  const teamColors = [
-    { name: "blue", glow: "from-[#4A7FA7] to-[#011C40]", accent: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20" },
-    { name: "emerald", glow: "from-emerald-400 to-teal-600", accent: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
-    { name: "rose", glow: "from-rose-400 to-pink-600", accent: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20" },
-    { name: "amber", glow: "from-amber-400 to-orange-600", accent: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" },
-    { name: "violet", glow: "from-violet-400 to-purple-600", accent: "text-violet-400", bg: "bg-violet-500/10", border: "border-violet-500/20" },
-    { name: "fuchsia", glow: "from-fuchsia-400 to-pink-600", accent: "text-fuchsia-400", bg: "bg-fuchsia-500/10", border: "border-fuchsia-500/20" }
-  ];
-
-  const [teams, setTeams] = useState([
-    { id: 'T1', name: "الفريق الأول", members: ["peter"], theme: teamColors[0] },
-    { id: 'T2', name: "الفريق الثاني", members: ["dany"], theme: teamColors[1] }
-  ]);
-
-  const [games, setGames] = useState([
-    { id: 1, name: "الجولة الأولى", scores: { 'T1': "", 'T2': "" } }
-  ]);
-  
-  const [showMembers, setShowMembers] = useState(false);
+  const [teams, setTeams] = useState(
+    () => loadPersistedGameArena()?.teams ?? DEFAULT_TEAMS(),
+  );
+  const [games, setGames] = useState(() => {
+    const p = loadPersistedGameArena();
+    return (
+      p?.games ??
+      DEFAULT_GAMES((p?.teams ?? DEFAULT_TEAMS()).map((t) => t.id))
+    );
+  });
+  const [showMembers, setShowMembers] = useState(
+    () => loadPersistedGameArena()?.showMembers ?? false,
+  );
   const [addingToTeam, setAddingToTeam] = useState(null);
   const [newMemberName, setNewMemberName] = useState("");
   /** null | 'team' | 'game' — مربع في منتصف الشاشة لإدخال الاسم */
@@ -43,6 +120,10 @@ export function GamePage({ onBack, onGoHome }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [nameModal]);
+
+  useEffect(() => {
+    gameArenaDB.set({ teams, games, showMembers });
+  }, [teams, games, showMembers]);
 
   const allStudents = useMemo(() => {
     const db = studentsDB.getAll();
@@ -78,7 +159,8 @@ export function GamePage({ onBack, onGoHome }) {
     const name = modalNameInput.trim();
     if (!name) return;
     const newId = `T${Date.now()}`;
-    const theme = teamColors[teams.length % teamColors.length];
+    const theme =
+      GAME_TEAM_COLORS[teams.length % GAME_TEAM_COLORS.length];
     setTeams((prev) => [...prev, { id: newId, name, members: [], theme }]);
     setGames((prev) =>
       prev.map((g) => ({ ...g, scores: { ...g.scores, [newId]: "" } })),
@@ -104,7 +186,14 @@ export function GamePage({ onBack, onGoHome }) {
 
   const handleRemoveTeam = (teamId) => {
     if (teams.length <= 1) return;
-    setTeams(prev => prev.filter(t => t.id !== teamId));
+    setTeams((prev) => prev.filter((t) => t.id !== teamId));
+    setGames((prev) =>
+      prev.map((g) => {
+        const scores = { ...g.scores };
+        delete scores[teamId];
+        return { ...g, scores };
+      }),
+    );
   };
 
   const handleRemoveGame = (id) => {
