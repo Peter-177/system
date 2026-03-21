@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from "react";
-import { Plus, Search, User, Minus, Trophy, Users, Settings } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react";
+import { Plus, Search, Minus, Trophy, Users, Settings, X } from "lucide-react";
 import { studentsDB } from "../data/storage";
 import { Page, Navbar } from "../components/UI";
 import { motion, AnimatePresence } from "framer-motion";
 
-export function GamePage({ currentUser, onGoHome }) {
+export function GamePage({ onBack, onGoHome }) {
   const teamColors = [
     { name: "blue", glow: "from-[#4A7FA7] to-[#011C40]", accent: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20" },
     { name: "emerald", glow: "from-emerald-400 to-teal-600", accent: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
@@ -26,6 +26,23 @@ export function GamePage({ currentUser, onGoHome }) {
   const [showMembers, setShowMembers] = useState(false);
   const [addingToTeam, setAddingToTeam] = useState(null);
   const [newMemberName, setNewMemberName] = useState("");
+  /** null | 'team' | 'game' — مربع في منتصف الشاشة لإدخال الاسم */
+  const [nameModal, setNameModal] = useState(null);
+  const [modalNameInput, setModalNameInput] = useState("");
+
+  const closeNameModal = () => {
+    setNameModal(null);
+    setModalNameInput("");
+  };
+
+  useEffect(() => {
+    if (!nameModal) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") closeNameModal();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [nameModal]);
 
   const allStudents = useMemo(() => {
     const db = studentsDB.getAll();
@@ -52,26 +69,42 @@ export function GamePage({ currentUser, onGoHome }) {
     setTeams(prev => prev.map(t => t.id === teamId ? { ...t, members: t.members.filter((_, i) => i !== index) } : t));
   };
 
-  const handleAddTeam = () => {
-    const name = prompt("اسم الفريق الجديد:");
+  const openTeamNameModal = () => {
+    setModalNameInput("");
+    setNameModal("team");
+  };
+
+  const confirmAddTeam = () => {
+    const name = modalNameInput.trim();
     if (!name) return;
     const newId = `T${Date.now()}`;
     const theme = teamColors[teams.length % teamColors.length];
-    setTeams(prev => [...prev, { id: newId, name, members: [], theme }]);
-    setGames(prev => prev.map(g => ({ ...g, scores: { ...g.scores, [newId]: "" } })));
+    setTeams((prev) => [...prev, { id: newId, name, members: [], theme }]);
+    setGames((prev) =>
+      prev.map((g) => ({ ...g, scores: { ...g.scores, [newId]: "" } })),
+    );
+    closeNameModal();
+  };
+
+  const openGameNameModal = () => {
+    setModalNameInput(`الجولة ${games.length + 1}`);
+    setNameModal("game");
+  };
+
+  const confirmAddGame = () => {
+    const name = modalNameInput.trim();
+    if (!name) return;
+    const initialScores = {};
+    teams.forEach((t) => {
+      initialScores[t.id] = "";
+    });
+    setGames((prev) => [...prev, { id: Date.now(), name, scores: initialScores }]);
+    closeNameModal();
   };
 
   const handleRemoveTeam = (teamId) => {
     if (teams.length <= 1) return;
     setTeams(prev => prev.filter(t => t.id !== teamId));
-  };
-
-  const handleAddGame = () => {
-    const name = prompt("اسم الجولة:", `الجولة ${games.length + 1}`);
-    if (!name) return;
-    const initialScores = {};
-    teams.forEach(t => initialScores[t.id] = "");
-    setGames(prev => [...prev, { id: Date.now(), name, scores: initialScores }]);
   };
 
   const handleRemoveGame = (id) => {
@@ -85,7 +118,10 @@ export function GamePage({ currentUser, onGoHome }) {
 
   return (
     <Page>
-      <Navbar title="ساحة الألعاب / Game Arena" onBack={onGoHome} />
+      <Navbar
+        title="ساحة الألعاب / Game Arena"
+        onBack={onBack ?? onGoHome}
+      />
 
       <div className="flex-1 w-full flex flex-col relative z-10" dir="rtl">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-500/5 rounded-full blur-[150px] -z-10 pointer-events-none" />
@@ -101,7 +137,11 @@ export function GamePage({ currentUser, onGoHome }) {
               <Settings className="text-sky-400" size={22} /> إدارة اللعبة
             </h3>
 
-            <button onClick={handleAddTeam} className="tech-btn-primary w-full flex items-center justify-center gap-3 font-extrabold mb-8 !rounded-xl">
+            <button
+              type="button"
+              onClick={openTeamNameModal}
+              className="tech-btn-primary w-full flex items-center justify-center gap-3 font-extrabold mb-8 !rounded-xl"
+            >
               <Plus size={18} strokeWidth={3} /> إضافة فريق
             </button>
 
@@ -109,7 +149,11 @@ export function GamePage({ currentUser, onGoHome }) {
             <div className="flex flex-col gap-4 mb-8">
                <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-sky-400 uppercase tracking-widest">إدارة الجولات / النقاط</span>
-                  <button onClick={handleAddGame} className="tech-badge cursor-pointer hover:bg-sky-500/20 transition-colors">
+                  <button
+                    type="button"
+                    onClick={openGameNameModal}
+                    className="tech-badge cursor-pointer hover:bg-sky-500/20 transition-colors"
+                  >
                      + جولة جديدة
                   </button>
                </div>
@@ -223,6 +267,88 @@ export function GamePage({ currentUser, onGoHome }) {
 
         </div>
       </div>
+
+      <AnimatePresence>
+        {nameModal && (
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="game-name-modal-title"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) closeNameModal();
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="w-full max-w-md rounded-[1.75rem] border border-white/10 bg-slate-900/95 p-6 shadow-[0_0_60px_rgba(0,0,0,0.45)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-4 mb-5">
+                <h4
+                  id="game-name-modal-title"
+                  className="text-lg font-black text-white tracking-tight"
+                >
+                  {nameModal === "team" ? "فريق جديد" : "جولة جديدة"}
+                </h4>
+                <button
+                  type="button"
+                  onClick={closeNameModal}
+                  className="shrink-0 rounded-xl p-2 text-slate-500 hover:bg-white/5 hover:text-white transition-colors"
+                  aria-label="إغلاق"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                {nameModal === "team" ? "اسم الفريق" : "اسم الجولة"}
+              </label>
+              <input
+                type="text"
+                value={modalNameInput}
+                onChange={(e) => setModalNameInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (nameModal === "team") confirmAddTeam();
+                    else confirmAddGame();
+                  }
+                }}
+                placeholder={
+                  nameModal === "team" ? "اكتب اسم الفريق..." : "اكتب اسم الجولة..."
+                }
+                className="tech-input w-full !rounded-xl !h-12 !text-base mb-6"
+                autoFocus
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={closeNameModal}
+                  className="flex-1 h-12 rounded-xl border border-white/10 bg-slate-950/80 font-bold text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="button"
+                  onClick={
+                    nameModal === "team" ? confirmAddTeam : confirmAddGame
+                  }
+                  className="flex-1 h-12 rounded-xl tech-btn-primary font-extrabold"
+                >
+                  {nameModal === "team" ? "إضافة الفريق" : "إضافة الجولة"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Page>
   );
 }
