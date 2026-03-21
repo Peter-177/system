@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Plus, Search, Minus, Trophy, Users, Settings, X } from "lucide-react";
 import { studentsDB, gameArenaDB } from "../data/storage";
 import { Page, Navbar } from "../components/UI";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 
 const GAME_TEAM_COLORS = [
   { name: "blue", glow: "from-[#4A7FA7] to-[#011C40]", accent: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20" },
@@ -218,7 +218,7 @@ export function GamePage({ onBack, onGoHome }) {
         <div className="w-full max-w-[95rem] mx-auto h-full flex flex-col lg:flex-row p-4 lg:p-10 gap-8 relative pb-32">
           
           {/* Admin Panel */}
-          <motion.div 
+          <Motion.div 
             initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
             className="w-full lg:w-[360px] tech-card !p-6 flex flex-col shrink-0 h-full relative"
           >
@@ -287,7 +287,7 @@ export function GamePage({ onBack, onGoHome }) {
                
                <AnimatePresence>
                  {showMembers && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-y-auto pr-2 flex flex-col gap-4 custom-scrollbar lg:max-h-[35vh]">
+                    <Motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-y-auto pr-2 flex flex-col gap-4 custom-scrollbar lg:max-h-[35vh]">
                       {teams.map(team => (
                         <div key={team.id} className={`bg-slate-900/40 border ${team.theme.border} rounded-xl p-4 flex flex-col gap-3 group/team`}>
                           <div className="flex justify-between items-start gap-3">
@@ -304,7 +304,7 @@ export function GamePage({ onBack, onGoHome }) {
 
                           <AnimatePresence>
                             {addingToTeam === team.id && (
-                              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="relative mt-1">
+                              <Motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="relative mt-1">
                                 <Search size={14} className="absolute right-3 top-3 text-sky-500/50" />
                                 <input 
                                   type="text" value={newMemberName} onChange={(e) => setNewMemberName(e.target.value)}
@@ -321,7 +321,7 @@ export function GamePage({ onBack, onGoHome }) {
                                     ))}
                                   </div>
                                 )}
-                              </motion.div>
+                              </Motion.div>
                             )}
                           </AnimatePresence>
 
@@ -337,11 +337,11 @@ export function GamePage({ onBack, onGoHome }) {
                           </div>
                         </div>
                       ))}
-                    </motion.div>
+                    </Motion.div>
                  )}
                </AnimatePresence>
             </div>
-          </motion.div>
+          </Motion.div>
 
           {/* Teams Arena - SCORES LIST PER GAME */}
           <div className={`flex-1 grid gap-6 h-fit ${
@@ -359,7 +359,7 @@ export function GamePage({ onBack, onGoHome }) {
 
       <AnimatePresence>
         {nameModal && (
-          <motion.div
+          <Motion.div
             role="dialog"
             aria-modal="true"
             aria-labelledby="game-name-modal-title"
@@ -372,7 +372,7 @@ export function GamePage({ onBack, onGoHome }) {
               if (e.target === e.currentTarget) closeNameModal();
             }}
           >
-            <motion.div
+            <Motion.div
               initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
@@ -434,8 +434,8 @@ export function GamePage({ onBack, onGoHome }) {
                   {nameModal === "team" ? "إضافة الفريق" : "إضافة الجولة"}
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
+            </Motion.div>
+          </Motion.div>
         )}
       </AnimatePresence>
     </Page>
@@ -445,7 +445,7 @@ export function GamePage({ onBack, onGoHome }) {
 const TeamCard = ({ team, games, handleRemoveTeam, delay }) => {
   const { glow, accent, border } = team.theme;
   return (
-    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }} className="flex flex-col relative group h-full min-h-[500px]">
+    <Motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }} className="flex flex-col relative group h-full min-h-[500px]">
       <div className={`tech-panel !p-6 flex-1 flex flex-col relative overflow-hidden h-full border ${border} hover:border-white/10 transition-all duration-500`}>
         <div className={`absolute top-0 inset-x-0 h-1 bg-gradient-to-r ${glow}`} />
         
@@ -467,7 +467,7 @@ const TeamCard = ({ team, games, handleRemoveTeam, delay }) => {
         {/* List of Game Scores */}
         <div className="flex-1 w-full relative z-10 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-1 pb-4">
            {games.map((g, i) => (
-             <motion.div 
+             <Motion.div 
                key={g.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
                className="bg-slate-950/60 border border-white/5 rounded-2xl p-6 flex items-center justify-between group/game hover:bg-slate-900/60 transition-colors"
              >
@@ -488,7 +488,7 @@ const TeamCard = ({ team, games, handleRemoveTeam, delay }) => {
                       <span className="text-[8px] font-black text-slate-700 uppercase tracking-tighter">Points</span>
                    </div>
                 </div>
-             </motion.div>
+             </Motion.div>
            ))}
 
            {games.length === 0 && (
@@ -505,6 +505,6 @@ const TeamCard = ({ team, games, handleRemoveTeam, delay }) => {
            <div className="w-1.5 h-1.5 rounded-full bg-white" />
         </div>
       </div>
-    </motion.div>
+    </Motion.div>
   );
 }
