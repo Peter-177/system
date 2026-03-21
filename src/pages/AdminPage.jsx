@@ -54,6 +54,18 @@ export function AdminPage({
   const [brand, setBrand] = useState(settingsDB.get());
   const [brandLoading, setBrandLoading] = useState(false);
   const [cropImage, setCropImage] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileMenuOpen]);
 
   const classList = useMemo(
     () =>
@@ -156,31 +168,43 @@ export function AdminPage({
     XLSX.writeFile(wb, "البيانات_المصدرة.xlsx");
   };
 
-  const sidebarContent = (
+  const renderSidebar = () => (
     <Sidebar branding={{ icon: brand.icon }}>
       <button
-        onClick={() => setActiveSection("dashboard")}
+        onClick={() => {
+          setActiveSection("dashboard");
+          closeMobileMenu();
+        }}
         className={`tech-sidebar-item ${activeSection === "dashboard" ? "active" : ""}`}
       >
         <LayoutDashboard className="w-5 h-5" />
         <span>لوحة التحكم</span>
       </button>
       <button
-        onClick={() => setActiveSection("servants")}
+        onClick={() => {
+          setActiveSection("servants");
+          closeMobileMenu();
+        }}
         className={`tech-sidebar-item ${activeSection === "servants" ? "active" : ""}`}
       >
         <Users className="w-5 h-5" />
         <span>إدارة الخدام</span>
       </button>
       <button
-        onClick={() => setActiveSection("branding")}
+        onClick={() => {
+          setActiveSection("branding");
+          closeMobileMenu();
+        }}
         className={`tech-sidebar-item ${activeSection === "branding" ? "active" : ""}`}
       >
         <Palette className="w-5 h-5" />
         <span>هوية النظام</span>
       </button>
       <button
-        onClick={() => setActiveSection("security")}
+        onClick={() => {
+          setActiveSection("security");
+          closeMobileMenu();
+        }}
         className={`tech-sidebar-item ${activeSection === "security" ? "active" : ""}`}
       >
         <ShieldCheck className="w-5 h-5" />
@@ -193,14 +217,20 @@ export function AdminPage({
         </p>
       </div>
       <button
-        onClick={handleExportExcel}
+        onClick={() => {
+          handleExportExcel();
+          closeMobileMenu();
+        }}
         className="tech-sidebar-item group/export"
       >
         <Database className="w-5 h-5 group-hover/export:text-sky-400 transition-colors" />
         <span>تصدير البيانات</span>
       </button>
       <button
-        onClick={onBack}
+        onClick={() => {
+          closeMobileMenu();
+          onBack();
+        }}
         className="tech-sidebar-item text-red-400/60 hover:text-red-400 hover:bg-red-500/5 mt-auto"
       >
         <ArrowLeft className="w-5 h-5" />
@@ -210,7 +240,7 @@ export function AdminPage({
   );
 
   return (
-    <Page sidebar={sidebarContent}>
+    <Page sidebar={renderSidebar()}>
       <Navbar
         title={
           activeSection === "dashboard"
@@ -222,7 +252,57 @@ export function AdminPage({
                 : "Security Shield"
         }
         onBack={onBack}
+        right={
+          <button
+            type="button"
+            className="md:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#1a2332] border border-white/[0.06] text-[#c8d4e0] shadow-none transition-colors hover:bg-[#222d3d] hover:text-white active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50"
+            aria-label="فتح القائمة"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="admin-mobile-drawer"
+            onClick={() => setMobileMenuOpen(true)}
+          >
+            <span className="flex flex-col items-center justify-center gap-[5px]" aria-hidden>
+              <span className="block h-[2px] w-[18px] rounded-full bg-current" />
+              <span className="block h-[2px] w-[18px] rounded-full bg-current" />
+              <span className="block h-[2px] w-[18px] rounded-full bg-current" />
+            </span>
+          </button>
+        }
       />
+
+      {/* قائمة جانبية للموبايل (نفس محتوى الشريط — الشريط مخفي تحت md) */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-[200] md:hidden"
+          id="admin-mobile-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-label="قائمة الإدارة"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-950/75 backdrop-blur-[2px]"
+            aria-label="إغلاق القائمة"
+            onClick={closeMobileMenu}
+          />
+          <aside className="absolute top-0 right-0 flex h-full w-[min(100%,20rem)] flex-col border-l border-white/10 bg-slate-900/98 shadow-2xl animate-reveal overflow-y-auto">
+            <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
+              <span className="text-xs font-black uppercase tracking-widest text-slate-500">
+                القائمة
+              </span>
+              <button
+                type="button"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1a2332] border border-white/[0.06] text-[#c8d4e0] transition-colors hover:bg-[#222d3d] hover:text-white active:scale-95"
+                aria-label="إغلاق"
+                onClick={closeMobileMenu}
+              >
+                <X className="h-5 w-5" strokeWidth={2.25} />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1">{renderSidebar()}</div>
+          </aside>
+        </div>
+      )}
 
       <div
         className="flex-1 px-8 py-10 md:px-16 w-full pb-32 overflow-y-auto"
