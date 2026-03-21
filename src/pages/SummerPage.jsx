@@ -22,12 +22,12 @@ export function SummerSection({ onGoHome }) {
 
 
   return (
-    <div ref={sectionRef} className="w-full h-full relative overflow-y-auto overflow-x-hidden bg-[#022c22]">
-      {/* Fixed Background Layer - always visible */}
+    <div ref={sectionRef} className="w-full h-full relative overflow-y-auto overflow-x-hidden bg-[#063d2f]">
+      {/* Fixed Background Layer — تدرج أخف قليلاً ليظهر عشب الصورة أكثر، مع بقاء طبقة بسيطة أغمق من الصورة الخام */}
       <div 
         className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat"
         style={{ 
-          backgroundImage: `linear-gradient(to bottom, rgba(6, 78, 59, 0.94), rgba(2, 44, 34, 0.98)), url(${bgImage})`
+          backgroundImage: `linear-gradient(to bottom, rgba(12, 92, 70, 0.72), rgba(4, 52, 40, 0.82)), url(${bgImage})`
         }}
       ></div>
 

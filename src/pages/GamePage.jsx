@@ -3,6 +3,7 @@ import { Plus, Search, User, Minus, Trophy, Users, Settings } from "lucide-react
 import { studentsDB } from "../data/storage";
 import { Page, Navbar } from "../components/UI";
 import { motion, AnimatePresence } from "framer-motion";
+import bgImage from "../assets/studium.png";
 
 export function GamePage({ currentUser, onGoHome }) {
   const teamColors = [
@@ -88,9 +89,16 @@ export function GamePage({ currentUser, onGoHome }) {
       <Navbar title="ساحة الألعاب / Game Arena" onBack={onGoHome} />
 
       <div className="flex-1 w-full flex flex-col relative z-10" dir="rtl">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-500/5 rounded-full blur-[150px] -z-10 pointer-events-none" />
-        
-        <div className="w-full max-w-[95rem] mx-auto h-full flex flex-col lg:flex-row p-4 lg:p-10 gap-8 relative pb-32">
+        {/* خلفية ملعب — أفتح قليلاً من الطبقة السابقة، مع بقاء تظليل بسيط أغمق من الصورة الأصلية */}
+        <div
+          className="absolute inset-0 z-0 pointer-events-none bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `linear-gradient(to bottom, rgba(12, 92, 70, 0.72), rgba(4, 52, 40, 0.82)), url(${bgImage})`,
+          }}
+        />
+        <div className="absolute top-0 right-0 z-[1] w-[500px] h-[500px] bg-sky-500/5 rounded-full blur-[150px] pointer-events-none" />
+
+        <div className="w-full max-w-[95rem] mx-auto h-full flex flex-col lg:flex-row p-4 lg:p-10 gap-8 relative z-10 pb-32">
           
           {/* Admin Panel */}
           <motion.div 
