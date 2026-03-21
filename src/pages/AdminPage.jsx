@@ -521,16 +521,19 @@ export function AdminPage({
 
             <div className="tech-panel space-y-12">
               <div className="p-10 rounded-[2.5rem] bg-slate-950/50 border border-white/5 flex flex-col md:flex-row items-center gap-10">
-                <div className="w-32 h-32 rounded-3xl bg-slate-900 border-2 border-white/10 flex items-center justify-center shadow-2xl overflow-hidden shrink-0 group relative">
-                  <div className="absolute inset-0 bg-sky-500/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                {/* إطار يلتف حول الصورة (بدون مربع ثابت) لتقليل فراغات الزوايا */}
+                <div className="relative inline-flex max-w-[min(100%,12.5rem)] max-h-48 min-w-0 items-center justify-center overflow-hidden rounded-3xl border-2 border-white/10 bg-slate-950/90 shadow-2xl shrink-0 group">
+                  <div className="pointer-events-none absolute inset-0 bg-sky-500/10 blur-xl opacity-0 transition-opacity group-hover:opacity-100" />
                   {brand.icon?.startsWith("data:image") ? (
                     <img
                       alt="brand"
                       src={brand.icon}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 relative z-10"
+                      className="relative z-10 block h-auto w-auto max-h-48 max-w-[12.5rem] object-contain group-hover:scale-[1.02] transition-transform duration-500"
                     />
                   ) : (
-                    <span className="text-6xl relative z-10">{brand.icon}</span>
+                    <span className="relative z-10 flex h-32 w-32 items-center justify-center text-6xl">
+                      {brand.icon}
+                    </span>
                   )}
                 </div>
                 <div className="flex-1 w-full flex flex-col gap-4">

@@ -59,14 +59,19 @@ export const formatTime = (isoString) =>
     minute: "2-digit",
   });
 
-export const getCroppedImg = (imageSrc, pixelCrop, maxSize = 400) => {
+export const getCroppedImg = (
+  imageSrc,
+  pixelCrop,
+  maxSize = 400,
+  mimeType = "image/png",
+) => {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.src = imageSrc;
     image.onload = () => {
       const canvas = document.createElement("canvas");
       let { width, height } = pixelCrop;
-      
+
       if (width > maxSize || height > maxSize) {
         if (width > height) {
           height = Math.round((height * maxSize) / width);
@@ -81,6 +86,11 @@ export const getCroppedImg = (imageSrc, pixelCrop, maxSize = 400) => {
       canvas.height = height;
       const ctx = canvas.getContext("2d");
 
+      // PNG: preserve transparency; JPEG: opaque (no white fill from alpha)
+      if (mimeType === "image/png") {
+        ctx.clearRect(0, 0, width, height);
+      }
+
       ctx.drawImage(
         image,
         pixelCrop.x,
@@ -90,10 +100,14 @@ export const getCroppedImg = (imageSrc, pixelCrop, maxSize = 400) => {
         0,
         0,
         width,
-        height
+        height,
       );
 
-      resolve(canvas.toDataURL("image/jpeg", 0.7));
+      const out =
+        mimeType === "image/jpeg"
+          ? canvas.toDataURL("image/jpeg", 0.92)
+          : canvas.toDataURL("image/png");
+      resolve(out);
     };
     image.onerror = (error) => reject(error);
   });

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import Cropper from "react-easy-crop";
 import { getCroppedImg } from "../utils/helpers";
 import { settingsDB } from "../data/storage";
@@ -256,6 +256,23 @@ export function ImageCropperModal({ imageSrc, onCropDone, onCancel }) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  /** نسبة قص = نسبة الصورة الأصلية حتى لا يُفرض مربع/دائرة وتظهر فراغات */
+  const [aspect, setAspect] = useState(4 / 3);
+
+  useEffect(() => {
+    if (!imageSrc) return;
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    const img = new Image();
+    img.src = imageSrc;
+    img.onload = () => {
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      if (w > 0 && h > 0) {
+        setAspect(w / h);
+      }
+    };
+  }, [imageSrc]);
 
   const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels);
@@ -263,7 +280,12 @@ export function ImageCropperModal({ imageSrc, onCropDone, onCancel }) {
 
   const handleApply = async () => {
     try {
-      const croppedImageBase64 = await getCroppedImg(imageSrc, croppedAreaPixels);
+      const croppedImageBase64 = await getCroppedImg(
+        imageSrc,
+        croppedAreaPixels,
+        512,
+        "image/png",
+      );
       onCropDone(croppedImageBase64);
     } catch (e) {
       console.error(e);
@@ -289,8 +311,8 @@ export function ImageCropperModal({ imageSrc, onCropDone, onCancel }) {
             image={imageSrc}
             crop={crop}
             zoom={zoom}
-            aspect={1}
-            cropShape="round"
+            aspect={aspect}
+            cropShape="rect"
             showGrid={false}
             onCropChange={setCrop}
             onCropComplete={onCropComplete}
