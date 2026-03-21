@@ -3,6 +3,7 @@ import {
   Sun,
   ChevronLeft,
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 import bgImage from "../assets/studium.png";
 

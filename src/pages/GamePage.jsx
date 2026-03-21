@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Plus, Search, Minus, Trophy, Users, Settings, X } from "lucide-react";
+import { Plus, Search, Minus, Trophy, Users, Settings, X, Pencil } from "lucide-react";
 import { studentsDB, gameArenaDB } from "../data/storage";
 import { Page, Navbar } from "../components/UI";
 import { motion as Motion, AnimatePresence } from "framer-motion";
@@ -103,13 +103,15 @@ export function GamePage({ onBack, onGoHome }) {
   );
   const [addingToTeam, setAddingToTeam] = useState(null);
   const [newMemberName, setNewMemberName] = useState("");
-  /** null | 'team' | 'game' — مربع في منتصف الشاشة لإدخال الاسم */
+  /** null | 'team' | 'game' | 'renameTeam' — مربع في منتصف الشاشة لإدخال الاسم */
   const [nameModal, setNameModal] = useState(null);
   const [modalNameInput, setModalNameInput] = useState("");
+  const [renameTeamId, setRenameTeamId] = useState(null);
 
   const closeNameModal = () => {
     setNameModal(null);
     setModalNameInput("");
+    setRenameTeamId(null);
   };
 
   useEffect(() => {
@@ -148,6 +150,23 @@ export function GamePage({ onBack, onGoHome }) {
 
   const handleRemoveMember = (teamId, index) => {
     setTeams(prev => prev.map(t => t.id === teamId ? { ...t, members: t.members.filter((_, i) => i !== index) } : t));
+  };
+
+  const openRenameTeamModal = (teamId) => {
+    const t = teams.find((x) => x.id === teamId);
+    if (!t) return;
+    setRenameTeamId(teamId);
+    setModalNameInput(t.name);
+    setNameModal("renameTeam");
+  };
+
+  const confirmRenameTeam = () => {
+    const name = modalNameInput.trim();
+    if (!name || !renameTeamId) return;
+    setTeams((prev) =>
+      prev.map((t) => (t.id === renameTeamId ? { ...t, name } : t)),
+    );
+    closeNameModal();
   };
 
   const openTeamNameModal = () => {
@@ -293,6 +312,14 @@ export function GamePage({ onBack, onGoHome }) {
                           <div className="flex justify-between items-start gap-3">
                             <span className={`font-bold text-sm leading-snug min-w-0 flex-1 text-right ${team.theme.accent}`}>{team.name}</span>
                             <div className="flex shrink-0 items-center gap-1.5">
+                               <button
+                                 type="button"
+                                 onClick={() => openRenameTeamModal(team.id)}
+                                 className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 text-slate-400 hover:text-amber-400 border border-white/5"
+                                 title="تغيير اسم الفريق"
+                               >
+                                 <Pencil size={14} strokeWidth={2.5} />
+                               </button>
                                <button type="button" onClick={() => { setAddingToTeam(addingToTeam === team.id ? null : team.id); setNewMemberName(""); }} className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 text-slate-400 hover:text-sky-400 border border-white/5" title="عضو">
                                  {addingToTeam === team.id ? <Minus size={12} strokeWidth={3} /> : <Plus size={12} strokeWidth={3} />}
                                </button>
@@ -350,7 +377,14 @@ export function GamePage({ onBack, onGoHome }) {
              'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
           }`}>
              {teams.map((team, idx) => (
-                <TeamCard key={team.id} team={team} games={games} handleRemoveTeam={handleRemoveTeam} delay={idx * 0.1} />
+                <TeamCard
+                  key={team.id}
+                  team={team}
+                  games={games}
+                  handleRemoveTeam={handleRemoveTeam}
+                  onRenameTeam={openRenameTeamModal}
+                  delay={idx * 0.1}
+                />
              ))}
           </div>
 
@@ -385,7 +419,11 @@ export function GamePage({ onBack, onGoHome }) {
                   id="game-name-modal-title"
                   className="text-lg font-black text-white tracking-tight"
                 >
-                  {nameModal === "team" ? "فريق جديد" : "جولة جديدة"}
+                  {nameModal === "renameTeam"
+                    ? "تعديل اسم الفريق"
+                    : nameModal === "team"
+                      ? "فريق جديد"
+                      : "جولة جديدة"}
                 </h4>
                 <button
                   type="button"
@@ -397,7 +435,11 @@ export function GamePage({ onBack, onGoHome }) {
                 </button>
               </div>
               <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
-                {nameModal === "team" ? "اسم الفريق" : "اسم الجولة"}
+                {nameModal === "renameTeam"
+                  ? "الاسم الجديد"
+                  : nameModal === "team"
+                    ? "اسم الفريق"
+                    : "اسم الجولة"}
               </label>
               <input
                 type="text"
@@ -406,12 +448,17 @@ export function GamePage({ onBack, onGoHome }) {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    if (nameModal === "team") confirmAddTeam();
+                    if (nameModal === "renameTeam") confirmRenameTeam();
+                    else if (nameModal === "team") confirmAddTeam();
                     else confirmAddGame();
                   }
                 }}
                 placeholder={
-                  nameModal === "team" ? "اكتب اسم الفريق..." : "اكتب اسم الجولة..."
+                  nameModal === "renameTeam"
+                    ? "اسم الفريق..."
+                    : nameModal === "team"
+                      ? "اكتب اسم الفريق..."
+                      : "اكتب اسم الجولة..."
                 }
                 className="tech-input w-full !rounded-xl !h-12 !text-base mb-6"
                 autoFocus
@@ -427,11 +474,19 @@ export function GamePage({ onBack, onGoHome }) {
                 <button
                   type="button"
                   onClick={
-                    nameModal === "team" ? confirmAddTeam : confirmAddGame
+                    nameModal === "renameTeam"
+                      ? confirmRenameTeam
+                      : nameModal === "team"
+                        ? confirmAddTeam
+                        : confirmAddGame
                   }
                   className="flex-1 h-12 rounded-xl tech-btn-primary font-extrabold"
                 >
-                  {nameModal === "team" ? "إضافة الفريق" : "إضافة الجولة"}
+                  {nameModal === "renameTeam"
+                    ? "حفظ الاسم"
+                    : nameModal === "team"
+                      ? "إضافة الفريق"
+                      : "إضافة الجولة"}
                 </button>
               </div>
             </Motion.div>
@@ -442,13 +497,23 @@ export function GamePage({ onBack, onGoHome }) {
   );
 }
 
-const TeamCard = ({ team, games, handleRemoveTeam, delay }) => {
+const TeamCard = ({ team, games, handleRemoveTeam, onRenameTeam, delay }) => {
   const { glow, accent, border } = team.theme;
   return (
     <Motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }} className="flex flex-col relative group h-full min-h-[500px]">
       <div className={`tech-panel !p-6 flex-1 flex flex-col relative overflow-hidden h-full border ${border} hover:border-white/10 transition-all duration-500`}>
         <div className={`absolute top-0 inset-x-0 h-1 bg-gradient-to-r ${glow}`} />
         
+        {/* تعديل اسم الفريق */}
+        <button
+           type="button"
+           onClick={() => onRenameTeam?.(team.id)}
+           className="absolute top-4 start-4 z-30 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-slate-950/90 text-slate-500 shadow-lg backdrop-blur-sm transition-all hover:border-amber-500/40 hover:text-amber-400 opacity-0 group-hover:opacity-100"
+           title="تغيير اسم الفريق"
+        >
+           <Pencil size={18} strokeWidth={2.5} />
+        </button>
+
         {/* حذف الفريق — داخل البطاقة (كان -top/-left يُقصّ بسبب overflow-hidden) */}
         <button
            type="button"
@@ -459,8 +524,8 @@ const TeamCard = ({ team, games, handleRemoveTeam, delay }) => {
            <Minus size={18} strokeWidth={3} />
         </button>
 
-        <div className="w-full text-center relative z-10 mb-8 pt-4">
-           <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase mb-2">{team.name}</h2>
+        <div className="w-full text-center relative z-10 mb-8 pt-4 px-4">
+           <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase mb-2 break-words">{team.name}</h2>
            <div className={`w-16 h-1 mx-auto bg-gradient-to-r ${glow} rounded-full opacity-60`} />
         </div>
 
