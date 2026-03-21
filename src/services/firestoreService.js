@@ -99,6 +99,16 @@ export const resetAttendanceFB = async (studentId) => {
 
 // --- COUPONS API --- //
 
+export const getAllCouponsFB = async () => {
+  if (!db) return {};
+  const querySnapshot = await getDocs(collection(db, "coupons"));
+  const coupons = {};
+  querySnapshot.forEach((doc) => {
+    coupons[doc.id] = doc.data().log || [];
+  });
+  return coupons;
+};
+
 export const getCouponsFB = async (studentId) => {
   if (!db) return [];
   const ds = await getDoc(doc(db, "coupons", studentId));
