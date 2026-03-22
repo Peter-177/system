@@ -75,6 +75,9 @@ export function HomePage({
   onGoAdmin,
   onGoGame,
   onLogout,
+  onGoSearch_Summer,
+  onGoAttendance_Summer,
+  onGoGame_Summer,
 }) {
 
   const cards = [
@@ -210,13 +213,18 @@ export function HomePage({
         </main>
 
         {/* Portal Animation Section */}
-        <PortalDive onGoHome={handleGoHome} />
+        <PortalDive 
+          onGoHome={handleGoHome} 
+          onGoSearch={onGoSearch_Summer}
+          onGoAttendance={onGoAttendance_Summer}
+          onGoGame={onGoGame_Summer}
+        />
       </div>
     </Page>
   );
 }
 
-function PortalDive({ onGoHome }) {
+function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame }) {
   const portalSectionRef = useRef(null);
   const portalContentRef = useRef(null);
   const portalTextRef = useRef(null);
@@ -229,8 +237,8 @@ function PortalDive({ onGoHome }) {
           scrollTrigger: {
             trigger: portalSectionRef.current,
             start: "top top",
-            end: "+=4000",
-            scrub: 1,
+            end: "+=2000",
+            scrub: 0.5,
             pin: true,
             invalidateOnRefresh: true,
             pinSpacing: true,
@@ -319,7 +327,12 @@ function PortalDive({ onGoHome }) {
           willChange: "clip-path, opacity",
         }}
       >
-        <SummerSection onGoHome={onGoHome} />
+        <SummerSection 
+          onGoHome={onGoHome} 
+          onGoSearch={onGoSearch}
+          onGoAttendance={onGoAttendance}
+          onGoGame={onGoGame}
+        />
       </div>
 
       {/* 2. Hero Text (Floating outside/above the window) */}

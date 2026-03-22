@@ -154,18 +154,93 @@ export function AdminPage({
 
   const handleExportExcel = () => {
     const students = studentsDB.getAll();
-    const data = Object.entries(students).map(([qrId, s]) => ({
-      "الكود (ID)": qrId,
-      الاسم: s.name || "",
-      "السنة الدراسية": s.year || "",
-      العنوان: s.address || "",
-      "رقم التليفون": s.phone || "",
-      "تاريخ الميلاد": s.birthdate || "",
-    }));
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "بيانات الأطفال");
-    XLSX.writeFile(wb, "البيانات_المصدرة.xlsx");
+    const rows = Object.entries(students).map(([qrId, s]) => {
+      const customString = (s.customFields || [])
+        .map(f => `${f.label}: ${f.value}`)
+        .join(" | ");
+
+      return [
+        qrId,
+        s.name || "",
+        s.year || "",
+        s.phone || "",
+        s.address || "",
+        s.birthdate || "",
+        customString
+      ];
+    });
+
+    const html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8" />
+        <!--[if gte mso 9]>
+        <xml>
+         <x:ExcelWorkbook>
+          <x:ExcelWorksheets>
+           <x:ExcelWorksheet>
+            <x:Name>البيانات</x:Name>
+            <x:WorksheetOptions>
+             <x:DisplayRightToLeft/>
+             <x:FreezePanes/>
+             <x:FrozenNoSplit/>
+             <x:SplitHorizontal>1</x:SplitHorizontal>
+             <x:TopRowBottomPane>1</x:TopRowPane>
+            </x:WorksheetOptions>
+           </x:ExcelWorksheet>
+          </x:ExcelWorksheets>
+         </x:ExcelWorkbook>
+        </xml>
+        <![endif]-->
+        <style>
+          table { border-collapse: collapse; font-family: 'Segoe UI', tahoma, sans-serif; }
+          th { background-color: #1F4E78; color: #FFFFFF; font-weight: bold; border: 1px solid #B4C6E7; padding: 10px; text-align: center; font-size: 14px; }
+          td { border: 1px solid #D9E1F2; padding: 8px; text-align: center; color: #333333; font-size: 13px; vertical-align: middle; }
+          .even td { background-color: #F8F9FA; }
+          .odd td { background-color: #FFFFFF; }
+        </style>
+      </head>
+      <body dir="rtl">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 100px;">الكود (ID)</th>
+              <th style="width: 250px;">الاسم</th>
+              <th style="width: 120px;">السنة الدراسية</th>
+              <th style="width: 150px;">رقم التليفون</th>
+              <th style="width: 300px;">العنوان</th>
+              <th style="width: 120px;">تاريخ الميلاد</th>
+              <th style="width: 300px;">تفاصيل إضافية</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((r, i) => `
+            <tr class="${i % 2 === 0 ? 'even' : 'odd'}">
+              <td style="mso-number-format:'\@';">${r[0]}</td>
+              <td><b>${r[1]}</b></td>
+              <td>${r[2]}</td>
+              <td style="mso-number-format:'\@'; color: #1F4E78; font-weight: bold;">${r[3]}</td>
+              <td>${r[4]}</td>
+              <td>${r[5]}</td>
+              <td style="color: #666; font-style: italic;">${r[6]}</td>
+            </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+
+    // \ufeff enables UTF-8 BOM so Excel reads Arabic perfectly
+    const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "بيانات_مدارس_الاحد.xls";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const renderSidebar = () => (

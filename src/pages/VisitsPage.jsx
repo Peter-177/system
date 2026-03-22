@@ -11,12 +11,15 @@ import {
   Users,
   Home as HomeIcon,
   CheckCircle2,
+  AlertTriangle,
+  Info,
 } from "lucide-react";
 import { gsap } from "gsap";
 
 export function VisitsPage({ onBack, onGoVisitsHistory }) {
   const [query, setQuery] = useState("");
   const [pendingList, setPendingList] = useState([]);
+  const [showNotification, setShowNotification] = useState(true);
   const toast = useToast();
   const inputRef = useRef(null);
 
@@ -87,6 +90,19 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
       .slice(0, 5);
   }, [query, allStudents]);
 
+  const missingVisits = useMemo(() => {
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+    return allStudents.filter(s => {
+      const log = visitsDB.get(s.qrId);
+      if (!log || log.length === 0) return true; // Never visited
+
+      const lastVisit = new Date(log[log.length - 1].timestamp);
+      return lastVisit < threeMonthsAgo;
+    });
+  }, [allStudents]);
+
   // Framer Motion Variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -111,6 +127,46 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
         className="flex-1 w-full max-w-4xl mx-auto px-6 py-8 flex flex-col gap-6"
         dir="rtl"
       >
+        {/* Missing Visits Notification */}
+        <AnimatePresence>
+          {showNotification && missingVisits.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: "auto", marginBottom: 24 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              className="bg-amber-500/10 border border-amber-500/30 rounded-[2rem] overflow-hidden"
+            >
+              <div className="p-6 flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-amber-500">
+                    <AlertTriangle className="w-6 h-6" />
+                    <h3 className="text-lg font-black tracking-tight">مخدومين لم تتم زيارتهم منذ 3 شهور</h3>
+                  </div>
+                  <button 
+                    onClick={() => setShowNotification(false)}
+                    className="p-2 hover:bg-amber-500/10 rounded-full text-amber-500/50 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 text-white">
+                  {missingVisits.map(s => (
+                    <div key={s.qrId} className="px-3 py-1.5 bg-[#0F2545] border border-[#1A3D63] rounded-xl text-xs font-bold flex items-center gap-2">
+                       <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                       {s.name}
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="flex items-center gap-2 text-[10px] text-amber-500/60 font-black uppercase tracking-widest mt-1">
+                  <Info className="w-3.5 h-3.5" />
+                  <span>برجاء المتابعة مع هؤلاء المخدومين في أقرب وقت.</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         {/* Top Controls Box */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}

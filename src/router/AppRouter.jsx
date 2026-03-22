@@ -24,13 +24,14 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
   const [pendingId,    setPendingId]    = useState("");
   const [activeClass,  setActiveClass]  = useState(null);
 
-  const setPage = useCallback((newPage, customPerson = activePerson, replace = false) => {
+  const setPage = useCallback((newPage, customPerson = activePerson, replace = false, isSummer = false) => {
     if (!replace && newPage === page && JSON.stringify(customPerson) === JSON.stringify(activePerson)) return;
 
+    const state = { page: newPage, person: customPerson, isSummer };
     if (replace) {
-      window.history.replaceState({ page: newPage, person: customPerson }, "");
+      window.history.replaceState(state, "");
     } else {
-      window.history.pushState({ page: newPage, person: customPerson }, "");
+      window.history.pushState(state, "");
     }
     setPageState(newPage);
   }, [activePerson, page]);
@@ -48,6 +49,16 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
         setPageState(e.state.page);
         setActivePersonState(e.state.person);
         if (e.state.activeClass) setActiveClass(e.state.activeClass);
+        
+        // Auto-scroll to summer if returning to home from a summer-originated page
+        if (e.state.page === "home" && e.state.isSummer) {
+          requestAnimationFrame(() => {
+            setTimeout(() => {
+              const portal = document.getElementById("summer-portal");
+              if (portal) portal.scrollIntoView({ behavior: "smooth" });
+            }, 100);
+          });
+        }
       }
     };
     window.addEventListener("popstate", onPopState);
@@ -93,14 +104,26 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
     onGoClasses:    () => setPage("classes"),
     onGoAdmin:      () => setPage("admin"),
     onGoGame:       () => setPage("game"),
-    currentUser,
     onLogout
+  };
 
+  const summerProps = {
+    ...homeProps,
+    onGoSearch:     () => setPage("search", activePerson, false, true),
+    onGoAttendance: () => { setActivePerson(null); setPage("attendance", null, false, true); },
+    onGoGame:       () => setPage("game", activePerson, false, true),
   };
 
   switch (page) {
     case "home":
-      return <HomePage {...homeProps} />;
+      return (
+        <HomePage 
+          {...homeProps} 
+          onGoSearch_Summer={summerProps.onGoSearch} 
+          onGoAttendance_Summer={summerProps.onGoAttendance} 
+          onGoGame_Summer={summerProps.onGoGame} 
+        />
+      );
     case "search":
       return <SearchPage currentUser={currentUser} onBack={()=>window.history.back()} onGoStudent={goStudent} onGoAdd={()=>setPage("add")} />;
     case "birthday":

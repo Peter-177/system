@@ -18,7 +18,10 @@ import {
   ArrowRight,
   AlertCircle,
   X,
-  Fingerprint
+  Fingerprint,
+  Heart,
+  School,
+  StickyNote
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -59,10 +62,10 @@ export function EditPage({ person, onBack, onSaved }) {
     birthdate_d: bDay || "",
     birthdate_m: bMonth || "",
     birthdate_y: bYear || "",
-    year: person.year ?? "",
     phone: person.phone ?? "",
     image: person.image ?? null,
   });
+  const [customFields, setCustomFields] = useState(person.customFields || []);
   const [errors, setErrors] = useState({});
   const toast = useToast();
 
@@ -87,6 +90,20 @@ export function EditPage({ person, onBack, onSaved }) {
   const handleCropDone = (croppedBase64) => {
     upd("image", croppedBase64);
     setCropImageSrc(null);
+  };
+
+  const handleAddCustomField = () => {
+    setCustomFields([...customFields, { id: Date.now().toString(), label: "", value: "" }]);
+  };
+
+  const handleCustomFieldChange = (id, field, val) => {
+    setCustomFields(
+      customFields.map((f) => (f.id === id ? { ...f, [field]: val } : f))
+    );
+  };
+
+  const handleRemoveCustomField = (id) => {
+    setCustomFields(customFields.filter((f) => f.id !== id));
   };
 
   const handleSave = async () => {
@@ -114,7 +131,16 @@ export function EditPage({ person, onBack, onSaved }) {
         : "";
 
     const { qrId, birthdate_d, birthdate_m, birthdate_y, ...restForm } = form; 
-    const updated = { ...restForm, birthdate: bd, name: restForm.name.trim() };
+    
+    // Filter out empty custom fields
+    const validCustomFields = customFields.filter(f => f.label.trim() || f.value.trim());
+
+    const updated = { 
+        ...restForm, 
+        birthdate: bd, 
+        name: restForm.name.trim(),
+        customFields: validCustomFields
+    };
 
     studentsDB.update(newId, updated);
     toast.show("✅ تم التعديل!");
@@ -331,6 +357,62 @@ export function EditPage({ person, onBack, onSaved }) {
                 </div>
               ),
             )}
+
+            {/* Dynamic Custom Fields (Appears directly after standard fields) */}
+            <AnimatePresence>
+                {customFields.map((field) => (
+                    <motion.div
+                        key={field.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="col-span-2 space-y-4"
+                    >
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                                <Sparkles className="w-5 h-5 text-sky-500/50" />
+                                <input
+                                    className="bg-transparent border-none p-0 text-xs font-black text-sky-400 uppercase tracking-[0.3em] focus:ring-0 w-72 placeholder:text-slate-700"
+                                    placeholder="تسمية الحقل الجديد... (مثلاً: اسم الأم)"
+                                    value={field.label}
+                                    onChange={(e) => handleCustomFieldChange(field.id, "label", e.target.value)}
+                                />
+                            </div>
+                            <button
+                                onClick={() => handleRemoveCustomField(field.id)}
+                                className="text-[10px] font-black text-red-500/40 hover:text-red-400 uppercase tracking-widest flex items-center gap-1 transition-colors"
+                            >
+                                <X size={10} /> حذف
+                            </button>
+                        </div>
+
+                        <div className="relative group">
+                            <input
+                                className="tech-input h-16 w-full bg-slate-950/50 pr-12 focus:border-sky-500/40 focus:bg-slate-950 transition-all text-white"
+                                placeholder={`اكتب ${field.label || 'بيانات إضافية'}...`}
+                                value={field.value}
+                                onChange={(e) => handleCustomFieldChange(field.id, "value", e.target.value)}
+                            />
+                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-700 group-focus-within:text-sky-500/40 transition-colors">
+                                <Plus size={18} />
+                            </div>
+                        </div>
+                    </motion.div>
+                ))}
+            </AnimatePresence>
+
+            {/* Add Button Placeholder */}
+            <div className="col-span-2 pt-4">
+                <button
+                    onClick={handleAddCustomField}
+                    className="w-full h-16 rounded-2xl border-2 border-dashed border-white/5 hover:border-sky-500/20 hover:bg-sky-500/5 flex items-center justify-center gap-3 transition-all group"
+                >
+                    <div className="w-8 h-8 rounded-lg bg-slate-950 flex items-center justify-center text-slate-600 group-hover:text-sky-400 transition-colors">
+                        <Plus size={16} />
+                    </div>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] group-hover:text-sky-300">إضافة حقل مخصص جديد</span>
+                </button>
+            </div>
           </motion.div>
 
           {/* Action Buttons */}

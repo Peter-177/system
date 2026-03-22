@@ -1,8 +1,11 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { Plus, Search, Minus, Trophy, Users, Settings, X, Pencil } from "lucide-react";
+import React, { useState, useMemo, useEffect, useRef, useLayoutEffect } from "react";
+import { Plus, Search, Minus, Trophy, Users, Settings, X, Pencil, Crown, Medal } from "lucide-react";
 import { studentsDB, gameArenaDB } from "../data/storage";
 import { Page, Navbar } from "../components/UI";
 import { motion as Motion, AnimatePresence } from "framer-motion";
+import gsap from "gsap";
+
+
 
 const GAME_TEAM_COLORS = [
   { name: "blue", glow: "from-[#4A7FA7] to-[#011C40]", accent: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20" },
@@ -26,6 +29,12 @@ const DEFAULT_GAMES = (teamIds) => {
   return [{ id: 1, name: "الجولة الأولى", scores }];
 };
 
+function getRandomColor(usedNames = []) {
+  const available = GAME_TEAM_COLORS.filter(c => !usedNames.includes(c.name));
+  const pool = available.length > 0 ? available : GAME_TEAM_COLORS;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 function mergeTeamTheme(theme, index) {
   if (
     theme &&
@@ -35,7 +44,8 @@ function mergeTeamTheme(theme, index) {
   ) {
     return theme;
   }
-  return GAME_TEAM_COLORS[index % GAME_TEAM_COLORS.length];
+  // Fallback: assign random color (not purely sequential)
+  return GAME_TEAM_COLORS[Math.floor(Math.random() * GAME_TEAM_COLORS.length)];
 }
 
 /** تحميل من localStorage مع مزامنة نقاط الجولات مع معرفات الفرق */
@@ -107,6 +117,7 @@ export function GamePage({ onBack, onGoHome }) {
   const [nameModal, setNameModal] = useState(null);
   const [modalNameInput, setModalNameInput] = useState("");
   const [renameTeamId, setRenameTeamId] = useState(null);
+  const [showResults, setShowResults] = useState(false);
 
   const closeNameModal = () => {
     setNameModal(null);
@@ -178,8 +189,8 @@ export function GamePage({ onBack, onGoHome }) {
     const name = modalNameInput.trim();
     if (!name) return;
     const newId = `T${Date.now()}`;
-    const theme =
-      GAME_TEAM_COLORS[teams.length % GAME_TEAM_COLORS.length];
+    const usedColors = teams.map(t => t.theme?.name).filter(Boolean);
+    const theme = getRandomColor(usedColors);
     setTeams((prev) => [...prev, { id: newId, name, members: [], theme }]);
     setGames((prev) =>
       prev.map((g) => ({ ...g, scores: { ...g.scores, [newId]: "" } })),
@@ -227,10 +238,13 @@ export function GamePage({ onBack, onGoHome }) {
   return (
     <Page>
       <Navbar
-        title="ساحة الألعاب / Game Arena"
-        onBack={onBack ?? onGoHome}
+        title={showResults ? "النتيجة النهائية / Final Results" : "ساحة الألعاب / Game Arena"}
+        onBack={showResults ? () => setShowResults(false) : (onBack ?? onGoHome)}
       />
 
+      {showResults ? (
+        <ResultsView teams={teams} games={games} />
+      ) : (
       <div className="flex-1 w-full flex flex-col relative z-10" dir="rtl">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-500/5 rounded-full blur-[150px] -z-10 pointer-events-none" />
         
@@ -387,9 +401,28 @@ export function GamePage({ onBack, onGoHome }) {
                 />
              ))}
           </div>
+        </div>
 
+        {/* Action Button: The Result */}
+        <div className="w-full flex flex-col items-center justify-center pt-8 pb-20 relative z-20">
+           {/* Visual Glow behind the button */}
+           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[200px] bg-sky-500/10 rounded-full blur-[100px] -z-10" />
+           
+           <Motion.button
+              onClick={() => setShowResults(true)}
+              whileHover={{ scale: 1.05, y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              className="tech-btn-primary px-16 py-6 !rounded-[2rem] flex items-center gap-5 shadow-[0_25px_50px_rgba(0,0,0,0.4)] border border-sky-400/40 group relative overflow-hidden"
+           >
+              <div clas sName="absolute inset-0 bg-gradient-to-r from-sky-600/20 to-indigo-600/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative flex items-center gap-5">
+                 <Trophy size={36} className="text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.6)]" />
+                 <span className="text-4xl font-black tracking-tight text-white drop-shadow-lg">النتيجة</span>
+              </div>
+           </Motion.button>
         </div>
       </div>
+      )}
 
       <AnimatePresence>
         {nameModal && (
@@ -497,6 +530,117 @@ export function GamePage({ onBack, onGoHome }) {
   );
 }
 
+const ResultsView = ({ teams, games }) => {
+  const containerRef = useRef(null);
+  const cardsRef = useRef([]);
+
+  const results = useMemo(() => {
+    return teams.map(t => {
+      let score = 0;
+      games.forEach(g => {
+        score += Number(g.scores[t.id]) || 0;
+      });
+      return { ...t, score };
+    }).sort((a, b) => b.score - a.score);
+  }, [teams, games]);
+
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      
+      gsap.set(cardsRef.current, { opacity: 0, y: 80, scale: 0.9 });
+      
+      tl.to(cardsRef.current, {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.8,
+        stagger: {
+          each: 0.7,
+          from: "end"
+        }
+      })
+      .to(cardsRef.current[0], {
+        scale: 1.05,
+        boxShadow: "0 0 50px rgba(251, 191, 36, 0.4)",
+        borderColor: "rgba(251, 191, 36, 0.8)",
+        duration: 0.8,
+        ease: "back.out(1.5)"
+      });
+    }, containerRef);
+    
+    return () => ctx.revert();
+  }, [results]);
+
+  return (
+    <div className="flex-1 w-full flex flex-col items-center p-4 md:p-10 relative z-10" dir="rtl" ref={containerRef}>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-sky-500/10 rounded-full blur-[150px] -z-10 pointer-events-none" />
+      
+      <h1 className="text-4xl md:text-5xl font-black text-white mb-10 tracking-tight drop-shadow-md">الترتيب النهائي</h1>
+      
+      <div className="w-full max-w-3xl flex flex-col gap-5 pb-20">
+        {results.map((team, index) => {
+          const isFirstPlace = index === 0;
+          
+          return (
+            <div 
+              key={team.id}
+              ref={el => cardsRef.current[index] = el}
+              className={`relative flex items-center justify-between p-5 md:p-8 rounded-[1.5rem] border overflow-hidden backdrop-blur-md transition-colors ${
+                isFirstPlace 
+                  ? 'bg-slate-900/80 border-amber-500/40' 
+                  : 'bg-slate-900/50 border-white/5'
+              }`}
+            >
+              {isFirstPlace && (
+                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-amber-400 to-amber-600" />
+              )}
+              
+              <div className="flex items-center gap-5 md:gap-8 z-10">
+                <div className={`w-14 h-14 md:w-20 md:h-20 shrink-0 rounded-[1rem] md:rounded-[1.5rem] flex items-center justify-center border-2 border-b-4 ${
+                  isFirstPlace 
+                    ? 'bg-gradient-to-b from-amber-300 to-amber-600 border-amber-200 text-white shadow-[0_0_20px_rgba(251,191,36,0.6)]' 
+                    : index === 1 
+                      ? 'bg-gradient-to-b from-slate-300 to-slate-500 border-slate-200 text-white shadow-lg'
+                      : index === 2
+                        ? 'bg-gradient-to-b from-orange-400 to-red-600 border-orange-300 text-white shadow-lg'
+                        : 'bg-slate-800 border-slate-700 text-slate-400'
+                }`}>
+                  {isFirstPlace ? (
+                     <Crown className="w-8 h-8 md:w-10 md:h-10 text-amber-100" />
+                  ) : index === 1 || index === 2 ? (
+                     <Medal className="w-8 h-8 md:w-10 md:h-10 opacity-80" />
+                  ) : (
+                     <span className="text-2xl font-black">{index + 1}</span>
+                  )}
+                </div>
+                
+                <h2 className={`text-2xl md:text-4xl font-black tracking-tighter truncate ${isFirstPlace ? 'bg-gradient-to-br from-amber-200 to-amber-500 bg-clip-text text-transparent' : 'text-slate-200'}`}>
+                  {team.name}
+                </h2>
+              </div>
+              
+              <div className="flex flex-col items-end z-10">
+                <span className={`text-4xl md:text-6xl font-black tabular-nums tracking-tighter ${isFirstPlace ? 'text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]' : 'text-white drop-shadow-md'}`}>
+                  {team.score}
+                </span>
+                <span className={`text-[10px] md:text-xs font-black uppercase tracking-widest ${isFirstPlace ? 'text-amber-500/60' : 'text-slate-500'}`}>
+                  Points
+                </span>
+              </div>
+
+              {isFirstPlace && (
+                <div className="absolute -right-10 -bottom-10 opacity-5 pointer-events-none">
+                   <Trophy size={180} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 const TeamCard = ({ team, games, handleRemoveTeam, onRenameTeam, delay }) => {
   const { glow, accent, border } = team.theme;
   return (

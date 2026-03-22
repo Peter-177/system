@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Page, Navbar, StudentMiniCard } from "../components/UI";
 import { studentsDB } from "../data/storage";
 import { motion, AnimatePresence } from "framer-motion";

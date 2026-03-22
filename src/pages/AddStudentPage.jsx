@@ -18,7 +18,10 @@ import {
   CalendarDays,
   UserCheck,
   AlertCircle,
-  X
+  X,
+  Heart,
+  School,
+  StickyNote
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 

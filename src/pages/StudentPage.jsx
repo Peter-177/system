@@ -109,7 +109,7 @@ export function StudentPage({
 
               {/* Info fields */}
               <div
-                className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${showDetails ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"}`}
+                className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${showDetails ? "max-h-[1200px] opacity-100" : "max-h-0 opacity-0"}`}
               >
                 <div className="bg-black/20 backdrop-blur-md shadow-inner rounded-[2.5rem] p-6 sm:p-8 space-y-2 border border-black/10 mt-2">
                   {FIELDS.map(({ icon, label, key, fmt }) =>
@@ -130,6 +130,24 @@ export function StudentPage({
                       </div>
                     ) : null,
                   )}
+                  
+                  {/* Dynamic Custom Fields */}
+                  {person.customFields?.map((field) => (
+                    <div
+                      key={field.id}
+                      className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 border-b border-white/5 last:border-0 hover:bg-white/5 px-4 rounded-xl transition-colors duration-300 group"
+                    >
+                      <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#B3CFE5]/60 mb-1 sm:mb-0 flex items-center gap-2">
+                        <span className="text-sm opacity-80 group-hover:scale-110 transition-transform text-sky-400">
+                          ✨
+                        </span>{" "}
+                        {field.label}
+                      </span>
+                      <span className="font-black text-sky-100 text-lg lg:text-xl drop-shadow-sm">
+                        {field.value}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
 

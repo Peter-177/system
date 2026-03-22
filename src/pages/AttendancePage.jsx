@@ -54,12 +54,8 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
 
     return allStudents
       .filter((s) => targetClass.grades?.includes(s.year))
-      .sort((a, b) => {
-        const countA = attendanceDB.get(a.qrId).length;
-        const countB = attendanceDB.get(b.qrId).length;
-        if (countB !== countA) return countB - countA;
-        return a.name.localeCompare(b.name, "ar");
-      });
+      .filter((s) => registeredToday(attendanceDB.get(s.qrId))) // Only show present students
+      .sort((a, b) => a.name.localeCompare(b.name, "ar"));
   }, [selectedClass, allStudents, allClassesDB]);
 
   const addPerson = (student) => {
@@ -348,23 +344,12 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
                         <div className="flex items-center gap-3">
                           <span className="w-1.5 h-5 bg-indigo-600 rounded-full"></span>
                           <h3 className="text-lg font-black text-white">
-                            أطفال {allClassesDB[selectedClass]?.name}
+                            أطفال {allClassesDB[selectedClass]?.name} الحاضرين
                           </h3>
-                          <span className="text-xs bg-sky-500/20 border border-sky-500/30 px-2 py-0.5 rounded-full text-sky-300 font-black">
+                          <span className="text-xs bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full text-emerald-400 font-black">
                             {classRoster.length}
                           </span>
                         </div>
-                        {currentUser?.role === "admin" &&
-                          classRoster.some(
-                            (s) => !registeredToday(attendanceDB.get(s.qrId)),
-                          ) && (
-                            <button
-                              onClick={handleSaveClass}
-                              className="px-4 py-1.5 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-sky-500/20 transition-all shadow-sm"
-                            >
-                              تسجيل الكل
-                            </button>
-                          )}
                       </div>
 
                       <motion.div
@@ -375,7 +360,7 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
                       >
                         {classRoster.length === 0 ? (
                           <div className="py-12 border-2 border-dashed border-white/5 rounded-2xl text-center text-slate-400 font-bold text-sm">
-                            لا يوجد اطفال في هذا الفصل
+                            محدش حضر لسه من الفصل ده
                           </div>
                         ) : (
                           classRoster.map((s) => {
