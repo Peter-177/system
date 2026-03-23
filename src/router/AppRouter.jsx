@@ -82,6 +82,7 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
   };
 
   const homeProps = {
+    currentUser,
     onGoSearch:     () => setPage("search"),
     onGoAttendance: () => { setActivePerson(null); setPage("attendance"); },
     onGoHistory:    () => setPage("history"),

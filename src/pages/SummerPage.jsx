@@ -27,19 +27,9 @@ import bgImage from "../assets/studium.png";
 
 export function SummerSection({ onGoHome }) {
   const sectionRef = useRef(null);
-  const [entered, setEntered] = useState(false);
   const [internalView, setInternalView] = useState("menu"); // 'menu' | 'search' | 'attendance' | 'games'
   const [searchQuery, setSearchQuery] = useState("");
   const toast = useToast();
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { setEntered(entry.isIntersecting && entry.intersectionRatio >= 0.3); },
-      { threshold: [0, 0.3] }
-    );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, []);
 
   // Data Fetching
   const allStudents = useMemo(() => {
@@ -101,12 +91,12 @@ export function SummerSection({ onGoHome }) {
     <div ref={sectionRef} className="w-full h-full relative overflow-y-auto overflow-x-hidden bg-[#063d2f] custom-scrollbar">
       <Toast msg={toast.msg} />
       
-      {/* Background Layer */}
+      {/* Background Layer (Synchronized through GSAP in HomePage) */}
       <div 
-        className="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat transition-transform duration-[1500ms]"
+        className="summer-bg-layer fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat"
         style={{ 
           backgroundImage: `linear-gradient(to bottom, rgba(12, 92, 70, 0.72), rgba(4, 52, 40, 0.82)), url(${bgImage})`,
-          transform: entered ? "scale(1)" : "scale(1.15)"
+          transform: "scale(1.2)"
         }}
       ></div>
 
@@ -117,10 +107,8 @@ export function SummerSection({ onGoHome }) {
       </div>
 
       <motion.div
+        className="summer-stadium-content max-w-7xl mx-auto px-6 lg:px-12 relative z-10 flex flex-col items-center w-full min-h-full py-12"
         initial={{ opacity: 0, y: 40 }}
-        animate={entered ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 flex flex-col items-center w-full min-h-full py-12"
       >
         <header className="w-full flex justify-between items-center mb-12" dir="rtl">
           <button

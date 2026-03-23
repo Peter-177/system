@@ -237,8 +237,8 @@ function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame }) {
           scrollTrigger: {
             trigger: portalSectionRef.current,
             start: "top top",
-            end: "+=2000",
-            scrub: 0.5,
+            end: "+=2200",
+            scrub: 1.5,
             pin: true,
             invalidateOnRefresh: true,
             pinSpacing: true,
@@ -260,7 +260,7 @@ function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame }) {
           "start",
         );
 
-        // 2. The "Window" expands
+        // 2. The "Window" expands & Background scales down
         tl.fromTo(
           portalContentRef.current,
           {
@@ -276,13 +276,22 @@ function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame }) {
           "start",
         );
 
-        // 3. Summer content begins to reveal more clearly at mid
-        tl.to(
-          portalContentRef.current.querySelector("#summer-hero"),
+        tl.fromTo(
+          ".summer-bg-layer",
+          { scale: 1.25 },
+          { scale: 1, duration: 1, ease: "power2.inOut" },
+          "start",
+        );
+
+        // 3. New Unified Summer Content Reveal (Sync with scroll)
+        tl.fromTo(
+          ".summer-stadium-content",
+          { opacity: 0, y: 120 },
           {
             opacity: 1,
             y: 0,
-            duration: 0.5,
+            duration: 0.7,
+            ease: "power2.out",
           },
           "mid",
         );
