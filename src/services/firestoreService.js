@@ -61,23 +61,29 @@ export const getAllAttendanceFB = async () => {
   const querySnapshot = await getDocs(collection(db, "attendance"));
   const attendance = {};
   querySnapshot.forEach((doc) => {
-    attendance[doc.id] = doc.data().log || [];
+    const data = doc.data();
+    const sid = data.sid || doc.id; // Use stored sid or fallback to doc id
+    attendance[sid] = data.log || [];
   });
   return attendance;
 };
 
-export const addAttendanceFB = async (studentId, entry) => {
+export const addAttendanceFB = async (studentId, entry, originalSid) => {
   if (!db) return;
   const ref = doc(db, "attendance", studentId);
   const ds = await getDoc(ref);
   if (!ds.exists()) {
-    await setDoc(ref, { log: [entry] });
+    await setDoc(ref, { 
+      sid: originalSid || studentId, 
+      log: [entry] 
+    });
   } else {
-    // We add to the beginning by updating the whole array or using arrayUnion
-    // But arrayUnion adds to the end. The local version prepended (unshift).
     const log = ds.data().log || [];
     log.unshift(entry);
-    await updateDoc(ref, { log });
+    await updateDoc(ref, { 
+      sid: originalSid || ds.data().sid || studentId,
+      log 
+    });
   }
 };
 
@@ -87,7 +93,7 @@ export const removeAttendanceFB = async (studentId, entryId) => {
   const ds = await getDoc(ref);
   if (ds.exists()) {
     const log = ds.data().log || [];
-    const newLog = log.filter(x => x.id !== entryId);
+    const newLog = log.filter(x => (x.recordId || x.id) !== entryId);
     await updateDoc(ref, { log: newLog });
   }
 };
@@ -97,14 +103,64 @@ export const resetAttendanceFB = async (studentId) => {
   await deleteDoc(doc(db, "attendance", studentId));
 };
 
-// --- COUPONS API --- //
+// --- SUMMER ATTENDANCE API --- //
+
+export const getAllSummerAttendanceFB = async () => {
+  if (!db) return {};
+  const querySnapshot = await getDocs(collection(db, "summerAttendance"));
+  const attendance = {};
+  querySnapshot.forEach((doc) => {
+    const data = doc.data();
+    const sid = data.sid || doc.id;
+    attendance[sid] = data.log || [];
+  });
+  return attendance;
+};
+
+export const addSummerAttendanceFB = async (studentId, entry, originalSid) => {
+  if (!db) return;
+  const ref = doc(db, "summerAttendance", studentId);
+  const ds = await getDoc(ref);
+  if (!ds.exists()) {
+    await setDoc(ref, { 
+      sid: originalSid || studentId,
+      log: [entry] 
+    });
+  } else {
+    const log = ds.data().log || [];
+    log.unshift(entry);
+    await updateDoc(ref, { 
+      sid: originalSid || ds.data().sid || studentId,
+      log 
+    });
+  }
+};
+
+export const removeSummerAttendanceFB = async (studentId, entryId) => {
+  if (!db) return;
+  const ref = doc(db, "summerAttendance", studentId);
+  const ds = await getDoc(ref);
+  if (ds.exists()) {
+    const log = ds.data().log || [];
+    const newLog = log.filter(x => (x.recordId || x.id) !== entryId);
+    await updateDoc(ref, { log: newLog });
+  }
+};
+
+export const resetSummerAttendanceFB = async (studentId) => {
+  if (!db) return;
+  await deleteDoc(doc(db, "summerAttendance", studentId));
+};
+
 
 export const getAllCouponsFB = async () => {
   if (!db) return {};
   const querySnapshot = await getDocs(collection(db, "coupons"));
   const coupons = {};
   querySnapshot.forEach((doc) => {
-    coupons[doc.id] = doc.data().log || [];
+    const data = doc.data();
+    const sid = data.sid || doc.id;
+    coupons[sid] = data.log || [];
   });
   return coupons;
 };
@@ -118,16 +174,22 @@ export const getCouponsFB = async (studentId) => {
   return [];
 };
 
-export const addCouponFB = async (studentId, entry) => {
+export const addCouponFB = async (studentId, entry, originalSid) => {
   if (!db) return;
   const ref = doc(db, "coupons", studentId);
   const ds = await getDoc(ref);
   if (!ds.exists()) {
-    await setDoc(ref, { log: [entry] });
+    await setDoc(ref, { 
+      sid: originalSid || studentId,
+      log: [entry] 
+    });
   } else {
     const log = ds.data().log || [];
     log.push(entry);
-    await updateDoc(ref, { log });
+    await updateDoc(ref, { 
+      sid: originalSid || ds.data().sid || studentId,
+      log 
+    });
   }
 };
 
@@ -137,7 +199,8 @@ export const removeCouponFB = async (studentId, entryId) => {
   const ds = await getDoc(ref);
   if (ds.exists()) {
     const log = ds.data().log || [];
-    const newLog = log.filter(x => x.id !== entryId);
+    // Check both recordId and id for compatibility
+    const newLog = log.filter(x => (x.recordId || x.id) !== entryId);
     await updateDoc(ref, { log: newLog });
   }
 };
@@ -154,21 +217,29 @@ export const getAllVisitsFB = async () => {
   const querySnapshot = await getDocs(collection(db, "visits"));
   const visits = {};
   querySnapshot.forEach((doc) => {
-    visits[doc.id] = doc.data().log || [];
+    const data = doc.data();
+    const sid = data.sid || doc.id;
+    visits[sid] = data.log || [];
   });
   return visits;
 };
 
-export const addVisitFB = async (studentId, entry) => {
+export const addVisitFB = async (studentId, entry, originalSid) => {
   if (!db) return;
   const ref = doc(db, "visits", studentId);
   const ds = await getDoc(ref);
   if (!ds.exists()) {
-    await setDoc(ref, { log: [entry] });
+    await setDoc(ref, { 
+      sid: originalSid || studentId,
+      log: [entry] 
+    });
   } else {
     const log = ds.data().log || [];
     log.unshift(entry);
-    await updateDoc(ref, { log });
+    await updateDoc(ref, { 
+      sid: originalSid || ds.data().sid || studentId,
+      log 
+    });
   }
 };
 
@@ -178,7 +249,8 @@ export const removeVisitFB = async (studentId, entryId) => {
   const ds = await getDoc(ref);
   if (ds.exists()) {
     const log = ds.data().log || [];
-    const newLog = log.filter(x => x.id !== entryId);
+    // Check both recordId and id for compatibility
+    const newLog = log.filter(x => (x.recordId || x.id) !== entryId);
     await updateDoc(ref, { log: newLog });
   }
 };
@@ -240,7 +312,11 @@ export const getAllUsersFB = async () => {
 
 export const updateUserPermissionsFB = async (username, permissions) => {
   if (!db) return;
-  await updateDoc(doc(db, "users", username.toLowerCase()), { permissions });
+  const role = permissions.includes("perm_admin") ? "admin" : "user";
+  await updateDoc(doc(db, "users", username.toLowerCase()), { 
+    permissions,
+    role 
+  });
 };
 
 export const deleteUserFB = async (username) => {
@@ -265,7 +341,11 @@ export const getAllClassesFB = async () => {
   if (!db) return {};
   const snap = await getDocs(collection(db, "classes"));
   const classes = {};
-  snap.forEach((d) => { classes[d.id] = d.data(); });
+  snap.forEach((d) => { 
+    const data = d.data();
+    const id = data.id || d.id; // Correctly map back to internal ID
+    classes[id] = data; 
+  });
   return classes;
 };
 

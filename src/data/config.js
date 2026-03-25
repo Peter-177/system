@@ -22,4 +22,7 @@ export const STORAGE_KEYS = {
   settings: "qrapp_settings",
   /** ساحة الألعاب — فرق، جولات، نقاط (محلي فقط) */
   gameArena: "qrapp_game_arena",
+  summerGameArena: "qrapp_summer_game_arena",
+  /** حضور النادي الصيفي (Firebase) */
+  summerAttendance: "qrapp_summer_attendance",
 };

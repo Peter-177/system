@@ -17,13 +17,14 @@ import {
   Medal,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { studentsDB, attendanceDB, gameArenaDB } from "../data/storage";
+import { studentsDB, summerAttendanceDB } from "../data/storage";
 import { buildAttendanceEntry, registeredToday } from "../utils/helpers";
 import { useToast } from "../hooks/useToast";
 import { Avatar, Toast } from "../components/UI";
 import gsap from "gsap";
 
 import bgImage from "../assets/studium.png";
+import { SummerGameArena } from "./SummerGameArena";
 
 export function SummerSection({ onGoHome }) {
   const sectionRef = useRef(null);
@@ -39,20 +40,33 @@ export function SummerSection({ onGoHome }) {
 
   const filteredStudents = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return allStudents.slice(0, 12);
-    return allStudents.filter(s => 
-      s.name?.toLowerCase().includes(q) || s.qrId.toLowerCase().includes(q)
+    if (!q) {
+      if (internalView === "attendance") {
+        // Only show who attended today in summer attendance view
+        return allStudents.filter((s) =>
+          registeredToday(summerAttendanceDB.get(s.qrId)),
+        );
+      }
+      return [];
+    }
+    return allStudents.filter(
+      (s) =>
+        s.name?.toLowerCase().includes(q) || s.qrId.toLowerCase().includes(q),
     );
-  }, [searchQuery, allStudents]);
+  }, [searchQuery, allStudents, internalView]);
 
-  const arenaData = useMemo(() => gameArenaDB.get() || { teams: [], games: [] }, []);
+  useEffect(() => {
+    if (sectionRef.current) {
+      sectionRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [internalView]);
 
   const handleToggleAttendance = (student) => {
-    const log = attendanceDB.get(student.qrId);
+    const log = summerAttendanceDB.get(student.qrId);
     if (registeredToday(log)) {
       toast.show(`✅ ${student.name} مُسجل بالفعل`);
     } else {
-      attendanceDB.add(student.qrId, buildAttendanceEntry());
+      summerAttendanceDB.add(student.qrId, buildAttendanceEntry());
       toast.show(`⚽ هدف! تم تسجيل حضور ${student.name}`);
     }
   };
@@ -106,9 +120,8 @@ export function SummerSection({ onGoHome }) {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] border-2 border-white/10 rounded-full"></div>
       </div>
 
-      <motion.div
+      <div
         className="summer-stadium-content max-w-7xl mx-auto px-6 lg:px-12 relative z-10 flex flex-col items-center w-full min-h-full py-12"
-        initial={{ opacity: 0, y: 40 }}
       >
         <header className="w-full flex justify-between items-center mb-12" dir="rtl">
           <button
@@ -117,8 +130,6 @@ export function SummerSection({ onGoHome }) {
                 setInternalView("menu");
               } else {
                 if (onGoHome) onGoHome();
-                const portal = document.getElementById("summer-portal");
-                if (portal) window.scrollTo({ top: portal.offsetTop, behavior: "smooth" });
               }
             }}
             className="group flex items-center gap-4 px-6 py-3 bg-emerald-900/60 backdrop-blur-3xl border border-white/5 rounded-2xl text-emerald-100 font-extrabold text-xs hover:bg-emerald-500 hover:text-white transition-all shadow-2xl"
@@ -201,14 +212,14 @@ export function SummerSection({ onGoHome }) {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="ابحث عن اسم الطفل هنا..."
+                    placeholder="ابحث عن اسم الطفل أو الكود هنا..."
                     className="w-full h-16 bg-emerald-950/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] pr-16 pl-8 text-white font-bold placeholder:text-emerald-100/20 focus:outline-none focus:border-lime-400/40 transition-all shadow-2xl"
                   />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                   {filteredStudents.map((s, idx) => {
-                    const isPresent = registeredToday(attendanceDB.get(s.qrId));
+                    const isPresent = registeredToday(summerAttendanceDB.get(s.qrId));
                     return (
                       <motion.div
                         key={s.qrId}
@@ -247,10 +258,10 @@ export function SummerSection({ onGoHome }) {
                initial={{ opacity: 0, scale: 0.95 }}
                animate={{ opacity: 1, scale: 1 }}
                exit={{ opacity: 0, scale: 1.05 }}
-               className="w-full"
+               className="w-full h-full"
                dir="rtl"
             >
-               <SummerRankings teams={arenaData.teams} games={arenaData.games} />
+               <SummerGameArena />
             </motion.div>
           )}
         </AnimatePresence>
@@ -259,85 +270,10 @@ export function SummerSection({ onGoHome }) {
             <div className="w-32 h-px bg-gradient-to-r from-transparent via-lime-500/50 to-transparent"></div>
             <p className="text-[9px] font-black uppercase tracking-[0.5em] text-emerald-100">Elite Stadium V2</p>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
 
-const SummerRankings = ({ teams, games }) => {
-  const containerRef = useRef(null);
-  const cardsRef = useRef([]);
 
-  const results = useMemo(() => {
-    if (!teams?.length) return [];
-    return teams.map(t => {
-      let score = 0;
-      games?.forEach(g => {
-        score += Number(g.scores?.[t.id]) || 0;
-      });
-      return { ...t, score };
-    }).sort((a, b) => b.score - a.score);
-  }, [teams, games]);
-
-  useEffect(() => {
-    if (!results.length) return;
-    const ctx = gsap.context(() => {
-      gsap.set(cardsRef.current, { opacity: 0, x: 20 });
-      gsap.to(cardsRef.current, {
-        opacity: 1,
-        x: 0,
-        duration: 0.5,
-        stagger: 0.08,
-        ease: "power2.out"
-      });
-    }, containerRef);
-    return () => ctx.revert();
-  }, [results]);
-
-  if (!results.length) {
-    return (
-      <div className="bg-emerald-950/30 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] p-16 text-center flex flex-col items-center gap-6">
-          <Award className="w-12 h-12 text-emerald-100/20" />
-          <h3 className="text-sm font-black text-emerald-100/40 uppercase tracking-widest">لا يوجد بيانات ألعاب متاحة</h3>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" ref={containerRef}>
-      {results.map((team, index) => {
-        const isWinner = index === 0;
-        return (
-          <div 
-            key={team.id}
-            ref={el => cardsRef.current[index] = el}
-            className={`p-8 rounded-[2.5rem] border overflow-hidden backdrop-blur-3xl ${
-              isWinner 
-              ? "bg-gradient-to-br from-lime-500/20 to-emerald-900/40 border-lime-400/30" 
-              : "bg-emerald-950/40 border-white/5"
-            }`}
-          >
-            <div className="flex flex-col items-center gap-6">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl border-2 ${
-                 index === 0 ? "bg-lime-400 text-emerald-950 border-lime-200" :
-                 index === 1 ? "bg-slate-300 text-slate-900 border-slate-100" :
-                 index === 2 ? "bg-amber-700 text-amber-50 border-amber-500" :
-                 "bg-emerald-900/50 text-emerald-100/50 border-white/5"
-              }`}>
-                 {index === 0 ? <Crown /> : index === 1 ? <Medal /> : index === 2 ? <Award /> : index + 1}
-              </div>
-
-              <div className="text-center">
-                 <h4 className="text-xl font-black text-white tracking-tighter mb-1 uppercase">{team.name}</h4>
-                 <span className={`text-4xl font-black tabular-nums ${isWinner ? 'text-lime-400' : 'text-emerald-100/80'}`}>
-                   {team.score}
-                 </span>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
 

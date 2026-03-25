@@ -181,17 +181,7 @@ export function HomePage({
 
               <div className="pt-10 flex flex-col items-start gap-4">
                 
-                {currentUser?.name && (
-                  <div className="mt-4 px-6 py-3 bg-slate-900/60 backdrop-blur-md border border-white/5 rounded-2xl flex items-center gap-4 group hover:border-sky-400/30 transition-all">
-                    <span className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></span>
-                    <span className="text-sm font-black text-sky-100/60 uppercase tracking-widest leading-none">
-                      Session:
-                    </span>
-                    <span className="text-sm font-black text-sky-50 tracking-tight leading-none">
-                      {currentUser.name}
-                    </span>
-                  </div>
-                )}
+                {/* Removed Session Info */}
               </div>
             </motion.div>
           </header>

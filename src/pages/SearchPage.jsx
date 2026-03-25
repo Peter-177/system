@@ -16,7 +16,7 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return allStudents;
+    if (!q) return [];
     return allStudents.filter(
       (s) =>
         s.qrId.toLowerCase().includes(q) ||
@@ -114,7 +114,7 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
 
         {/* Results List */}
         <div className="flex flex-col gap-4 pb-20 w-full relative">
-          {filtered.length === 0 ? (
+          {!query.trim() ? null : filtered.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}

@@ -217,7 +217,7 @@ export function AddFormPage({
         ? `${form.birthdate_d}/${form.birthdate_m}/${form.birthdate_y}`
         : "";
 
-    const { ...restForm } = form;
+    const { birthdate_d, birthdate_m, birthdate_y, ...restForm } = form;
     const data = {
       ...restForm,
       birthdate: bd,

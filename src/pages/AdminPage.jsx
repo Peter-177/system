@@ -133,7 +133,11 @@ export function AdminPage({
     setUsers(
       users.map((u) =>
         u.username === editingUser.username
-          ? { ...u, permissions: tempPerms }
+          ? { 
+              ...u, 
+              permissions: tempPerms, 
+              role: tempPerms.includes("perm_admin") ? "admin" : "user" 
+            }
           : u,
       ),
     );

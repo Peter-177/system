@@ -1,11 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef, useLayoutEffect } from "react";
 import { Plus, Search, Minus, Trophy, Users, Settings, X, Pencil, Crown, Medal } from "lucide-react";
-import { studentsDB, gameArenaDB } from "../data/storage";
-import { Page, Navbar } from "../components/UI";
+import { studentsDB, summerGameArenaDB } from "../data/storage";
+import { Navbar } from "../components/UI";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
-
-
 
 const GAME_TEAM_COLORS = [
   { name: "blue", glow: "from-[#4A7FA7] to-[#011C40]", accent: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20" },
@@ -50,7 +48,7 @@ function mergeTeamTheme(theme, index) {
 
 /** تحميل من localStorage مع مزامنة نقاط الجولات مع معرفات الفرق */
 function loadPersistedGameArena() {
-  const raw = gameArenaDB.get();
+  const raw = summerGameArenaDB.get();
   if (!raw || !Array.isArray(raw.teams) || !Array.isArray(raw.games)) return null;
   if (raw.teams.length < 1 || raw.games.length < 1) return null;
 
@@ -97,7 +95,7 @@ function loadPersistedGameArena() {
   };
 }
 
-export function GamePage({ onBack, onGoHome }) {
+export function SummerGameArena() {
   const [teams, setTeams] = useState(
     () => loadPersistedGameArena()?.teams ?? DEFAULT_TEAMS(),
   );
@@ -135,7 +133,7 @@ export function GamePage({ onBack, onGoHome }) {
   }, [nameModal]);
 
   useEffect(() => {
-    gameArenaDB.set({ teams, games, showMembers });
+    summerGameArenaDB.set({ teams, games, showMembers });
   }, [teams, games, showMembers]);
 
   const allStudents = useMemo(() => {
@@ -236,33 +234,35 @@ export function GamePage({ onBack, onGoHome }) {
   };
 
   return (
-    <Page>
-      <Navbar
-        title={showResults ? "النتيجة النهائية / Final Results" : "ساحة الألعاب / Game Arena"}
-        onBack={showResults ? () => setShowResults(false) : (onBack ?? onGoHome)}
-      />
+    <>
+      {showResults && (
+        <Navbar
+          title="النتيجة النهائية / Final Results"
+          onBack={() => setShowResults(false)}
+        />
+      )}
 
       {showResults ? (
         <ResultsView teams={teams} games={games} />
       ) : (
       <div className="flex-1 w-full flex flex-col relative z-10" dir="rtl">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-500/5 rounded-full blur-[150px] -z-10 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-lime-500/5 rounded-full blur-[150px] -z-10 pointer-events-none" />
         
         <div className="w-full max-w-[95rem] mx-auto h-full flex flex-col lg:flex-row p-4 lg:p-10 gap-8 relative pb-32">
           
           {/* Admin Panel */}
           <Motion.div 
             initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-            className="w-full lg:w-[360px] tech-card !p-6 flex flex-col shrink-0 h-full relative"
+            className="w-full lg:w-[360px] bg-emerald-950/40 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] p-6 flex flex-col shrink-0 h-full relative"
           >
             <h3 className="text-xl font-black text-white flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
-              <Settings className="text-sky-400" size={22} /> إدارة اللعبة
+              <Settings className="text-lime-400" size={22} /> إدارة اللعبة
             </h3>
 
             <button
               type="button"
               onClick={openTeamNameModal}
-              className="tech-btn-primary w-full flex items-center justify-center gap-3 font-extrabold mb-8 !rounded-xl"
+              className="w-full flex items-center justify-center gap-3 font-extrabold mb-8 rounded-xl px-4 py-3 bg-emerald-900/60 backdrop-blur-3xl border border-lime-500/20 text-lime-400 hover:bg-lime-500 hover:text-slate-900 transition-all shadow-xl"
             >
               <Plus size={18} strokeWidth={3} /> إضافة فريق
             </button>
@@ -270,11 +270,11 @@ export function GamePage({ onBack, onGoHome }) {
             {/* Games List */}
             <div className="flex flex-col gap-4 mb-8">
                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-sky-400 uppercase tracking-widest">إدارة الجولات / النقاط</span>
+                  <span className="text-xs font-black text-lime-400 uppercase tracking-widest">إدارة الجولات / النقاط</span>
                   <button
                     type="button"
                     onClick={openGameNameModal}
-                    className="tech-badge cursor-pointer hover:bg-sky-500/20 transition-colors"
+                    className="bg-lime-500/10 text-lime-400 text-[10px] font-black tracking-[0.4em] uppercase rounded-lg px-3 py-1.5 border border-lime-500/20 backdrop-blur-md cursor-pointer hover:bg-lime-500/20 transition-colors"
                   >
                      + جولة جديدة
                   </button>
@@ -311,9 +311,9 @@ export function GamePage({ onBack, onGoHome }) {
             <div className="flex flex-col flex-1 min-h-0 pt-4 border-t border-white/5">
                 <div className="flex items-center justify-between mb-4">
                   <span className="font-black text-slate-300 text-sm flex items-center gap-2">
-                     <Users size={16} className="text-sky-500" /> الفرق والأعضاء
+                     <Users size={16} className="text-lime-500" /> الفرق والأعضاء
                   </span>
-                  <button onClick={() => setShowMembers(!showMembers)} className="tech-badge cursor-pointer">
+                  <button onClick={() => setShowMembers(!showMembers)} className="bg-emerald-500/10 text-emerald-400 text-[10px] font-black tracking-[0.4em] uppercase rounded-lg px-3 py-1.5 border border-emerald-500/20 backdrop-blur-md cursor-pointer">
                      {showMembers ? "إخفاء" : "عرض"}
                   </button>
                </div>
@@ -334,7 +334,7 @@ export function GamePage({ onBack, onGoHome }) {
                                >
                                  <Pencil size={14} strokeWidth={2.5} />
                                </button>
-                               <button type="button" onClick={() => { setAddingToTeam(addingToTeam === team.id ? null : team.id); setNewMemberName(""); }} className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 text-slate-400 hover:text-sky-400 border border-white/5" title="عضو">
+                               <button type="button" onClick={() => { setAddingToTeam(addingToTeam === team.id ? null : team.id); setNewMemberName(""); }} className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 text-slate-400 hover:text-lime-400 border border-white/5" title="عضو">
                                  {addingToTeam === team.id ? <Minus size={12} strokeWidth={3} /> : <Plus size={12} strokeWidth={3} />}
                                </button>
                                <button type="button" onClick={() => { if(window.confirm(`حذف ${team.name}؟`)) handleRemoveTeam(team.id) }} className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors border border-rose-500/20" title="حذف الفريق">
@@ -346,16 +346,16 @@ export function GamePage({ onBack, onGoHome }) {
                           <AnimatePresence>
                             {addingToTeam === team.id && (
                               <Motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="relative mt-1">
-                                <Search size={14} className="absolute right-3 top-3 text-sky-500/50" />
+                                <Search size={14} className="absolute right-3 top-3 text-lime-500/50" />
                                 <input 
                                   type="text" value={newMemberName} onChange={(e) => setNewMemberName(e.target.value)}
                                   onKeyDown={(e) => e.key === "Enter" && handleAddMember(team.id)}
                                   placeholder="ابحث..." className="tech-input !h-9 !text-xs !pr-9 !pl-3 !rounded-lg" autoFocus
                                 />
                                 {searchResults.length > 0 && (
-                                  <div className="absolute top-full left-0 right-0 z-[100] bg-slate-900 border border-sky-500/20 mt-1 rounded-lg overflow-hidden shadow-2xl">
+                                  <div className="absolute top-full left-0 right-0 z-[100] bg-slate-900 border border-lime-500/20 mt-1 rounded-lg overflow-hidden shadow-2xl">
                                     {searchResults.map(s => (
-                                      <button key={s.id} onClick={() => handleAddMember(team.id, s.name)} className="w-full text-right p-2.5 hover:bg-sky-500/10 flex items-center justify-between border-b border-white/5 last:border-0 text-xs text-slate-300">
+                                      <button key={s.id} onClick={() => handleAddMember(team.id, s.name)} className="w-full text-right p-2.5 hover:bg-lime-500/10 flex items-center justify-between border-b border-white/5 last:border-0 text-xs text-slate-300">
                                         <span>{s.name}</span>
                                         <span className="opacity-40">{s.id}</span>
                                       </button>
@@ -406,17 +406,17 @@ export function GamePage({ onBack, onGoHome }) {
         {/* Action Button: The Result */}
         <div className="w-full flex flex-col items-center justify-center pt-8 pb-20 relative z-20">
            {/* Visual Glow behind the button */}
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[200px] bg-sky-500/10 rounded-full blur-[100px] -z-10" />
+           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[200px] bg-lime-500/10 rounded-full blur-[100px] -z-10" />
            
            <Motion.button
               onClick={() => setShowResults(true)}
               whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
-              className="tech-btn-primary px-16 py-6 !rounded-[2rem] flex items-center gap-5 shadow-[0_25px_50px_rgba(0,0,0,0.4)] border border-sky-400/40 group relative overflow-hidden"
+              className="px-16 py-6 rounded-[2rem] bg-emerald-900/80 backdrop-blur-xl flex items-center gap-5 shadow-[0_25px_50px_rgba(0,0,0,0.4)] border border-lime-400/40 hover:bg-emerald-800 transition-all group relative overflow-hidden"
            >
-              <div className="absolute inset-0 bg-gradient-to-r from-sky-600/20 to-indigo-600/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-r from-lime-600/20 to-emerald-600/20 opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="relative flex items-center gap-5">
-                 <Trophy size={36} className="text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.6)]" />
+                 <Trophy size={36} className="text-lime-400 drop-shadow-[0_0_15px_rgba(163,230,53,0.6)]" />
                  <span className="text-4xl font-black tracking-tight text-white drop-shadow-lg">النتيجة</span>
               </div>
            </Motion.button>
@@ -513,7 +513,7 @@ export function GamePage({ onBack, onGoHome }) {
                         ? confirmAddTeam
                         : confirmAddGame
                   }
-                  className="flex-1 h-12 rounded-xl tech-btn-primary font-extrabold"
+                  className="flex-1 h-12 rounded-xl font-extrabold bg-emerald-700/80 text-white hover:bg-emerald-600 transition-colors border border-emerald-500/30"
                 >
                   {nameModal === "renameTeam"
                     ? "حفظ الاسم"
@@ -526,7 +526,7 @@ export function GamePage({ onBack, onGoHome }) {
           </Motion.div>
         )}
       </AnimatePresence>
-    </Page>
+    </>
   );
 }
 
@@ -560,7 +560,7 @@ const ResultsView = ({ teams, games }) => {
   return (
     <div className="flex-1 w-full flex flex-col items-center justify-center p-4 md:p-10 relative z-10 overflow-hidden" dir="rtl">
       {/* Dynamic Background */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-sky-500/10 rounded-full blur-[150px] -z-10 pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-lime-500/10 rounded-full blur-[150px] -z-10 pointer-events-none" />
       
       <AnimatePresence mode="wait">
         {!isFinalStep ? (
@@ -573,7 +573,7 @@ const ResultsView = ({ teams, games }) => {
             className="flex flex-col items-center gap-12 text-center"
           >
             <div className="space-y-4">
-              <span className="text-sky-500/60 font-black uppercase tracking-[0.4em] text-xs">Team Result</span>
+              <span className="text-lime-500/60 font-black uppercase tracking-[0.4em] text-xs">Team Result</span>
               <h2 className="text-6xl md:text-8xl font-black text-white tracking-tighter drop-shadow-2xl">
                 {currentTeam.name}
               </h2>
@@ -615,7 +615,7 @@ const ResultsView = ({ teams, games }) => {
                className="text-4xl md:text-6xl font-black text-white tracking-tight drop-shadow-md text-center mb-4"
             >
               الترتيب النهائي <br />
-              <span className="text-xs text-sky-500/40 uppercase tracking-[0.5em] font-bold">Consolidated Leaderboard</span>
+              <span className="text-xs text-lime-500/40 uppercase tracking-[0.5em] font-bold">Consolidated Leaderboard</span>
             </Motion.h1>
 
             <div className="w-full flex flex-col gap-4 max-w-2xl">
@@ -676,7 +676,7 @@ const TeamCard = ({ team, games, handleRemoveTeam, onRenameTeam, delay }) => {
   const { glow, accent, border } = team.theme;
   return (
     <Motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }} className="flex flex-col relative group h-full min-h-[500px]">
-      <div className={`tech-panel !p-6 flex-1 flex flex-col relative overflow-hidden h-full border ${border} hover:border-white/10 transition-all duration-500`}>
+      <div className={`bg-emerald-950/40 backdrop-blur-3xl rounded-[2.5rem] p-6 flex-1 flex flex-col relative overflow-hidden h-full border ${border} hover:border-white/10 transition-all duration-500`}>
         <div className={`absolute top-0 inset-x-0 h-1 bg-gradient-to-r ${glow}`} />
         
         {/* تعديل اسم الفريق */}

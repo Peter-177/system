@@ -6,17 +6,20 @@ import {
   addVisitFB, removeVisitFB, resetVisitsFB,
   getAllStudentsFB, getAllAttendanceFB, getAllVisitsFB,
   getAllClassesFB, setClassFB, deleteClassFB,
-  getAppSettingsFB, setAppSettingsFB
+  getAppSettingsFB, setAppSettingsFB,
+  getAllSummerAttendanceFB, addSummerAttendanceFB,
+  removeSummerAttendanceFB, resetSummerAttendanceFB,
 } from "../services/firestoreService";
 
 // ── In-memory data store (populated from Firebase on startup) ──
 const mem = {
-  [STORAGE_KEYS.students]:   {},
-  [STORAGE_KEYS.attendance]: {},
-  [STORAGE_KEYS.coupons]:    {},
-  [STORAGE_KEYS.visits]:     {},
-  [STORAGE_KEYS.classes]:    {},
-  [STORAGE_KEYS.settings]:   {
+  [STORAGE_KEYS.students]:          {},
+  [STORAGE_KEYS.attendance]:        {},
+  [STORAGE_KEYS.summerAttendance]:  {},
+  [STORAGE_KEYS.coupons]:           {},
+  [STORAGE_KEYS.visits]:            {},
+  [STORAGE_KEYS.classes]:           {},
+  [STORAGE_KEYS.settings]:          {
     nameTop: "SUNDAY",
     nameBottom: "SCHOOL",
     icon: "⛪"
@@ -59,6 +62,26 @@ export const gameArenaDB = {
   clear: () => localStorage.removeItem(STORAGE_KEYS.gameArena),
 };
 
+export const summerGameArenaDB = {
+  get: () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.summerGameArena);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  },
+  set: (data) => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.summerGameArena, JSON.stringify(data));
+    } catch (e) {
+      console.error("summerGameArenaDB.set failed:", e);
+    }
+  },
+  clear: () => localStorage.removeItem(STORAGE_KEYS.summerGameArena),
+};
+
 export const sessionStore = {
   get: () => !!sessionStorage.getItem(STORAGE_KEYS.session),
   set: () => sessionStorage.setItem(STORAGE_KEYS.session, "1"),
@@ -87,8 +110,12 @@ export const studentsDB = {
   update: (id, d) => {
     const a = loadMem(STORAGE_KEYS.students, {});
     a[id] = { ...a[id], ...d };
+    // Cleanup legacy fields
+    delete a[id].birthdate_d;
+    delete a[id].birthdate_m;
+    delete a[id].birthdate_y;
     saveMem(STORAGE_KEYS.students, a);
-    updateStudentFB(id, d).catch(console.error);
+    addStudentFB(id, a[id]).catch(console.error); // full overwrite
   },
   remove: (id) => {
     const a = loadMem(STORAGE_KEYS.students, {});
@@ -103,23 +130,72 @@ export const attendanceDB = {
   getAll: () => loadMem(STORAGE_KEYS.attendance, {}),
   get: (sid) => loadMem(STORAGE_KEYS.attendance, {})[sid] ?? [],
   add: (sid, e) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
+    
+    // Store unique record ID separately and set id to sid as requested
+    e.recordId = e.id;
+    e.id = sid;
+    e.sid = sid;
+
     const a = loadMem(STORAGE_KEYS.attendance, {});
     if (!a[sid]) a[sid] = [];
     a[sid].unshift(e);
     saveMem(STORAGE_KEYS.attendance, a);
-    addAttendanceFB(sid, e).catch(console.error);
+    addAttendanceFB(docId, e, sid).catch(console.error);
   },
   remove: (sid, eid) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
     const a = loadMem(STORAGE_KEYS.attendance, {});
     a[sid] = (a[sid] ?? []).filter((x) => x.id !== eid);
     saveMem(STORAGE_KEYS.attendance, a);
-    removeAttendanceFB(sid, eid).catch(console.error);
+    removeAttendanceFB(docId, eid).catch(console.error);
   },
   removeAll: (sid) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
     const a = loadMem(STORAGE_KEYS.attendance, {});
     delete a[sid];
     saveMem(STORAGE_KEYS.attendance, a);
-    resetAttendanceFB(sid).catch(console.error);
+    resetAttendanceFB(docId).catch(console.error);
+  },
+};
+
+// ── Summer Attendance (Firebase-only) ──
+export const summerAttendanceDB = {
+  getAll: () => loadMem(STORAGE_KEYS.summerAttendance, {}),
+  get: (sid) => loadMem(STORAGE_KEYS.summerAttendance, {})[sid] ?? [],
+  add: (sid, e) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
+    
+    // Store unique record ID separately and set id to sid
+    e.recordId = e.id;
+    e.id = sid;
+    e.sid = sid;
+
+    const a = loadMem(STORAGE_KEYS.summerAttendance, {});
+    if (!a[sid]) a[sid] = [];
+    a[sid].unshift(e);
+    saveMem(STORAGE_KEYS.summerAttendance, a);
+    addSummerAttendanceFB(docId, e, sid).catch(console.error);
+  },
+  remove: (sid, eid) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
+    const a = loadMem(STORAGE_KEYS.summerAttendance, {});
+    a[sid] = (a[sid] ?? []).filter((x) => x.id !== eid);
+    saveMem(STORAGE_KEYS.summerAttendance, a);
+    removeSummerAttendanceFB(docId, eid).catch(console.error);
+  },
+  removeAll: (sid) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
+    const a = loadMem(STORAGE_KEYS.summerAttendance, {});
+    delete a[sid];
+    saveMem(STORAGE_KEYS.summerAttendance, a);
+    resetSummerAttendanceFB(docId).catch(console.error);
   },
 };
 
@@ -127,23 +203,35 @@ export const attendanceDB = {
 export const couponsDB = {
   get: (sid) => loadMem(STORAGE_KEYS.coupons, {})[sid] ?? [],
   add: (sid, e) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
+
+    // Store unique record ID separately and set id to sid
+    e.recordId = e.id;
+    e.id = sid;
+    e.sid = sid;
+
     const c = loadMem(STORAGE_KEYS.coupons, {});
     if (!c[sid]) c[sid] = [];
     c[sid].push(e);
     saveMem(STORAGE_KEYS.coupons, c);
-    addCouponFB(sid, e).catch(console.error);
+    addCouponFB(docId, e, sid).catch(console.error);
   },
   remove: (sid, eid) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
     const c = loadMem(STORAGE_KEYS.coupons, {});
     c[sid] = (c[sid] ?? []).filter((x) => x.id !== eid);
     saveMem(STORAGE_KEYS.coupons, c);
-    removeCouponFB(sid, eid).catch(console.error);
+    removeCouponFB(docId, eid).catch(console.error);
   },
   reset: (sid) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
     const c = loadMem(STORAGE_KEYS.coupons, {});
     c[sid] = [];
     saveMem(STORAGE_KEYS.coupons, c);
-    resetCouponsFB(sid).catch(console.error);
+    resetCouponsFB(docId).catch(console.error);
   },
 };
 
@@ -152,23 +240,35 @@ export const visitsDB = {
   getAll: () => loadMem(STORAGE_KEYS.visits, {}),
   get: (sid) => loadMem(STORAGE_KEYS.visits, {})[sid] ?? [],
   add: (sid, e) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
+
+    // Store unique record ID separately and set id to sid
+    e.recordId = e.id;
+    e.id = sid;
+    e.sid = sid;
+
     const a = loadMem(STORAGE_KEYS.visits, {});
     if (!a[sid]) a[sid] = [];
     a[sid].unshift(e);
     saveMem(STORAGE_KEYS.visits, a);
-    addVisitFB(sid, e).catch(console.error);
+    addVisitFB(docId, e, sid).catch(console.error);
   },
   remove: (sid, eid) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
     const a = loadMem(STORAGE_KEYS.visits, {});
     a[sid] = (a[sid] ?? []).filter((x) => x.id !== eid);
     saveMem(STORAGE_KEYS.visits, a);
-    removeVisitFB(sid, eid).catch(console.error);
+    removeVisitFB(docId, eid).catch(console.error);
   },
   removeAll: (sid) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
     const a = loadMem(STORAGE_KEYS.visits, {});
     delete a[sid];
     saveMem(STORAGE_KEYS.visits, a);
-    resetVisitsFB(sid).catch(console.error);
+    resetVisitsFB(docId).catch(console.error);
   },
 };
 
@@ -177,16 +277,22 @@ export const classesDB = {
   getAll: () => loadMem(STORAGE_KEYS.classes, {}),
   get: (id) => loadMem(STORAGE_KEYS.classes, {})[id] ?? null,
   set: (id, data) => {
+    // Ensure numeric ID is inside the data as requested
+    const finalData = { ...data, id };
     const a = loadMem(STORAGE_KEYS.classes, {});
-    a[id] = data;
+    a[id] = finalData;
     saveMem(STORAGE_KEYS.classes, a);
-    setClassFB(id, data).catch(console.error);
+    // Use Name as Document ID in Firebase for readability
+    const docId = finalData.name || id;
+    setClassFB(docId, finalData).catch(console.error);
   },
   remove: (id) => {
     const a = loadMem(STORAGE_KEYS.classes, {});
+    const cls = a[id];
+    const docId = cls ? cls.name : id;
     delete a[id];
     saveMem(STORAGE_KEYS.classes, a);
-    deleteClassFB(id).catch(console.error);
+    deleteClassFB(docId).catch(console.error);
   },
 };
 
@@ -205,18 +311,20 @@ export const settingsDB = {
 };
 export const syncFromFirebase = async () => {
   try {
-    const students = await getAllStudentsFB();
-    const attendance = await getAllAttendanceFB();
-    const visits = await getAllVisitsFB();
-    const classes = await getAllClassesFB();
-    const coupons = await getAllCouponsFB();
-    const settings = await getAppSettingsFB();
-    
-    saveMem(STORAGE_KEYS.students, students);
-    saveMem(STORAGE_KEYS.attendance, attendance);
-    saveMem(STORAGE_KEYS.visits, visits);
-    saveMem(STORAGE_KEYS.classes, classes);
-    saveMem(STORAGE_KEYS.coupons, coupons);
+    const students        = await getAllStudentsFB();
+    const attendance      = await getAllAttendanceFB();
+    const summerAtt       = await getAllSummerAttendanceFB();
+    const visits          = await getAllVisitsFB();
+    const classes         = await getAllClassesFB();
+    const coupons         = await getAllCouponsFB();
+    const settings        = await getAppSettingsFB();
+
+    saveMem(STORAGE_KEYS.students,         students);
+    saveMem(STORAGE_KEYS.attendance,       attendance);
+    saveMem(STORAGE_KEYS.summerAttendance, summerAtt);
+    saveMem(STORAGE_KEYS.visits,           visits);
+    saveMem(STORAGE_KEYS.classes,          classes);
+    saveMem(STORAGE_KEYS.coupons,          coupons);
     if (settings) saveMem(STORAGE_KEYS.settings, settings);
     return true;
   } catch (error) {
