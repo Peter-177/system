@@ -74,7 +74,7 @@ export function SummerSection({ onGoHome }) {
   const summerCards = [
     {
       id: "search",
-      label: "بحث عن مخدوم",
+      label: "بحث عن الطفل",
       subLabel: "SEARCH CENTRE",
       icon: <Search className="w-10 h-10" />,
       color: "from-lime-400/20 to-emerald-500/10",
@@ -92,7 +92,7 @@ export function SummerSection({ onGoHome }) {
     },
     {
       id: "games",
-      label: "ساحة الألعاب",
+      label: "الألعاب",
       subLabel: "GAME ARENA",
       icon: <Gamepad2 className="w-10 h-10" />,
       color: "from-amber-400/20 to-emerald-500/10",
