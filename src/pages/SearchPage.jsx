@@ -54,7 +54,7 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
 
   return (
     <Page>
-      <Navbar title="بحث / Search" onBack={onBack} />
+      <Navbar title="البحث" onBack={onBack} />
 
       <div
         className="flex-1 w-full max-w-4xl mx-auto px-6 py-8 flex flex-col gap-6"
@@ -68,7 +68,7 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="اكتب الاسم أو الكود هنا..."
+            placeholder="اكتب اسم الطفل أو الكود بتاعه هنا..."
             className="input w-full bg-[#011C40]/5 backdrop-blur-xl shadow-lg border border-[#011C40]/10 focus:border-primary/50 rounded-2xl pl-6 pr-14 h-16 text-lg font-black transition-all duration-300 placeholder:text-muted/60 text-text outline-none focus:shadow-[0_0_30px_rgba(2,56,89,0.1)]"
             autoFocus
           />
@@ -93,7 +93,7 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
             <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20">
               <UserPlus className="w-7 h-7 text-white" strokeWidth={3} />
             </div>
-            <span className="drop-shadow-lg">تسجيل طفل جديد</span>
+            <span className="drop-shadow-lg">نضيف طفل جديد للمجموعة</span>
           </motion.button>
         )}
 
@@ -106,7 +106,7 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
               exit={{ opacity: 0, height: 0 }}
               className="text-sm font-bold text-base-content/50 px-3 tracking-wide"
             >
-              عدد النتائج:{" "}
+              لقينا كام واحد؟{" "}
               <span className="text-primary">{filtered.length}</span>
             </motion.div>
           )}
@@ -128,7 +128,7 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
                 />
               </div>
               <span className="text-lg font-medium tracking-wider">
-                لا توجد نتائج مطابقة
+                للأسف، مفيش حد بالاسم ده. اتأكد من الاسم تاني!
               </span>
             </motion.div>
           ) : (

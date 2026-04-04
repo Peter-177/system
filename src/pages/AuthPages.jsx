@@ -173,46 +173,50 @@ export function SetupPage({ onDone, onGoLogin }) {
   return (
     <PremiumAuthLayout
       icon="🚀"
-      title="Admin Setup"
-      subtitle="Initialize Master Account"
+      title="تظبيط حساب الأدمن"
+      subtitle="الخطوة الأولى عشان نبدأ"
       shake={shake}
-      dir="ltr"
+      dir="rtl"
     >
       <SleekInput
-        label="Admin Username"
+        label="اسم المستخدم"
         type="text"
-        placeholder="admin"
+        placeholder="مثلاً: admin"
         value={form.username}
         onChange={(e) => upd("username", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
-        error={errors.username}
+        error={errors.username ? "لازم تكتب الاسم" : ""}
+        dir="rtl"
       />
       <SleekInput
-        label="Strong Password"
+        label="كلمة سر قوية"
         type="password"
         placeholder="••••••••"
         value={form.password}
         onChange={(e) => upd("password", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
-        error={errors.password}
+        error={errors.password ? "خليها 8 حروف على الأقل" : ""}
+        dir="rtl"
       />
       <SleekInput
-        label="Confirm Password"
+        label="تأكيد كلمة السر"
         type="password"
         placeholder="••••••••"
         value={form.confirm}
         onChange={(e) => upd("confirm", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
-        error={errors.confirm}
+        error={errors.confirm ? "مش زي بعض، اتأكد تاني" : ""}
+        dir="rtl"
       />
       <SleekInput
-        label="Secret Reset Key"
+        label="كود الأمان للطوارئ"
         type="password"
-        placeholder="Store this safely"
+        placeholder="شيله في مكان أمين"
         value={form.secret}
         onChange={(e) => upd("secret", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
-        error={errors.secret}
+        error={errors.secret ? "الكود ده مهم جداً، متنساهوش" : ""}
+        dir="rtl"
       />
 
       {globalError && (
@@ -224,18 +228,18 @@ export function SetupPage({ onDone, onGoLogin }) {
       <SubmitButton 
         onClick={submit} 
         loading={loading} 
-        text="Save Admin" 
-        loadingText="Processing..." 
+        text="تمام، سجلني" 
+        loadingText="بنحفظ البيانات..." 
       />
 
       <div className="text-center pt-8 mt-4 border-t border-white/[0.05]">
-        <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest">
-          Already have an account?{" "}
+        <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest" dir="rtl">
+          عندك حساب فعلاً؟{" "}
           <button
             className="text-indigo-400 hover:text-indigo-300 transition-colors font-bold hover:underline underline-offset-4"
             onClick={onGoLogin}
           >
-            Log in
+            ادخل من هنا
           </button>
         </p>
       </div>
@@ -260,7 +264,7 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
     const ok = await onLogin(form.username, form.password);
     setLoading(false);
     if (!ok) {
-      setError("Invalid username or password");
+      setError("الاسم أو كلمة السر مش مظبوطين، جرب تاني");
       setShake(true);
       setTimeout(() => setShake(false), 500);
     }
@@ -271,30 +275,30 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
       className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest"
       onClick={onForgot}
     >
-      Recover
+      نسيت؟
     </button>
   );
 
   return (
-    <PremiumAuthLayout icon="👋" title="Welcome Back" subtitle="Log in to continue" shake={shake} dir="rtl">
+    <PremiumAuthLayout icon="👋" title="نورتنا من تاني!" subtitle="ادخل عشان نكمل شغلنا" shake={shake} dir="rtl">
       <SleekInput
-        label="Username"
+        label="اسم المستخدم"
         type="text"
-        placeholder="admin"
+        placeholder="مثلاً: admin"
         value={form.username}
         onChange={(e) => upd("username", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
-        dir="ltr"
+        dir="rtl"
       />
       <SleekInput
-        label="Password"
+        label="كلمة السر"
         type="password"
         placeholder="••••••••"
         value={form.password}
         onChange={(e) => upd("password", e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
         rightElement={forgotButton}
-        dir="ltr"
+        dir="rtl"
       />
 
       {error && (
@@ -309,19 +313,19 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
       <SubmitButton 
         onClick={submit} 
         loading={loading} 
-        text="Log In" 
-        loadingText="Authenticating..." 
+        text="يلا ندخل" 
+        loadingText="جاري التأكد..." 
       />
 
       {(onGoSetup || onGoRegister) && (
         <div className="text-center pt-8 mt-4 border-t border-white/[0.05]">
-          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest" dir="ltr">
-            Don't have an account?{" "}
+          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest" dir="rtl">
+            لسه معندكش حساب؟{" "}
             <button
               className="text-indigo-400 hover:text-indigo-300 transition-colors font-bold hover:underline underline-offset-4"
               onClick={onGoSetup || onGoRegister}
             >
-              Sign up
+              سجل حساب جديد
             </button>
           </p>
         </div>

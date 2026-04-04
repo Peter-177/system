@@ -1,14 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { studentsDB } from "../data/storage";
 import { randomAccent } from "../utils/helpers";
-import { Page, Navbar, ImageCropperModal } from "../components/UI";
+import { Page, ImageCropperModal } from "../components/UI";
 import { 
-  Plus, 
   User, 
   MapPin, 
   Phone, 
   GraduationCap, 
-  Calendar,
   Camera,
   Check,
   Sparkles,
@@ -19,9 +17,6 @@ import {
   UserCheck,
   AlertCircle,
   X,
-  Heart,
-  School,
-  StickyNote
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -61,7 +56,7 @@ export function AddIdPage({ onBack, onNext }) {
     const t = id.trim();
     if (!t) return;
     if (studentsDB.exists(t)) {
-      setError(`الـ ID "${t}" موجود قبل كده — شوف واحد غيره`);
+      setError(`الـ ID ده "${t}" موجود قبل كده — جرب واحد تاني`);
     } else {
       setError("");
       onNext(t);
@@ -80,8 +75,8 @@ export function AddIdPage({ onBack, onNext }) {
           </button>
         </div>
         <div className="navbar-center flex flex-col items-center text-center">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-1">New Registration</span>
-          <div className="font-black text-white text-lg tracking-tight">إضافة طفل جديد</div>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-1">تسجيل جديد</span>
+          <div className="font-black text-white text-lg tracking-tight">اضافة طفل جديد</div>
         </div>
         <div className="navbar-end"></div>
       </div>
@@ -111,10 +106,10 @@ export function AddIdPage({ onBack, onNext }) {
 
             <div className="text-center">
               <h2 className="text-3xl font-black text-white tracking-tight mb-2">
-                اكتب (ID)
+                اكتب الـ (ID)
               </h2>
               <p className="text-[10px] text-slate-500 font-black tracking-[0.3em] uppercase">
-                Student Identification Code
+                كود الطفل المميز
               </p>
             </div>
 
@@ -209,7 +204,7 @@ export function AddFormPage({
 
   const handleSave = () => {
     if (!form.name.trim()) {
-      setErrors({ name: "لازم تكتب اسم الطفل" });
+      setErrors({ name: "من فضلك اكتب اسم الطفل" });
       return;
     }
     const bd =
@@ -251,8 +246,8 @@ export function AddFormPage({
           </button>
         </div>
         <div className="navbar-center flex flex-col items-center">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-1">Student Profile</span>
-          <div className="font-black text-white text-lg tracking-tight">بيانات الطفل</div>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-1">بيانات الطفل</span>
+          <div className="font-black text-white text-lg tracking-tight">ملف الطفل</div>
         </div>
         <div className="navbar-end">
           <AnimatePresence>
@@ -290,10 +285,10 @@ export function AddFormPage({
                 </div>
                 <div className="relative z-10">
                   <div className="text-2xl font-black text-white mb-2 tracking-tight">
-                    تم الحفظ بنجاح!
+                    تم الحفظ بنجاح، مبروك!
                   </div>
                   <div className="text-emerald-400/80 text-[10px] font-black uppercase tracking-[0.2em]">
-                     Student Added to Database
+                     الطفل اتسجل خلاص في القاعدة
                   </div>
                 </div>
               </div>
@@ -435,7 +430,7 @@ export function AddFormPage({
                     </label>
                     {required && (
                       <span className="text-[8px] bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded-md font-black uppercase">
-                        Required
+                        مطلوب
                       </span>
                     )}
                   </div>

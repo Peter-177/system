@@ -173,10 +173,10 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
             <header className="flex flex-col md:flex-row md:items-end justify-between items-start gap-4">
               <div>
                 <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-                  إضافة للقائمة
+                  يلا نحضّرهم
                 </h2>
                 <p className="text-slate-500 font-medium text-sm mt-1">
-                  سجل المخدومين الحاضرين اليوم
+                  سجل كل اللي جه النهاردة عشان ميفوتوش حاجة
                 </p>
               </div>
               <motion.button
@@ -195,7 +195,7 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
               <div className="md:col-span-3 space-y-2 relative">
                 <label className="text-[10px] font-black text-sky-300/60 uppercase tracking-widest flex items-center gap-2 mr-1">
                   <Search className="w-4 h-4 text-sky-500" />
-                  بحث سريع
+                  دور بسرعة
                 </label>
                 <div className="relative">
                   <input
@@ -203,7 +203,7 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="دور بالاسم أو الكود..."
+                    placeholder="اكتب اسم الطفل أو الكود بتاعه..."
                     className="admin-input h-14 pl-4 pr-12 w-full"
                   />
                   <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-300">
@@ -245,14 +245,14 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
               <div className="md:col-span-1 space-y-2">
                 <label className="text-[10px] font-black text-sky-300/60 uppercase tracking-widest flex items-center gap-2 mr-1">
                   <Users className="w-4 h-4 text-sky-500" />
-                  تحضير فصل محدد
+                  حضر فصل بالانابة
                 </label>
                 <select
                   className="admin-input h-14"
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
                 >
-                  <option value="">اختار الفصل...</option>
+                  <option value="">أنهي فصل اللي موجود؟</option>
                   {classList.map((cls) => (
                     <option key={cls.id} value={cls.id}>
                       {cls.name}
@@ -268,7 +268,7 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
                 <div className="flex items-center gap-3 mb-4">
                   <span className="w-1.5 h-5 bg-orange-500 rounded-full"></span>
                   <h3 className="text-lg font-black text-white">
-                    قائمة التحضير
+                    الناس اللي حضرت
                   </h3>
                   <span className="text-xs bg-sky-500/20 border border-sky-500/30 px-2 py-0.5 rounded-full text-sky-300 font-black">
                     {pendingList.length}
@@ -281,7 +281,7 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
                       <UserCheck className="w-8 h-8 opacity-40" />
                     </div>
                     <p className="font-bold text-slate-400 text-sm max-w-[200px]">
-                      أضف اطفال من القائمة أو عبر البحث للتحضير
+                      ضيف الأطفال من هنا أو دور عليهم فوق عشان تحضرهم
                     </p>
                   </div>
                 ) : (
@@ -323,7 +323,7 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
                       className="admin-btn-primary w-full h-16 mt-6 shadow-indigo-600/20"
                     >
                       <Save className="w-6 h-6" />
-                      <span>تأكيد تحضير {pendingList.length} طفل</span>
+                      <span>تمام، حضّر الـ {pendingList.length} طفل دول</span>
                     </button>
                   </motion.div>
                 )}
@@ -360,7 +360,7 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
                       >
                         {classRoster.length === 0 ? (
                           <div className="py-12 border-2 border-dashed border-white/5 rounded-2xl text-center text-slate-400 font-bold text-sm">
-                            محدش حضر لسه من الفصل ده
+                            لسه مفيش حد اتسجل من الفصل ده النهاردة
                           </div>
                         ) : (
                           classRoster.map((s) => {
@@ -410,7 +410,7 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
                     <div className="py-20 flex flex-col items-center justify-center text-center space-y-4 opacity-30 grayscale">
                       <Users className="w-16 h-16 text-slate-900" />
                       <p className="font-black text-slate-900">
-                        اختار فصل لعرض القائمة
+                        اختار الفصل من فوق عشان تعرف مين اللي جه
                       </p>
                     </div>
                   )}

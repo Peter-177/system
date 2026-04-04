@@ -74,7 +74,7 @@ export function SummerSection({ onGoHome }) {
   const summerCards = [
     {
       id: "search",
-      label: "بحث عن الطفل",
+      label: "البحث",
       subLabel: "SEARCH CENTRE",
       icon: <Search className="w-10 h-10" />,
       color: "from-lime-400/20 to-emerald-500/10",
@@ -83,7 +83,7 @@ export function SummerSection({ onGoHome }) {
     },
     {
       id: "attendance",
-      label: "تسجيل الحضور",
+      label: "سجل الحضور",
       subLabel: "ATTENDANCE HUB",
       icon: <ClipboardList className="w-10 h-10" />,
       color: "from-sky-400/20 to-emerald-500/10",
@@ -135,12 +135,12 @@ export function SummerSection({ onGoHome }) {
             className="group flex items-center gap-4 px-6 py-3 bg-emerald-900/60 backdrop-blur-3xl border border-white/5 rounded-2xl text-emerald-100 font-extrabold text-xs hover:bg-emerald-500 hover:text-white transition-all shadow-2xl"
           >
             <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-            <span>{internalView === "menu" ? "العودة للرئيسية" : "الرجوع للملعب"}</span>
+            <span>{internalView === "menu" ? "رجوع للرئيسية" : "يلا نرجع للملعب"}</span>
           </button>
 
           <div className="flex items-center gap-6">
             <div className="px-5 py-2.5 bg-lime-500/10 text-lime-400 text-[10px] font-black tracking-[0.4em] uppercase rounded-xl border border-lime-500/20 backdrop-blur-md">
-              {internalView === "menu" ? "Elite Summer Stadium" : internalView.toUpperCase()}
+              {internalView === "menu" ? "ملعبنا الصيفي الجميل" : internalView.toUpperCase()}
             </div>
           </div>
         </header>
@@ -158,7 +158,7 @@ export function SummerSection({ onGoHome }) {
                 <h1 className="text-5xl md:text-7xl font-black text-white mb-4 tracking-tighter leading-none flex items-center justify-center gap-6">
                   النادي <span className="text-lime-400 italic">الصيفي</span>
                 </h1>
-                <p className="text-emerald-300/40 text-[10px] font-black uppercase tracking-[0.8em] mt-2">Elite Sports Program 2026</p>
+                <p className="text-emerald-300/40 text-[10px] font-black uppercase tracking-[0.8em] mt-2">نادي صيف 2026</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl" dir="rtl">
@@ -187,7 +187,7 @@ export function SummerSection({ onGoHome }) {
                     </div>
                     
                     <div className="mt-4 flex items-center gap-2 text-white/20 group-hover:text-white/40 transition-colors">
-                       <span className="text-[9px] font-black uppercase tracking-widest">Open Interface</span>
+                       <span className="text-[9px] font-black uppercase tracking-widest">افتح الصفحة</span>
                        <ArrowRight size={12} />
                     </div>
                   </motion.button>
@@ -268,7 +268,7 @@ export function SummerSection({ onGoHome }) {
 
         <div className="mt-12 flex flex-col items-center gap-4 opacity-20">
             <div className="w-32 h-px bg-gradient-to-r from-transparent via-lime-500/50 to-transparent"></div>
-            <p className="text-[9px] font-black uppercase tracking-[0.5em] text-emerald-100">Elite Stadium V2</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.5em] text-emerald-100">صيف 2026</p>
         </div>
       </div>
     </div>

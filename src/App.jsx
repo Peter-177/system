@@ -69,7 +69,7 @@ export default function App() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-base-100">
         <span className="loading loading-spinner loading-lg text-primary"></span>
-        <p className="mt-4 text-base-content/60">جاري تحميل البيانات...</p>
+        <p className="mt-4 text-base-content/60">بنجهز لك كل حاجة... ⏳</p>
       </div>
     );
   }
@@ -78,7 +78,7 @@ export default function App() {
     <Suspense fallback={
       <div className="min-h-screen flex flex-col items-center justify-center bg-base-100">
         <span className="loading loading-spinner loading-lg text-primary"></span>
-        <p className="mt-4 text-base-content/60">جاري تحميل الصفحة...</p>
+        <p className="mt-4 text-base-content/60">ثانية واحدة، بنفتح الصفحة... ⚡</p>
       </div>
     }>
       <AppRouter onLogout={auth.logout} currentUser={auth.currentUser} onRefreshAuth={auth.refreshUser} onUpdateSecret={auth.updateSecretKey} />

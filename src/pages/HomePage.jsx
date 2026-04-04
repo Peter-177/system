@@ -53,7 +53,7 @@ const TechHeroCard = ({ card, index }) => {
 
       <div className="mt-4 flex items-center gap-2 text-sky-500/40 group-hover:text-sky-400 transition-colors">
         <span className="text-[9px] font-black uppercase tracking-widest">
-          Explore
+          يلا بينا
         </span>
         <ArrowRight size={14} />
       </div>
@@ -110,7 +110,7 @@ export function HomePage({
       show: true,
     },
     {
-      label: "الفصول الدراسية",
+      label: "الفصول",
       subLabel: "Classes & Stages",
       icon: <BookOpen />,
       onClick: onGoClasses,
@@ -170,7 +170,7 @@ export function HomePage({
               <div className="flex items-center gap-4 group">
                 <div className="h-0.5 w-16 bg-sky-500 rounded-full group-hover:w-24 transition-all duration-700"></div>
                 <span className="text-xs font-black uppercase tracking-[0.5em] text-sky-500/80">
-                  Platform Hub
+                  إحنا فين النهاردة؟
                 </span>
               </div>
 
@@ -197,7 +197,7 @@ export function HomePage({
 
           <div className="mt-40 flex flex-col items-center gap-12">
             <p className="text-slate-500 font-black uppercase tracking-[0.6em] text-[10px] opacity-40">
-              System Core Ready
+              كل حاجة جاهزة!
             </p>
           </div>
         </main>
@@ -340,12 +340,11 @@ function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame }) {
         className="absolute z-20 text-center px-6 pointer-events-none flex flex-col items-center"
       >
         <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-2xl">
-          أكتشف <br />
           <span className="text-sky-300 italic">النادي الصيفي</span>
         </h2>
         <div className="mt-8 flex flex-col items-center gap-4">
           <p className="text-white/60 font-black uppercase tracking-[0.4em] text-[10px]">
-            Scroll to dive in
+            انزل لتحت عشان ندخل سوا
           </p>
           <div className="w-px h-12 bg-gradient-to-b from-sky-400 to-transparent"></div>
         </div>
