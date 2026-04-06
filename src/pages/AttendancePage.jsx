@@ -175,9 +175,6 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
                 <h2 className="text-3xl font-black text-slate-900 tracking-tight">
                   يلا نحضّرهم
                 </h2>
-                <p className="text-slate-500 font-medium text-sm mt-1">
-                  سجل كل اللي جه النهاردة عشان ميفوتوش حاجة
-                </p>
               </div>
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -245,14 +242,14 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
               <div className="md:col-span-1 space-y-2">
                 <label className="text-[10px] font-black text-sky-300/60 uppercase tracking-widest flex items-center gap-2 mr-1">
                   <Users className="w-4 h-4 text-sky-500" />
-                  حضر فصل بالانابة
+                  حضر فصل
                 </label>
                 <select
                   className="admin-input h-14"
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
                 >
-                  <option value="">أنهي فصل اللي موجود؟</option>
+                  <option value="">فصل</option>
                   {classList.map((cls) => (
                     <option key={cls.id} value={cls.id}>
                       {cls.name}

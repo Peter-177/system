@@ -93,9 +93,10 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
             <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20">
               <UserPlus className="w-7 h-7 text-white" strokeWidth={3} />
             </div>
-            <span className="drop-shadow-lg">نضيف طفل جديد للمجموعة</span>
+            <span className="drop-shadow-lg">ضيف طفل جديد</span>
           </motion.button>
         )}
+
 
         {/* Results Info */}
         <AnimatePresence>
