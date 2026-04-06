@@ -395,9 +395,6 @@ export function AdminPage({
                 <h2 className="text-4xl font-black text-sky-50 tracking-tighter mb-2 italic">
                   Control Panel
                 </h2>
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">
-                  Real-time system diagnostics & management
-                </p>
               </div>
             </header>
 
@@ -469,9 +466,6 @@ export function AdminPage({
                       <span className="block font-black text-xl text-sky-50 mb-1">
                         الفصول
                       </span>
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                        Manage All Stages
-                      </span>
                     </div>
                   </button>
 
@@ -486,9 +480,7 @@ export function AdminPage({
                       <span className="block font-black text-xl text-sky-50 mb-1">
                         إضافة طفل
                       </span>
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                        Enroll New Member
-                      </span>
+                     
                     </div>
                   </button>
                 </div>
@@ -502,9 +494,6 @@ export function AdminPage({
                 <h4 className="font-black text-2xl text-sky-50 mb-3 tracking-tighter">
                   System Export
                 </h4>
-                <p className="text-slate-500 text-sm mb-10 leading-relaxed font-bold uppercase tracking-tight opacity-70">
-                  Archive all registered data to an encrypted Excel binary.
-                </p>
                 <button
                   onClick={handleExportExcel}
                   className="tech-btn-primary w-full shadow-2xl"

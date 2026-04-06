@@ -51,13 +51,6 @@ const TechHeroCard = ({ card, index }) => {
         </p>
       </div>
 
-      <div className="mt-4 flex items-center gap-2 text-sky-500/40 group-hover:text-sky-400 transition-colors">
-        <span className="text-[9px] font-black uppercase tracking-widest">
-          يلا بينا
-        </span>
-        <ArrowRight size={14} />
-      </div>
-
       {/* Hover Line */}
       <div className="absolute bottom-0 right-0 w-0 h-1 bg-sky-500 group-hover:w-full transition-all duration-700"></div>
     </motion.button>
@@ -167,13 +160,6 @@ export function HomePage({
               transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
               className="space-y-8 relative z-10"
             >
-              <div className="flex items-center gap-4 group">
-                <div className="h-0.5 w-16 bg-sky-500 rounded-full group-hover:w-24 transition-all duration-700"></div>
-                <span className="text-xs font-black uppercase tracking-[0.5em] text-sky-500/80">
-                  إحنا فين النهاردة؟
-                </span>
-              </div>
-
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-sky-50 tracking-[-0.05em] leading-tight text-balance">
                 مدارس أحد <br />
                 <span className="gradient-blue italic text-7xl sm:text-8xl lg:text-[10rem]">المحبة</span>
@@ -292,7 +278,7 @@ function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame }) {
           {
             autoAlpha: 0,
             y: -150,
-            x: 100, // Move sidebar out
+            x: 100,
             duration: 0.3,
             stagger: 0.05,
           },
@@ -343,9 +329,6 @@ function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame }) {
           <span className="text-sky-300 italic">النادي الصيفي</span>
         </h2>
         <div className="mt-8 flex flex-col items-center gap-4">
-          <p className="text-white/60 font-black uppercase tracking-[0.4em] text-[10px]">
-            انزل لتحت عشان ندخل سوا
-          </p>
           <div className="w-px h-12 bg-gradient-to-b from-sky-400 to-transparent"></div>
         </div>
       </div>

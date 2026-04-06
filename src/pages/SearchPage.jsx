@@ -9,20 +9,20 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
 
-  const allStudents = useMemo(() => {
-    const db = studentsDB.getAll();
-    return Object.keys(db).map((id) => ({ qrId: id, ...db[id] }));
-  }, []);
-
+  // FIXED: Read directly from DB to avoid staleness issues
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return allStudents.filter(
+    const db = studentsDB.getAll();
+    const students = Object.keys(db).map((id) => ({ qrId: id, ...db[id] }));
+    return students.filter(
       (s) =>
         s.qrId.toLowerCase().includes(q) ||
-        (s.name && s.name.toLowerCase().includes(q)),
+        (s.name  && s.name.toLowerCase().includes(q))  ||
+        (s.phone && s.phone.toLowerCase().includes(q)) ||
+        (s.year  && String(s.year).toLowerCase().includes(q)),
     );
-  }, [query, allStudents]);
+  }, [query]);
 
   // Input focus animation
   useEffect(() => {

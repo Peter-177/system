@@ -181,7 +181,15 @@ export function useAuth() {
       permissions: [],
     };
 
-    await setUserFB(uLower, userData).catch(console.error);
+    // Save user to Firebase — must be awaited for data integrity
+    try {
+      const { db } = await import("../firebase");
+      if (!db) return { ok: false, error: "Firebase config missing" };
+      await setUserFB(uLower, userData);
+    } catch (err) {
+      console.error("Failed save user:", err);
+      return { ok: false, error: `Firebase Error: ${err.code || err.message}` };
+    }
 
     // Auto-login after registration
     const user = { username: u.trim(), role: "user", permissions: [] };
@@ -218,9 +226,13 @@ export function useAuth() {
   const refreshUser = async () => {
     if (!currentUser || currentUser.role === "admin") return;
     try {
-      const userDoc = await getUserFB(currentUser.username);
+      const userDoc = await getUserFB(currentUser.username.toLowerCase());
       if (userDoc) {
-        const updatedUser = { ...currentUser, permissions: userDoc.permissions || [] };
+        const updatedUser = { 
+          ...currentUser, 
+          role: userDoc.role || currentUser.role,
+          permissions: userDoc.permissions || [] 
+        };
         setCurrentUser(updatedUser);
         sessionStore.setUser(updatedUser);
       }

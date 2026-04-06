@@ -171,9 +171,6 @@ export function BirthdayPage({ onBack }) {
               احتفالاتنا
             </h2>
           </div>
-          <p className="text-secondary-text text-lg font-medium pr-5">
-            متابعة أعياد ميلاد المخدومين والخدام
-          </p>
         </header>
 
         {/* Months Filter - Refined Chips */}
