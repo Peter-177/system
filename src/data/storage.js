@@ -9,6 +9,8 @@ import {
   getAppSettingsFB, setAppSettingsFB,
   getAllSummerAttendanceFB, addSummerAttendanceFB,
   removeSummerAttendanceFB, resetSummerAttendanceFB,
+  getAllSummerCouponsFB, addSummerCouponFB,
+  removeSummerCouponFB, resetSummerCouponsFB,
 } from "../services/firestoreService";
 
 // ── In-memory data store (populated from Firebase on startup) ──
@@ -17,6 +19,7 @@ const mem = {
   [STORAGE_KEYS.attendance]:        {},
   [STORAGE_KEYS.summerAttendance]:  {},
   [STORAGE_KEYS.coupons]:           {},
+  [STORAGE_KEYS.summerCoupons]:     {},
   [STORAGE_KEYS.visits]:            {},
   [STORAGE_KEYS.classes]:           {},
   [STORAGE_KEYS.settings]:          {
@@ -235,6 +238,42 @@ export const couponsDB = {
   },
 };
 
+// ── Summer Coupons (Firebase-only) ──
+export const summerCouponsDB = {
+  get: (sid) => loadMem(STORAGE_KEYS.summerCoupons, {})[sid] ?? [],
+  add: (sid, e) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
+
+    // Store unique record ID separately and set id to sid
+    e.recordId = e.id;
+    e.id = sid;
+    e.sid = sid;
+
+    const c = loadMem(STORAGE_KEYS.summerCoupons, {});
+    if (!c[sid]) c[sid] = [];
+    c[sid].push(e);
+    saveMem(STORAGE_KEYS.summerCoupons, c);
+    addSummerCouponFB(docId, e, sid).catch(console.error);
+  },
+  remove: (sid, eid) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
+    const c = loadMem(STORAGE_KEYS.summerCoupons, {});
+    c[sid] = (c[sid] ?? []).filter((x) => x.id !== eid);
+    saveMem(STORAGE_KEYS.summerCoupons, c);
+    removeSummerCouponFB(docId, eid).catch(console.error);
+  },
+  reset: (sid) => {
+    const student = studentsDB.get(sid);
+    const docId = student ? student.name : sid;
+    const c = loadMem(STORAGE_KEYS.summerCoupons, {});
+    c[sid] = [];
+    saveMem(STORAGE_KEYS.summerCoupons, c);
+    resetSummerCouponsFB(docId).catch(console.error);
+  },
+};
+
 // ── Visits (Firebase-only) ──
 export const visitsDB = {
   getAll: () => loadMem(STORAGE_KEYS.visits, {}),
@@ -317,6 +356,7 @@ export const syncFromFirebase = async () => {
     const visits          = await getAllVisitsFB();
     const classes         = await getAllClassesFB();
     const coupons         = await getAllCouponsFB();
+    const summerCoupons   = await getAllSummerCouponsFB();
     const settings        = await getAppSettingsFB();
 
     saveMem(STORAGE_KEYS.students,         students);
@@ -325,6 +365,7 @@ export const syncFromFirebase = async () => {
     saveMem(STORAGE_KEYS.visits,           visits);
     saveMem(STORAGE_KEYS.classes,          classes);
     saveMem(STORAGE_KEYS.coupons,          coupons);
+    saveMem(STORAGE_KEYS.summerCoupons,    summerCoupons);
     if (settings) saveMem(STORAGE_KEYS.settings, settings);
     return true;
   } catch (error) {
@@ -346,46 +387,61 @@ export const changeStudentId = async (oldId, newId) => {
   const attendance = attendanceDB.get(oldId);
   const visits = visitsDB.get(oldId);
   const coupons = couponsDB.get(oldId);
+  const summerAttendance = summerAttendanceDB.get(oldId);
+  const summerCoupons = summerCouponsDB.get(oldId);
 
   if (!student) return false;
 
   // 2. Write to new ID
   studentsDB.set(newId, student);
   if (attendance.length > 0) {
-    // Write directly to Firebase and Memory to bypass `add` unshift
     const memAtt = loadMem(STORAGE_KEYS.attendance, {});
     memAtt[newId] = attendance;
     saveMem(STORAGE_KEYS.attendance, memAtt);
-    
-    // Reverse it because addAttendanceFB unshifts each entry individually
     for (const e of [...attendance].reverse()) {
       await addAttendanceFB(newId, e).catch(console.error);
+    }
+  }
+  if (summerAttendance.length > 0) {
+    const memSumAtt = loadMem(STORAGE_KEYS.summerAttendance, {});
+    memSumAtt[newId] = summerAttendance;
+    saveMem(STORAGE_KEYS.summerAttendance, memSumAtt);
+    for (const e of [...summerAttendance].reverse()) {
+      await addSummerAttendanceFB(newId, e).catch(console.error);
     }
   }
   if (visits.length > 0) {
     const memVis = loadMem(STORAGE_KEYS.visits, {});
     memVis[newId] = visits;
     saveMem(STORAGE_KEYS.visits, memVis);
-    
     for (const e of [...visits].reverse()) {
-      await visitsDB.add(newId, e); // addVisitFB does unshift
+      await visitsDB.add(newId, e);
     }
   }
   if (coupons.length > 0) {
     const memCoup = loadMem(STORAGE_KEYS.coupons, {});
     memCoup[newId] = coupons;
     saveMem(STORAGE_KEYS.coupons, memCoup);
-    
     for (const e of coupons) {
       await couponsDB.add(newId, e);
+    }
+  }
+  if (summerCoupons.length > 0) {
+    const memSumCoup = loadMem(STORAGE_KEYS.summerCoupons, {});
+    memSumCoup[newId] = summerCoupons;
+    saveMem(STORAGE_KEYS.summerCoupons, memSumCoup);
+    for (const e of summerCoupons) {
+      await summerCouponsDB.add(newId, e);
     }
   }
 
   // 3. Delete old ID
   studentsDB.remove(oldId);
   attendanceDB.removeAll(oldId);
+  summerAttendanceDB.removeAll(oldId);
   visitsDB.removeAll(oldId);
   couponsDB.reset(oldId);
+  summerCouponsDB.reset(oldId);
 
   return true;
 };

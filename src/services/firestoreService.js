@@ -11,6 +11,7 @@ import {
 
 // --- STUDENTS API --- //
 
+
 export const addStudentFB = async (id, data) => {
   if (!db) return;
   await setDoc(doc(db, "students", id), data);
@@ -208,6 +209,55 @@ export const removeCouponFB = async (studentId, entryId) => {
 export const resetCouponsFB = async (studentId) => {
   if (!db) return;
   await deleteDoc(doc(db, "coupons", studentId));
+};
+
+// --- SUMMER COUPONS API --- //
+
+export const getAllSummerCouponsFB = async () => {
+  if (!db) return {};
+  const querySnapshot = await getDocs(collection(db, "summerCoupons"));
+  const coupons = {};
+  querySnapshot.forEach((doc) => {
+    const data = doc.data();
+    const sid = data.sid || doc.id;
+    coupons[sid] = data.log || [];
+  });
+  return coupons;
+};
+
+export const addSummerCouponFB = async (studentId, entry, originalSid) => {
+  if (!db) return;
+  const ref = doc(db, "summerCoupons", studentId);
+  const ds = await getDoc(ref);
+  if (!ds.exists()) {
+    await setDoc(ref, { 
+      sid: originalSid || studentId,
+      log: [entry] 
+    });
+  } else {
+    const log = ds.data().log || [];
+    log.push(entry);
+    await updateDoc(ref, { 
+      sid: originalSid || ds.data().sid || studentId,
+      log 
+    });
+  }
+};
+
+export const removeSummerCouponFB = async (studentId, entryId) => {
+  if (!db) return;
+  const ref = doc(db, "summerCoupons", studentId);
+  const ds = await getDoc(ref);
+  if (ds.exists()) {
+    const log = ds.data().log || [];
+    const newLog = log.filter(x => (x.recordId || x.id) !== entryId);
+    await updateDoc(ref, { log: newLog });
+  }
+};
+
+export const resetSummerCouponsFB = async (studentId) => {
+  if (!db) return;
+  await deleteDoc(doc(db, "summerCoupons", studentId));
 };
 
 // --- VISITS API --- //

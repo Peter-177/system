@@ -25,4 +25,5 @@ export const STORAGE_KEYS = {
   summerGameArena: "qrapp_summer_game_arena",
   /** حضور النادي الصيفي (Firebase) */
   summerAttendance: "qrapp_summer_attendance",
+  summerCoupons: "qrapp_summer_coupons",
 };

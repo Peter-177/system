@@ -1,38 +1,32 @@
-import React, { useRef, useState, useEffect, useMemo } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import {
-  Sun,
   ChevronLeft,
   Search,
   ClipboardList,
   Gamepad2,
   ArrowRight,
   Target,
-  Trophy,
-  Zap,
-  XCircle,
   CheckCircle2,
-  Users,
-  Award,
-  Crown,
-  Medal,
+  
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { studentsDB, summerAttendanceDB } from "../data/storage";
 import { buildAttendanceEntry, registeredToday } from "../utils/helpers";
 import { useToast } from "../hooks/useToast";
 import { Avatar, Toast } from "../components/UI";
-import gsap from "gsap";
 
 import bgImage from "../assets/studium.png";
 import { SummerGameArena } from "./SummerGameArena";
+import { SummerProfile } from "./SummerProfile";
+import { SummerCoupons } from "./SummerCoupons";
 
-export function SummerSection({ onGoHome }) {
+export function SummerSection({ onGoHome, currentUser }) {
   const sectionRef = useRef(null);
-  const [internalView, setInternalView] = useState("menu"); // 'menu' | 'search' | 'attendance' | 'games'
+  const [internalView, setInternalView] = useState("menu"); // 'menu' | 'search' | 'attendance' | 'games' | 'profile' | 'coupons'
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const toast = useToast();
 
-  // Data Fetching
   const allStudents = useMemo(() => {
     const db = studentsDB.getAll();
     return Object.keys(db).map(id => ({ qrId: id, ...db[id] }));
@@ -42,7 +36,6 @@ export function SummerSection({ onGoHome }) {
     const q = searchQuery.toLowerCase().trim();
     if (!q) {
       if (internalView === "attendance") {
-        // Only show who attended today in summer attendance view
         return allStudents.filter((s) =>
           registeredToday(summerAttendanceDB.get(s.qrId)),
         );
@@ -225,7 +218,13 @@ export function SummerSection({ onGoHome }) {
                         key={s.qrId}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
+                        onClick={internalView === "search" ? () => {
+                          setSelectedStudent(s);
+                          setInternalView("profile");
+                        } : undefined}
                         className={`p-4 rounded-3xl border backdrop-blur-xl flex items-center justify-between transition-all ${
+                          internalView === "search" ? "cursor-pointer hover:bg-white/10" : ""
+                        } ${
                           isPresent ? "bg-lime-500/10 border-lime-500/30" : "bg-white/5 border-white/5"
                         }`}
                       >
@@ -245,6 +244,11 @@ export function SummerSection({ onGoHome }) {
                               {isPresent ? <CheckCircle2 size={18} strokeWidth={3} /> : <Target size={18} />}
                            </button>
                         )}
+                        {internalView === "search" && (
+                          <div className="text-white/40">
+                            <ArrowRight size={18} className="rotate-180" />
+                          </div>
+                        )}
                       </motion.div>
                     );
                   })}
@@ -262,6 +266,40 @@ export function SummerSection({ onGoHome }) {
                dir="rtl"
             >
                <SummerGameArena />
+            </motion.div>
+          )}
+
+          {internalView === "profile" && selectedStudent && (
+            <motion.div
+              key="profile"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="w-full h-full"
+              dir="rtl"
+            >
+              <SummerProfile
+                person={selectedStudent}
+                onBack={() => setInternalView("search")}
+                onGoCoupons={() => setInternalView("coupons")}
+              />
+            </motion.div>
+          )}
+
+          {internalView === "coupons" && selectedStudent && (
+            <motion.div
+              key="coupons"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="w-full h-full"
+              dir="rtl"
+            >
+              <SummerCoupons
+                currentUser={currentUser}
+                person={selectedStudent}
+                onBack={() => setInternalView("profile")}
+              />
             </motion.div>
           )}
         </AnimatePresence>

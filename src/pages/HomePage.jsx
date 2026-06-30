@@ -194,13 +194,14 @@ export function HomePage({
           onGoSearch={onGoSearch_Summer}
           onGoAttendance={onGoAttendance_Summer}
           onGoGame={onGoGame_Summer}
+          currentUser={currentUser}
         />
       </div>
     </Page>
   );
 }
 
-function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame }) {
+function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame, currentUser }) {
   const portalSectionRef = useRef(null);
   const portalContentRef = useRef(null);
   const portalTextRef = useRef(null);
@@ -317,6 +318,7 @@ function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame }) {
           onGoSearch={onGoSearch}
           onGoAttendance={onGoAttendance}
           onGoGame={onGoGame}
+          currentUser={currentUser}
         />
       </div>
 

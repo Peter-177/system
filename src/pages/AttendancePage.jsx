@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   attendanceDB,
   studentsDB,
@@ -10,7 +10,7 @@ import {
   registeredToday,
   buildCouponEntry,
 } from "../utils/helpers";
-import { Page, Navbar, StudentMiniCard, Toast, Avatar } from "../components/UI";
+import { Page, Navbar, Toast, Avatar } from "../components/UI";
 import { useToast } from "../hooks/useToast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -23,7 +23,7 @@ import {
   Save,
 } from "lucide-react";
 
-export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
+export function AttendancePage({ person, onBack, onGoHistory }) {
   const [query, setQuery] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
   const [pendingList, setPendingList] = useState([]);
@@ -258,7 +258,6 @@ export function AttendancePage({ currentUser, person, onBack, onGoHistory }) {
                 </select>
               </div>
             </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
               {/* Attendance List - Now First (Right in RTL) */}
               <div className="space-y-6">
