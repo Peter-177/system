@@ -8,7 +8,6 @@ import {
   Gift,
   BookOpen,
   Settings,
-  ArrowRight,
   Gamepad2,
 } from "lucide-react";
 
@@ -17,6 +16,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SummerSection } from "./SummerPage";
 
 gsap.registerPlugin(ScrollTrigger);
+ScrollTrigger.config({ ignoreMobileResize: true });
 
 const TechHeroCard = ({ card, index }) => {
   return (
@@ -167,7 +167,6 @@ export function HomePage({
 
               <div className="pt-10 flex flex-col items-start gap-4">
                 
-                {/* Removed Session Info */}
               </div>
             </motion.div>
           </header>
@@ -182,13 +181,9 @@ export function HomePage({
           </div>
 
           <div className="mt-40 flex flex-col items-center gap-12">
-            <p className="text-slate-500 font-black uppercase tracking-[0.6em] text-[10px] opacity-40">
-              كل حاجة جاهزة!
-            </p>
           </div>
         </main>
 
-        {/* Portal Animation Section */}
         <PortalDive 
           onGoHome={handleGoHome} 
           onGoSearch={onGoSearch_Summer}

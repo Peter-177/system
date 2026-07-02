@@ -91,7 +91,7 @@ export function AdminPage({
     }
     getAllUsersFB()
       .then((data) => {
-        const userList = Object.values(data).filter((u) => u.role !== "admin");
+        const userList = Object.values(data || {});
         setUsers(userList);
         setLoading(false);
       })

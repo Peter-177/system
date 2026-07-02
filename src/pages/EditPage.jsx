@@ -19,9 +19,6 @@ import {
   AlertCircle,
   X,
   Fingerprint,
-  Heart,
-  School,
-  StickyNote
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -47,7 +44,6 @@ const FIELDS = [
       "تانية إعدادي",
       "تالتة إعدادي",
       "ثانوي",
-      "جامعة / خريجين"
     ],
   },
 ];
@@ -64,6 +60,7 @@ export function EditPage({ person, onBack, onSaved }) {
     birthdate_y: bYear || "",
     phone: person.phone ?? "",
     image: person.image ?? null,
+    year: person.year ?? "",
   });
   const [customFields, setCustomFields] = useState(person.customFields || []);
   const [errors, setErrors] = useState({});

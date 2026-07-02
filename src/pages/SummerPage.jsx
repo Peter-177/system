@@ -27,26 +27,32 @@ export function SummerSection({ onGoHome, currentUser }) {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const toast = useToast();
 
-  const allStudents = useMemo(() => {
-    const db = studentsDB.getAll();
-    return Object.keys(db).map(id => ({ qrId: id, ...db[id] }));
-  }, []);
-
   const filteredStudents = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
+    const db = studentsDB.getAll();
+    const allStudents = Object.keys(db).map(id => ({ qrId: id, ...db[id] }));
+
+    const normalizeArabic = (text) => {
+      if (!text) return "";
+      return text.replace(/[أإآا]/g, 'ا');
+    };
+
+    const q = normalizeArabic(searchQuery.toLowerCase().trim());
+
     if (!q) {
       if (internalView === "attendance") {
         return allStudents.filter((s) =>
           registeredToday(summerAttendanceDB.get(s.qrId)),
         );
       }
-      return [];
+      return allStudents;
     }
-    return allStudents.filter(
-      (s) =>
-        s.name?.toLowerCase().includes(q) || s.qrId.toLowerCase().includes(q),
-    );
-  }, [searchQuery, allStudents, internalView]);
+
+    return allStudents.filter((s) => {
+      const normalizedName = normalizeArabic(s.name?.toLowerCase());
+      const normalizedId = normalizeArabic(s.qrId?.toLowerCase());
+      return normalizedName.startsWith(q) || normalizedId.includes(q);
+    });
+  }, [searchQuery, internalView]);
 
   useEffect(() => {
     if (sectionRef.current) {
@@ -202,6 +208,7 @@ export function SummerSection({ onGoHome, currentUser }) {
                   <div className="absolute inset-0 bg-lime-400/5 blur-3xl group-focus-within:bg-lime-400/10 transition-colors pointer-events-none"></div>
                   <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-lime-400/40" />
                   <input 
+                    autoFocus
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}

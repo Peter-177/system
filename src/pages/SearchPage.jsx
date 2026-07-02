@@ -11,17 +11,31 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
 
   // FIXED: Read directly from DB to avoid staleness issues
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
     const db = studentsDB.getAll();
     const students = Object.keys(db).map((id) => ({ qrId: id, ...db[id] }));
-    return students.filter(
-      (s) =>
-        s.qrId.toLowerCase().includes(q) ||
-        (s.name  && s.name.toLowerCase().includes(q))  ||
-        (s.phone && s.phone.toLowerCase().includes(q)) ||
-        (s.year  && String(s.year).toLowerCase().includes(q)),
-    );
+
+    const normalizeArabic = (text) => {
+      if (!text) return "";
+      return text.replace(/[أإآا]/g, 'ا');
+    };
+
+    const q = normalizeArabic(query.trim().toLowerCase());
+
+    if (!q) return students;
+
+    return students.filter((s) => {
+      const normalizedName = normalizeArabic(String(s.name || "").toLowerCase());
+      const normalizedId = normalizeArabic(String(s.qrId || "").toLowerCase());
+      const normalizedPhone = normalizeArabic(String(s.phone || "").toLowerCase());
+      const normalizedYear = normalizeArabic(String(s.year || "").toLowerCase());
+
+      return (
+        normalizedId.includes(q) ||
+        normalizedName.startsWith(q) ||
+        normalizedPhone.includes(q) ||
+        normalizedYear.includes(q)
+      );
+    });
   }, [query]);
 
   // Input focus animation
@@ -39,7 +53,6 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.05 },
     },
   };
 
@@ -115,7 +128,7 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
 
         {/* Results List */}
         <div className="flex flex-col gap-4 pb-20 w-full relative">
-          {!query.trim() ? null : filtered.length === 0 ? (
+          {filtered.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}

@@ -68,7 +68,7 @@ export function CouponsPage({ currentUser, person, onBack }) {
 
   const handleRemove = (eid) => {
     if (!canManage) return;
-    const entryToRemove = log.find(e => e.id === eid);
+    const entryToRemove = log.find(e => (e.recordId || e.id) === eid);
     if (entryToRemove && entryToRemove.amount > 0 && total - entryToRemove.amount < 0) {
       toast.show("⚠️ ما ينفعش تمسح ده لأنه هيخلى الرصيد بالسالب!");
       setShake(true);
@@ -299,7 +299,7 @@ export function CouponsPage({ currentUser, person, onBack }) {
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, scale: 0.9 }}
-                          key={entry.id}
+                          key={entry.recordId || entry.id}
                           className="group relative bg-slate-900/40 border border-white/5 hover:border-white/10 rounded-2xl p-4 flex items-center gap-4 transition-all"
                         >
                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
@@ -327,7 +327,7 @@ export function CouponsPage({ currentUser, person, onBack }) {
 
                           {canManage && (
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                <DeleteBtn onClick={() => handleRemove(entry.id)} />
+                                <DeleteBtn onClick={() => handleRemove(entry.recordId || entry.id)} />
                             </div>
                           )}
                         </motion.div>

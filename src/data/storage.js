@@ -151,7 +151,7 @@ export const attendanceDB = {
     const student = studentsDB.get(sid);
     const docId = student ? student.name : sid;
     const a = loadMem(STORAGE_KEYS.attendance, {});
-    a[sid] = (a[sid] ?? []).filter((x) => x.id !== eid);
+    a[sid] = (a[sid] ?? []).filter((x) => (x.recordId || x.id) !== eid);
     saveMem(STORAGE_KEYS.attendance, a);
     removeAttendanceFB(docId, eid).catch(console.error);
   },
@@ -165,7 +165,6 @@ export const attendanceDB = {
   },
 };
 
-// ── Summer Attendance (Firebase-only) ──
 export const summerAttendanceDB = {
   getAll: () => loadMem(STORAGE_KEYS.summerAttendance, {}),
   get: (sid) => loadMem(STORAGE_KEYS.summerAttendance, {})[sid] ?? [],
@@ -173,7 +172,6 @@ export const summerAttendanceDB = {
     const student = studentsDB.get(sid);
     const docId = student ? student.name : sid;
     
-    // Store unique record ID separately and set id to sid
     e.recordId = e.id;
     e.id = sid;
     e.sid = sid;
@@ -188,7 +186,7 @@ export const summerAttendanceDB = {
     const student = studentsDB.get(sid);
     const docId = student ? student.name : sid;
     const a = loadMem(STORAGE_KEYS.summerAttendance, {});
-    a[sid] = (a[sid] ?? []).filter((x) => x.id !== eid);
+    a[sid] = (a[sid] ?? []).filter((x) => (x.recordId || x.id) !== eid);
     saveMem(STORAGE_KEYS.summerAttendance, a);
     removeSummerAttendanceFB(docId, eid).catch(console.error);
   },
@@ -224,7 +222,7 @@ export const couponsDB = {
     const student = studentsDB.get(sid);
     const docId = student ? student.name : sid;
     const c = loadMem(STORAGE_KEYS.coupons, {});
-    c[sid] = (c[sid] ?? []).filter((x) => x.id !== eid);
+    c[sid] = (c[sid] ?? []).filter((x) => (x.recordId || x.id) !== eid);
     saveMem(STORAGE_KEYS.coupons, c);
     removeCouponFB(docId, eid).catch(console.error);
   },
@@ -260,7 +258,7 @@ export const summerCouponsDB = {
     const student = studentsDB.get(sid);
     const docId = student ? student.name : sid;
     const c = loadMem(STORAGE_KEYS.summerCoupons, {});
-    c[sid] = (c[sid] ?? []).filter((x) => x.id !== eid);
+    c[sid] = (c[sid] ?? []).filter((x) => (x.recordId || x.id) !== eid);
     saveMem(STORAGE_KEYS.summerCoupons, c);
     removeSummerCouponFB(docId, eid).catch(console.error);
   },
@@ -297,7 +295,7 @@ export const visitsDB = {
     const student = studentsDB.get(sid);
     const docId = student ? student.name : sid;
     const a = loadMem(STORAGE_KEYS.visits, {});
-    a[sid] = (a[sid] ?? []).filter((x) => x.id !== eid);
+    a[sid] = (a[sid] ?? []).filter((x) => (x.recordId || x.id) !== eid);
     saveMem(STORAGE_KEYS.visits, a);
     removeVisitFB(docId, eid).catch(console.error);
   },
