@@ -200,7 +200,6 @@ export const summerAttendanceDB = {
   },
 };
 
-// ── Coupons (Firebase-only) ──
 export const couponsDB = {
   get: (sid) => loadMem(STORAGE_KEYS.coupons, {})[sid] ?? [],
   add: (sid, e) => {

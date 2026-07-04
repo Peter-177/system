@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { studentsDB, summerAttendanceDB } from "../data/storage";
-import { buildAttendanceEntry, registeredToday } from "../utils/helpers";
+import { buildAttendanceEntry, registeredToday, todayISO } from "../utils/helpers";
 import { useToast } from "../hooks/useToast";
 import { Avatar, Toast } from "../components/UI";
 
@@ -25,11 +25,17 @@ export function SummerSection({ onGoHome, currentUser }) {
   const [internalView, setInternalView] = useState("menu"); // 'menu' | 'search' | 'attendance' | 'games' | 'profile' | 'coupons'
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [studentToRemove, setStudentToRemove] = useState(null);
+  const [updateTrigger, setUpdateTrigger] = useState(0);
   const toast = useToast();
 
   const filteredStudents = useMemo(() => {
     const db = studentsDB.getAll();
-    const allStudents = Object.keys(db).map(id => ({ qrId: id, ...db[id] }));
+    let baseStudents = Object.keys(db).map(id => ({ qrId: id, ...db[id] }));
+
+    if (internalView === "attendance") {
+      baseStudents = baseStudents.filter(s => summerAttendanceDB.get(s.qrId).length > 0);
+    }
 
     const normalizeArabic = (text) => {
       if (!text) return "";
@@ -39,20 +45,15 @@ export function SummerSection({ onGoHome, currentUser }) {
     const q = normalizeArabic(searchQuery.toLowerCase().trim());
 
     if (!q) {
-      if (internalView === "attendance") {
-        return allStudents.filter((s) =>
-          registeredToday(summerAttendanceDB.get(s.qrId)),
-        );
-      }
-      return allStudents;
+      return baseStudents;
     }
 
-    return allStudents.filter((s) => {
+    return baseStudents.filter((s) => {
       const normalizedName = normalizeArabic(s.name?.toLowerCase());
       const normalizedId = normalizeArabic(s.qrId?.toLowerCase());
       return normalizedName.startsWith(q) || normalizedId.includes(q);
     });
-  }, [searchQuery, internalView]);
+  }, [searchQuery, internalView, updateTrigger]);
 
   useEffect(() => {
     if (sectionRef.current) {
@@ -63,10 +64,41 @@ export function SummerSection({ onGoHome, currentUser }) {
   const handleToggleAttendance = (student) => {
     const log = summerAttendanceDB.get(student.qrId);
     if (registeredToday(log)) {
-      toast.show(`✅ ${student.name} مُسجل بالفعل`);
+      setStudentToRemove(student);
     } else {
       summerAttendanceDB.add(student.qrId, buildAttendanceEntry());
+      setUpdateTrigger(prev => prev + 1);
       toast.show(`⚽ هدف! تم تسجيل حضور ${student.name}`);
+    }
+  };
+
+  const confirmRemoveAttendance = () => {
+    if (!studentToRemove) return;
+    const log = summerAttendanceDB.get(studentToRemove.qrId);
+    const todayEntry = log.find(e => e.timestamp.slice(0, 10) === todayISO());
+    if (todayEntry) {
+      summerAttendanceDB.remove(studentToRemove.qrId, todayEntry.recordId || todayEntry.id);
+      setUpdateTrigger(prev => prev + 1);
+      toast.show(`🗑️ تم مسح حضور ${studentToRemove.name}`);
+    }
+    setStudentToRemove(null);
+  };
+
+  const handleMarkAllPresent = () => {
+    let addedCount = 0;
+    filteredStudents.forEach(student => {
+      const log = summerAttendanceDB.get(student.qrId);
+      if (!registeredToday(log)) {
+        summerAttendanceDB.add(student.qrId, buildAttendanceEntry());
+        addedCount++;
+      }
+    });
+    
+    if (addedCount > 0) {
+      setUpdateTrigger(prev => prev + 1);
+      toast.show(`✅ تم تسجيل حضور ${addedCount} أطفال بنجاح`);
+    } else {
+      toast.show(`ℹ️ مفيش حد جديد يتسجل، كلهم متسجلين`);
     }
   };
 
@@ -103,6 +135,44 @@ export function SummerSection({ onGoHome, currentUser }) {
   return (
     <div ref={sectionRef} className="w-full h-full relative overflow-y-auto overflow-x-hidden bg-[#063d2f] custom-scrollbar">
       <Toast msg={toast.msg} />
+
+      <AnimatePresence>
+        {studentToRemove && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0A1931] border border-[#10B981]/30 rounded-3xl p-8 w-full max-w-sm shadow-[0_30px_70px_rgba(0,0,0,0.5)] flex flex-col gap-6"
+              dir="rtl"
+            >
+              <div className="flex flex-col items-center text-center gap-2">
+                <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-2">
+                  <CheckCircle2 size={32} />
+                </div>
+                <h3 className="text-2xl font-black text-white">مسح الحضور؟</h3>
+                <p className="text-[#B3CFE5]/60 text-sm font-bold">
+                  هل أنت متأكد إنك عايز تمسح حضور <span className="text-[#10B981]">{studentToRemove.name}</span> النهارده ؟
+                </p>
+              </div>
+              <div className="flex gap-4 w-full mt-2">
+                <button
+                  onClick={() => setStudentToRemove(null)}
+                  className="flex-1 py-3.5 rounded-2xl bg-white/5 text-[#B3CFE5] font-black hover:bg-white/10 transition-colors"
+                >
+                  لا
+                </button>
+                <button
+                  onClick={confirmRemoveAttendance}
+                  className="flex-1 py-3.5 rounded-2xl bg-red-500 text-white font-black hover:bg-red-600 shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:shadow-[0_0_30px_rgba(239,68,68,0.5)] transition-all"
+                >
+                   امسح
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       
       {/* Background Layer (Synchronized through GSAP in HomePage) */}
       <div 
@@ -217,6 +287,18 @@ export function SummerSection({ onGoHome, currentUser }) {
                   />
               </div>
 
+              {internalView === "attendance" && filteredStudents.length > 0 && (
+                <div className="flex justify-end w-full px-2 mt-[-1rem]">
+                  <button
+                    onClick={handleMarkAllPresent}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-lime-500 text-emerald-950 font-black rounded-xl hover:bg-lime-400 transition-colors shadow-lg"
+                  >
+                    <CheckCircle2 size={18} strokeWidth={3} />
+                    تسجيل الكل
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                   {filteredStudents.map((s, idx) => {
                     const isPresent = registeredToday(summerAttendanceDB.get(s.qrId));
@@ -246,7 +328,8 @@ export function SummerSection({ onGoHome, currentUser }) {
                         {internalView === "attendance" && (
                            <button 
                              onClick={() => handleToggleAttendance(s)}
-                             className={`p-2 rounded-xl transition-all ${isPresent ? 'bg-lime-500 text-emerald-950 shadow-lg' : 'bg-white/5 text-emerald-100/40 hover:bg-white/10'}`}
+                             className={`p-2 rounded-xl transition-all ${isPresent ? 'bg-lime-500 text-emerald-950 shadow-lg hover:bg-red-500 hover:text-white' : 'bg-white/5 text-emerald-100/40 hover:bg-white/10'}`}
+                             title={isPresent ? "مسح الحضور" : "تسجيل الحضور"}
                            >
                               {isPresent ? <CheckCircle2 size={18} strokeWidth={3} /> : <Target size={18} />}
                            </button>
