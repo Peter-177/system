@@ -22,11 +22,12 @@ import {
   UserCheck,
   Save,
 } from "lucide-react";
+import { useAttendanceContext } from "../context/AttendanceContext";
 
 export function AttendancePage({ person, onBack, onGoHistory }) {
   const [query, setQuery] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
-  const [pendingList, setPendingList] = useState([]);
+  const { pendingList, setPendingList } = useAttendanceContext();
   const toast = useToast();
   const inputRef = useRef(null);
 
@@ -37,10 +38,13 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
   }));
 
   useEffect(() => {
-    if (person && !pendingList.find((p) => p.qrId === person.qrId)) {
-      setPendingList([person]);
+    if (person) {
+      setPendingList((prev) => {
+        if (prev.find((p) => p.qrId === person.qrId)) return prev;
+        return [person, ...prev];
+      });
     }
-  }, [person]);
+  }, [person, setPendingList]);
 
   const allStudents = useMemo(() => {
     const db = studentsDB.getAll();

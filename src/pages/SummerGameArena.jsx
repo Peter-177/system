@@ -111,15 +111,16 @@ export function SummerGameArena() {
   );
   const [addingToTeam, setAddingToTeam] = useState(null);
   const [newMemberName, setNewMemberName] = useState("");
-  /** null | 'team' | 'game' | 'renameTeam' — مربع في منتصف الشاشة لإدخال الاسم */
   const [nameModal, setNameModal] = useState(null);
   const [modalNameInput, setModalNameInput] = useState("");
+  const [modalThemeInput, setModalThemeInput] = useState(null);
   const [renameTeamId, setRenameTeamId] = useState(null);
   const [showResults, setShowResults] = useState(false);
 
   const closeNameModal = () => {
     setNameModal(null);
     setModalNameInput("");
+    setModalThemeInput(null);
     setRenameTeamId(null);
   };
 
@@ -166,6 +167,7 @@ export function SummerGameArena() {
     if (!t) return;
     setRenameTeamId(teamId);
     setModalNameInput(t.name);
+    setModalThemeInput(t.theme);
     setNameModal("renameTeam");
   };
 
@@ -173,7 +175,7 @@ export function SummerGameArena() {
     const name = modalNameInput.trim();
     if (!name || !renameTeamId) return;
     setTeams((prev) =>
-      prev.map((t) => (t.id === renameTeamId ? { ...t, name } : t)),
+      prev.map((t) => (t.id === renameTeamId ? { ...t, name, theme: modalThemeInput || t.theme } : t)),
     );
     closeNameModal();
   };
@@ -467,6 +469,25 @@ export function SummerGameArena() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
+
+              {nameModal === "renameTeam" && (
+                <div className="mb-6">
+                   <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                     لون الفريق
+                   </label>
+                   <div className="flex gap-2">
+                      {GAME_TEAM_COLORS.map(c => (
+                        <button
+                          key={c.name}
+                          type="button"
+                          onClick={() => setModalThemeInput(c)}
+                          className={`w-10 h-10 rounded-xl border-2 transition-all ${c.bg} ${c.border} ${(modalThemeInput?.name === c.name) ? "scale-110 border-white/50 shadow-lg shadow-white/10" : "opacity-50 hover:opacity-100 hover:scale-105"}`}
+                        />
+                      ))}
+                   </div>
+                </div>
+              )}
+
               <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
                 {nameModal === "renameTeam"
                   ? "الاسم الجديد"
@@ -516,7 +537,7 @@ export function SummerGameArena() {
                   className="flex-1 h-12 rounded-xl font-extrabold bg-emerald-700/80 text-white hover:bg-emerald-600 transition-colors border border-emerald-500/30"
                 >
                   {nameModal === "renameTeam"
-                    ? "حفظ الاسم"
+                    ? "حفظ"
                     : nameModal === "team"
                       ? "إضافة الفريق"
                       : "إضافة الجولة"}

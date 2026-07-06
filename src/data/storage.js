@@ -1,6 +1,6 @@
 import { STORAGE_KEYS } from "./config";
 import {
-  addStudentFB, updateStudentFB, deleteStudentFB,
+  addStudentFB, deleteStudentFB,
   addAttendanceFB, removeAttendanceFB, resetAttendanceFB,
   addCouponFB, removeCouponFB, resetCouponsFB, getAllCouponsFB,
   addVisitFB, removeVisitFB, resetVisitsFB,
@@ -13,7 +13,6 @@ import {
   removeSummerCouponFB, resetSummerCouponsFB,
 } from "../services/firestoreService";
 
-// ── In-memory data store (populated from Firebase on startup) ──
 const mem = {
   [STORAGE_KEYS.students]:          {},
   [STORAGE_KEYS.attendance]:        {},
@@ -32,7 +31,6 @@ const mem = {
 const loadMem = (key, fb) => mem[key] ?? fb;
 const saveMem = (key, val) => { mem[key] = val; };
 
-// ── Auth & Session (kept in localStorage/sessionStorage) ──
 const loadLocal = (key, fb) => {
   try { return JSON.parse(localStorage.getItem(key)) ?? fb; }
   catch { return fb; }
