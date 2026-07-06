@@ -106,6 +106,22 @@ export function SummerSection({ onGoHome, currentUser }) {
     }
   };
 
+  const handleRemoveAll = () => {
+    let removedCount = 0;
+    filteredStudents.forEach(student => {
+      const log = summerAttendanceDB.get(student.qrId);
+      const todayEntry = log.find(e => e.timestamp.slice(0, 10) === todayISO());
+      if (todayEntry) {
+        summerAttendanceDB.remove(student.qrId, todayEntry.recordId || todayEntry.id);
+        removedCount++;
+      }
+    });
+    if (removedCount > 0) {
+      setUpdateTrigger(prev => prev + 1);
+      toast.show(`🗑️ تم مسح حضور ${removedCount} أطفال`);
+    }
+  };
+
   const summerCards = [
     {
       id: "search",
@@ -291,17 +307,24 @@ export function SummerSection({ onGoHome, currentUser }) {
                   />
               </div>
 
-              {internalView === "attendance" && filteredStudents.length > 0 && (
-                <div className="flex justify-end w-full px-2 mt-[-1rem]">
-                  <button
-                    onClick={handleMarkAllPresent}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-lime-500 text-emerald-950 font-black rounded-xl hover:bg-lime-400 transition-colors shadow-lg"
-                  >
-                    <CheckCircle2 size={18} strokeWidth={3} />
-                    تسجيل الكل
-                  </button>
-                </div>
-              )}
+              {internalView === "attendance" && filteredStudents.length > 0 && (() => {
+                const allPresent = filteredStudents.every(s => registeredToday(summerAttendanceDB.get(s.qrId)));
+                return (
+                  <div className="flex justify-end w-full px-2 mt-[-1rem]">
+                    <button
+                      onClick={allPresent ? handleRemoveAll : handleMarkAllPresent}
+                      className={`flex items-center gap-2 px-5 py-2.5 font-black rounded-xl transition-colors shadow-lg ${
+                        allPresent
+                          ? "bg-red-500 text-white hover:bg-red-600"
+                          : "bg-lime-500 text-emerald-950 hover:bg-lime-400"
+                      }`}
+                    >
+                      <CheckCircle2 size={18} strokeWidth={3} />
+                      {allPresent ? "مسح الكل" : "تسجيل الكل"}
+                    </button>
+                  </div>
+                );
+              })()}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                   {filteredStudents.map((s, idx) => {
