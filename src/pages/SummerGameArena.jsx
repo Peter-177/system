@@ -552,7 +552,7 @@ export function SummerGameArena() {
 }
 
 const ResultsView = ({ teams, games }) => {
-  const [step, setStep] = useState(0); // index 0..teams.length-1 for reveal, teams.length for final list
+  const [step, setStep] = useState(0);
 
   const results = useMemo(() => {
     return teams.map(t => {

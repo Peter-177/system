@@ -25,34 +25,38 @@ export function SummerSection({ onGoHome, currentUser }) {
   const [internalView, setInternalView] = useState("menu"); // 'menu' | 'search' | 'attendance' | 'games' | 'profile' | 'coupons'
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [prevView, setPrevView] = useState("search");
   const [studentToRemove, setStudentToRemove] = useState(null);
   const [updateTrigger, setUpdateTrigger] = useState(0);
   const toast = useToast();
 
   const filteredStudents = useMemo(() => {
     const db = studentsDB.getAll();
-    let baseStudents = Object.keys(db).map(id => ({ qrId: id, ...db[id] }));
-
-    if (internalView === "attendance") {
-      baseStudents = baseStudents.filter(s => summerAttendanceDB.get(s.qrId).length > 0);
-    }
+    const allStudents = Object.keys(db).map(id => ({ qrId: id, ...db[id] }));
 
     const normalizeArabic = (text) => {
       if (!text) return "";
       return text.replace(/[أإآا]/g, 'ا');
     };
 
+    const sortAr = (arr) => [...arr].sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", "ar"));
+
     const q = normalizeArabic(searchQuery.toLowerCase().trim());
 
-    if (!q) {
-      return baseStudents;
+    if (internalView === "attendance" && !q) {
+      // Default: show only students with prior summer attendance
+      return sortAr(allStudents.filter(s => summerAttendanceDB.get(s.qrId).length > 0));
     }
 
-    return baseStudents.filter((s) => {
+    if (!q) {
+      return sortAr(allStudents);
+    }
+
+    return sortAr(allStudents.filter((s) => {
       const normalizedName = normalizeArabic(s.name?.toLowerCase());
       const normalizedId = normalizeArabic(s.qrId?.toLowerCase());
       return normalizedName.startsWith(q) || normalizedId.includes(q);
-    });
+    }));
   }, [searchQuery, internalView, updateTrigger]);
 
   useEffect(() => {
@@ -318,7 +322,18 @@ export function SummerSection({ onGoHome, currentUser }) {
                         }`}
                       >
                         <div className="flex items-center gap-4">
-                            <Avatar name={s.name} image={s.image} size="md" />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedStudent(s);
+                                setPrevView(internalView);
+                                setInternalView("profile");
+                              }}
+                              className="rounded-full ring-2 ring-transparent hover:ring-lime-400/60 transition-all cursor-pointer shrink-0"
+                              title="عرض الملف الشخصي"
+                            >
+                              <Avatar name={s.name} image={s.image} size="md" />
+                            </button>
                             <div className="flex flex-col">
                                 <span className={`font-black tracking-tight text-white`}>{s.name}</span>
                                 <span className="text-[10px] uppercase font-bold opacity-40 text-emerald-100">{s.qrId}</span>
@@ -370,7 +385,7 @@ export function SummerSection({ onGoHome, currentUser }) {
             >
               <SummerProfile
                 person={selectedStudent}
-                onBack={() => setInternalView("search")}
+                onBack={() => setInternalView(prevView)}
                 onGoCoupons={() => setInternalView("coupons")}
               />
             </motion.div>
