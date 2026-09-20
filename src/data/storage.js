@@ -102,6 +102,24 @@ export const studentsDB = {
   getAll: () => loadMem(STORAGE_KEYS.students, {}),
   get: (id) => loadMem(STORAGE_KEYS.students, {})[id] ?? null,
   exists: (id) => !!loadMem(STORAGE_KEYS.students, {})[id],
+  getNextId: () => {
+    const a = loadMem(STORAGE_KEYS.students, {});
+    let maxId = 0;
+    for (const k of Object.keys(a)) {
+      const clean = String(k).trim();
+      if (/^\d+$/.test(clean)) {
+        const num = parseInt(clean, 10);
+        if (!isNaN(num) && num > maxId) {
+          maxId = num;
+        }
+      }
+    }
+    let next = maxId + 1;
+    while (a[String(next)]) {
+      next++;
+    }
+    return String(next);
+  },
   set: (id, d) => {
     const a = loadMem(STORAGE_KEYS.students, {});
     a[id] = d;

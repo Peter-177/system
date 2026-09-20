@@ -160,13 +160,13 @@ export function AddIdPage({ onBack, onNext }) {
   );
 }
 
-// ── Step 2: Form ───────────────────────────────
 export function AddFormPage({
   onBack,
   pendingId,
   onGoAttendance,
   onGoStudent,
 }) {
+  const [assignedId, setAssignedId] = useState(() => pendingId || studentsDB.getNextId());
   const [form, setForm] = useState({
     name: "",
     address: "",
@@ -182,6 +182,14 @@ export function AddFormPage({
   const [savedPerson, setSavedPerson] = useState(null);
 
   const [cropImageSrc, setCropImageSrc] = useState(null);
+
+  useEffect(() => {
+    if (pendingId) {
+      setAssignedId(pendingId);
+    } else if (!assignedId) {
+      setAssignedId(studentsDB.getNextId());
+    }
+  }, [pendingId]);
 
   const upd = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -202,11 +210,36 @@ export function AddFormPage({
     setCropImageSrc(null);
   };
 
+  const handleResetForNew = () => {
+    setForm({
+      name: "",
+      address: "",
+      birthdate_d: "",
+      birthdate_m: "",
+      birthdate_y: "",
+      year: "",
+      phone: "",
+      image: null,
+    });
+    setErrors({});
+    setSaved(false);
+    setSavedPerson(null);
+    setAssignedId(studentsDB.getNextId());
+  };
+
   const handleSave = () => {
     if (!form.name.trim()) {
       setErrors({ name: "من فضلك اكتب اسم الطفل" });
       return;
     }
+
+    // Ensure we have a valid and non-colliding ID
+    let currentId = assignedId || pendingId;
+    if (!currentId || (!pendingId && studentsDB.exists(currentId))) {
+      currentId = studentsDB.getNextId();
+      setAssignedId(currentId);
+    }
+
     const bd =
       form.birthdate_d && form.birthdate_m && form.birthdate_y
         ? `${form.birthdate_d}/${form.birthdate_m}/${form.birthdate_y}`
@@ -219,8 +252,8 @@ export function AddFormPage({
       name: restForm.name.trim(),
       accent: randomAccent(),
     };
-    studentsDB.set(pendingId, data);
-    setSavedPerson({ qrId: pendingId, ...data });
+    studentsDB.set(currentId, data);
+    setSavedPerson({ qrId: currentId, ...data });
     setSaved(true);
   };
 
@@ -246,8 +279,8 @@ export function AddFormPage({
           </button>
         </div>
         <div className="navbar-center flex flex-col items-center">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-1">بيانات الطفل</span>
-          <div className="font-black text-white text-lg tracking-tight">ملف الطفل</div>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-1">تسجيل جديد</span>
+          <div className="font-black text-white text-lg tracking-tight">إضافة طفل جديد</div>
         </div>
         <div className="navbar-end">
           <AnimatePresence>
@@ -267,8 +300,10 @@ export function AddFormPage({
 
       <div className="flex-1 w-full max-w-lg mx-auto px-6 py-10" dir="rtl">
         <div className="mb-8 flex flex-col items-center">
-            <div className="font-mono text-[10px] text-sky-400 bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20 mb-2">
-                ID: {pendingId}
+            <div className="flex items-center gap-2.5 font-mono text-xs text-sky-400 bg-sky-500/10 px-4 py-2 rounded-2xl border border-sky-500/20 shadow-inner">
+                <Fingerprint className="w-4 h-4 text-sky-400" />
+                <span className="font-medium text-slate-400">كود الطفل (تلقائي):</span>
+                <span className="font-black text-white text-sm tracking-wider">#{savedPerson?.qrId || assignedId}</span>
             </div>
         </div>
         <AnimatePresence mode="wait">
@@ -287,8 +322,8 @@ export function AddFormPage({
                   <div className="text-2xl font-black text-white mb-2 tracking-tight">
                     تم الحفظ بنجاح، مبروك!
                   </div>
-                  <div className="text-emerald-400/80 text-[10px] font-black uppercase tracking-[0.2em]">
-                     الطفل اتسجل خلاص في القاعدة
+                  <div className="text-emerald-400/90 text-sm font-bold">
+                    تم تسجيل الطفل بنجاح بكود رقم #{savedPerson?.qrId || assignedId}
                   </div>
                 </div>
               </div>
@@ -495,18 +530,31 @@ export function AddFormPage({
                 </div>
               </motion.button>
             ) : (
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                onClick={() => onGoStudent(pendingId)}
-                className="w-full h-20 rounded-3xl bg-slate-900 border border-white/10 text-white font-black hover:bg-slate-800 transition-all shadow-2xl flex items-center justify-center gap-4 group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <UserCheck className="w-5 h-5" />
-                </div>
-                <span className="text-lg">الذهاب لملف الطفل</span>
-                <ArrowRight className="w-5 h-5 text-slate-500 group-hover:translate-x-[-10px] transition-transform" />
-              </motion.button>
+              <div className="flex flex-col gap-4">
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  onClick={() => onGoStudent(savedPerson?.qrId || assignedId)}
+                  className="w-full h-20 rounded-3xl bg-slate-900 border border-white/10 text-white font-black hover:bg-slate-800 transition-all shadow-2xl flex items-center justify-center gap-4 group"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <UserCheck className="w-5 h-5" />
+                  </div>
+                  <span className="text-lg">الذهاب لملف الطفل</span>
+                  <ArrowRight className="w-5 h-5 text-slate-500 group-hover:translate-x-[-10px] transition-transform" />
+                </motion.button>
+
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  onClick={handleResetForNew}
+                  className="w-full h-16 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400 font-black hover:bg-sky-500/20 transition-all shadow-lg flex items-center justify-center gap-3 group"
+                >
+                  <Sparkles className="w-5 h-5 text-sky-400 group-hover:rotate-12 transition-transform" />
+                  <span className="text-base">تسجيل طفل آخر</span>
+                </motion.button>
+              </div>
             )}
           </motion.div>
         </motion.div>

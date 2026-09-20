@@ -3,7 +3,7 @@ import { studentsDB } from "../data/storage";
 import { HomePage }                 from "../pages/HomePage";
 import { SearchPage }               from "../pages/SearchPage";
 import { StudentPage }              from "../pages/StudentPage";
-import { AddIdPage, AddFormPage }   from "../pages/AddStudentPage";
+import { AddFormPage }              from "../pages/AddStudentPage";
 import { EditPage }                 from "../pages/EditPage";
 import { AttendancePage }           from "../pages/AttendancePage";
 import { PersonalAttendancePage }   from "../pages/PersonalAttendancePage";
@@ -126,7 +126,7 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
         />
       );
     case "search":
-      return <SearchPage currentUser={currentUser} onBack={()=>window.history.back()} onGoStudent={goStudent} onGoAdd={()=>setPage("add")} />;
+      return <SearchPage currentUser={currentUser} onBack={()=>window.history.back()} onGoStudent={goStudent} onGoAdd={()=>{setPendingId("");setPage("add");}} />;
     case "birthday":
       return <BirthdayPage onBack={()=>window.history.back()} />;
     case "classes":
@@ -144,7 +144,7 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
           currentUser={currentUser} 
           onBack={() => window.history.back()} 
           onGoClasses={() => setPage("classes")} 
-          onGoAddStudent={() => setPage("add")}
+          onGoAddStudent={() => { setPendingId(""); setPage("add"); }}
           onGoCreateClass={() => setPage("create-class")}
           onUpdateSecret={onUpdateSecret}
         />
@@ -152,9 +152,18 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
     case "student":
       return <StudentPage currentUser={currentUser} person={activePerson} onBack={()=>window.history.back()} onGoAttendance={()=>setPage("student-attendance")} onGoEdit={()=>setPage("edit", activePerson, true)} onGoCoupons={()=>setPage("coupons")} />;
     case "add":
-      return <AddIdPage onBack={()=>window.history.back()} onNext={id=>{setPendingId(id);setPage("add-form");}} />;
     case "add-form":
-      return <AddFormPage onBack={()=>window.history.back()} pendingId={pendingId} onGoAttendance={p=>{setActivePerson(p);setPage("student-attendance", p, true);}} onGoStudent={id => goStudent(id, true)} />;
+      return (
+        <AddFormPage
+          onBack={() => window.history.back()}
+          pendingId={pendingId}
+          onGoAttendance={(p) => {
+            setActivePerson(p);
+            setPage("student-attendance", p, true);
+          }}
+          onGoStudent={(id) => goStudent(id, true)}
+        />
+      );
     case "attendance":
       return <AttendancePage currentUser={currentUser} person={activePerson} onBack={()=>window.history.back()} onGoHistory={()=>setPage("history")} />;
     case "student-attendance":
