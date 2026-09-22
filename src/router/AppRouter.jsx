@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { studentsDB } from "../data/storage";
+import { StudentsDashboardPage } from "../pages/StudentsDashboardPage";
 import { HomePage }                 from "../pages/HomePage";
 import { SearchPage }               from "../pages/SearchPage";
 import { StudentPage }              from "../pages/StudentPage";
@@ -126,7 +127,26 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
         />
       );
     case "search":
-      return <SearchPage currentUser={currentUser} onBack={()=>window.history.back()} onGoStudent={goStudent} onGoAdd={()=>{setPendingId("");setPage("add");}} />;
+      return (
+        <SearchPage
+          currentUser={currentUser}
+          onBack={() => window.history.back()}
+          onGoStudent={goStudent}
+          onGoAdd={() => {
+            setPendingId("");
+            setPage("add");
+          }}
+          onGoDashboard={() => setPage("dashboard")}
+        />
+      );
+    case "dashboard":
+      return (
+        <StudentsDashboardPage
+          currentUser={currentUser}
+          onBack={() => window.history.back()}
+          onGoStudent={goStudent}
+        />
+      );
     case "birthday":
       return <BirthdayPage onBack={()=>window.history.back()} />;
     case "classes":

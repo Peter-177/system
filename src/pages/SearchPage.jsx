@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Page, Navbar, StudentMiniCard } from "../components/UI";
 import { studentsDB } from "../data/storage";
-import { motion, AnimatePresence } from "framer-motion";
-import { Search, UserPlus, FileQuestion } from "lucide-react";
+import { motion as Motion, AnimatePresence } from "framer-motion";
+import { Search, UserPlus, FileQuestion, LayoutDashboard } from "lucide-react";
 import { gsap } from "gsap";
 
-export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
+export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd, onGoDashboard }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
 
@@ -90,31 +90,52 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
           <div className="absolute inset-0 -z-10 bg-primary/5 blur-xl rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-500"></div>
         </div>
 
-        {/* Add Button */}
-        {(currentUser?.role === "admin" ||
-          currentUser?.permissions?.includes("perm_add_student")) && (
-          <motion.button
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            whileHover={{ scale: 1.02, translateY: -4 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onGoAdd}
-            className="btn w-full bg-gradient-to-r from-[#4A7FA7] to-[#011C40] text-white border border-[#4A7FA7]/40 rounded-[2.5rem] h-20 font-black text-2xl flex items-center justify-center gap-5 transition-all shadow-[0_0_40px_rgba(74,127,167,0.4)] cursor-pointer group relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-            <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20">
-              <UserPlus className="w-7 h-7 text-white" strokeWidth={3} />
-            </div>
-            <span className="drop-shadow-lg">ضيف طفل جديد</span>
-          </motion.button>
-        )}
+        {/* Action Buttons Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {/* Add Button */}
+          {(currentUser?.role === "admin" ||
+            currentUser?.permissions?.includes("perm_add_student")) && (
+            <Motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              whileHover={{ scale: 1.02, translateY: -2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onGoAdd}
+              className="btn w-full bg-gradient-to-r from-[#4A7FA7] to-[#011C40] text-white border border-[#4A7FA7]/40 rounded-2xl h-16 font-black text-lg flex items-center justify-center gap-3 transition-all shadow-[0_0_25px_rgba(74,127,167,0.3)] cursor-pointer group relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+              <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20">
+                <UserPlus className="w-5 h-5 text-white" strokeWidth={2.5} />
+              </div>
+              <span className="drop-shadow">ضيف طفل جديد</span>
+            </Motion.button>
+          )}
+
+          {/* Dashboard Button */}
+          {onGoDashboard && (
+            <Motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              whileHover={{ scale: 1.02, translateY: -2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onGoDashboard}
+              className="btn w-full bg-slate-900/80 hover:bg-slate-800 text-sky-300 border border-sky-400/30 hover:border-sky-400/60 rounded-2xl h-16 font-black text-lg flex items-center justify-center gap-3 transition-all shadow-[0_0_25px_rgba(14,165,233,0.15)] cursor-pointer group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-sky-500/10 flex items-center justify-center backdrop-blur-md border border-sky-400/20 text-sky-400">
+                <LayoutDashboard className="w-5 h-5" strokeWidth={2.5} />
+              </div>
+              <span className="drop-shadow">Dashboard</span>
+            </Motion.button>
+          )}
+        </div>
 
 
         {/* Results Info */}
         <AnimatePresence>
           {query.trim() && (
-            <motion.div
+            <Motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
@@ -122,14 +143,14 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
             >
               لقينا كام واحد؟{" "}
               <span className="text-primary">{filtered.length}</span>
-            </motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
 
         {/* Results List */}
         <div className="flex flex-col gap-4 pb-20 w-full relative">
           {filtered.length === 0 ? (
-            <motion.div
+            <Motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
@@ -144,16 +165,16 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
               <span className="text-lg font-medium tracking-wider">
                 للأسف، مفيش حد بالاسم ده. اتأكد من الاسم تاني!
               </span>
-            </motion.div>
+            </Motion.div>
           ) : (
-            <motion.div
+            <Motion.div
               variants={listVariants}
               initial="hidden"
               animate="show"
               className="w-full grid grid-cols-1 md:grid-cols-2 gap-4"
             >
               {filtered.map((student) => (
-                <motion.button
+                <Motion.button
                   key={student.qrId}
                   variants={itemVariants}
                   whileHover={{ scale: 1.02, x: -8 }}
@@ -162,9 +183,9 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd }) {
                   className="block text-right w-full bg-background backdrop-blur-md border border-[#011C40]/10 hover:border-[#023859]/40 rounded-[2rem] shadow-xl transition-all duration-300 cursor-pointer overflow-hidden group"
                 >
                   <StudentMiniCard person={student} />
-                </motion.button>
+                </Motion.button>
               ))}
-            </motion.div>
+            </Motion.div>
           )}
         </div>
       </div>

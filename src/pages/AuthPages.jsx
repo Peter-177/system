@@ -1,131 +1,562 @@
 import { useState } from "react";
+import {
+  User,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ArrowLeft,
+  KeyRound,
+  AlertCircle,
+  CheckCircle2,
+} from "lucide-react";
 
-// ── Shared Premium Layout ──────────────────────────────────────
-function PremiumAuthLayout({
-  children,
-  icon,
-  title,
-  subtitle,
-  shake,
-  dir = "ltr",
-}) {
+// ── Shared Design Shell & Background ────────────────────────────────
+function AuthContainer({ children, shake = false, dir = "ltr" }) {
   return (
     <div
-      className="min-h-screen relative flex items-center justify-center p-4 sm:p-8 overflow-hidden bg-[#050714]"
+      className="min-h-screen w-full relative flex items-center justify-center p-4 sm:p-6 md:p-10 overflow-hidden bg-[#030712] font-body selection:bg-sky-500/30 selection:text-sky-200"
       dir={dir}
     >
-      {/* Dynamic Aurora Background */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none flex items-center justify-center">
-        <div className="absolute top-[10%] left-[20%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full mix-blend-screen filter blur-[120px] animate-pulse duration-10000"></div>
-        <div 
-          className="absolute bottom-[20%] right-[10%] w-[600px] h-[600px] bg-purple-600/20 rounded-full mix-blend-screen filter blur-[120px] animate-pulse duration-10000"
-          style={{ animationDelay: "3s" }}
-        ></div>
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.15] mix-blend-overlay"></div>
+      {/* Background Ambience Layers */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Subtle grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.7) 1px, transparent 0)`,
+            backgroundSize: "32px 32px",
+          }}
+        />
+
+        {/* Ambient Glowing Orbs */}
+        <div className="absolute -top-[20%] -left-[10%] w-[650px] h-[650px] bg-gradient-to-br from-sky-600/15 via-blue-600/10 to-transparent rounded-full blur-[130px] animate-pulse duration-[8000ms]" />
+        <div
+          className="absolute -bottom-[20%] -right-[10%] w-[650px] h-[650px] bg-gradient-to-tl from-cyan-500/15 via-blue-700/10 to-transparent rounded-full blur-[140px] animate-pulse duration-[10000ms]"
+          style={{ animationDelay: "2s" }}
+        />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-sky-500/5 rounded-full blur-[100px]" />
       </div>
 
+      {/* Main Form Box */}
       <div
-        className={`relative w-full max-w-md z-10 flex flex-col items-center ${
-          shake ? "animate-shake" : "animate-in fade-in zoom-in duration-700"
+        className={`relative w-full max-w-[440px] z-10 ${
+          shake ? "animate-shake" : "animate-in fade-in zoom-in-95 duration-500"
         }`}
       >
-        <div className="bg-[#0b0f24]/80 backdrop-blur-xl shadow-2xl shadow-black/60 border border-white/[0.05] rounded-[2rem] p-8 sm:p-12 w-full relative overflow-hidden group">
-          {/* Subtle Top Border Glow */}
-          <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent"></div>
-          {/* Subtle Bottom Border Glow */}
-          <div className="absolute bottom-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-purple-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+        {/* Ambient Border Glow Ring */}
+        <div className="absolute -inset-0.5 bg-gradient-to-b from-sky-500/30 via-sky-500/5 to-transparent rounded-[2.5rem] blur-xl opacity-60 pointer-events-none transition-all duration-700 group-hover:opacity-100" />
 
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-[5rem] h-[5rem] rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/25 mb-8 transform transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3">
-              <span className="text-4xl drop-shadow-md">{icon}</span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
-              {title}
-            </h1>
-            {subtitle && (
-              <p className="text-indigo-200/60 font-bold uppercase tracking-[0.2em] text-[10px] sm:text-xs">
-                {subtitle}
-              </p>
-            )}
-          </div>
+        <div className="relative bg-[#0b132b]/80 backdrop-blur-2xl border border-white/[0.08] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-[2rem] p-7 sm:p-10 overflow-hidden">
+          {/* Top highlight bar */}
+          <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-sky-400/60 to-transparent" />
 
-          <div className="space-y-5">{children}</div>
+          {children}
         </div>
       </div>
     </div>
   );
 }
 
-// ── Shared Sleek Input Field ──────────────────────────────────────
-function SleekInput({
+// ── Custom Modern Input ──────────────────────────────────────────────
+function FormInput({
+  id,
   label,
-  type,
+  type = "text",
   value,
   onChange,
-  placeholder,
   onKeyDown,
+  placeholder,
   error,
-  rightElement,
-  dir = "ltr",
+  icon: Icon,
+  rightAction,
+  autoComplete,
+  disabled = false,
+  autoFocus = false,
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [capsLockActive, setCapsLockActive] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+
+  const isPassword = type === "password";
+  const actualType = isPassword ? (showPassword ? "text" : "password") : type;
+
+  const handleKeyUp = (e) => {
+    if (isPassword && e.getModifierState) {
+      setCapsLockActive(e.getModifierState("CapsLock"));
+    }
+  };
+
   return (
-    <div className="w-full flex flex-col gap-1.5" dir={dir}>
-      <div className="flex justify-between items-center px-1">
-        <label className="text-[10px] font-bold text-indigo-300/70 uppercase tracking-[0.2em]">
+    <div className="w-full space-y-1.5 text-left">
+      <div className="flex items-center justify-between px-0.5">
+        <label
+          htmlFor={id}
+          className="text-xs font-semibold text-slate-300 tracking-wide flex items-center gap-1.5 cursor-pointer"
+        >
           {label}
         </label>
-        {rightElement && <div>{rightElement}</div>}
+        {rightAction && <div>{rightAction}</div>}
       </div>
-      <div className="relative group/input">
+
+      <div
+        className={`relative flex items-center rounded-xl border transition-all duration-200 ${
+          error
+            ? "border-rose-500/60 bg-rose-500/[0.03] shadow-[0_0_15px_rgba(244,63,94,0.15)]"
+            : isFocused
+            ? "border-sky-400/70 bg-[#0f172a]/90 shadow-[0_0_20px_rgba(14,165,233,0.18)]"
+            : "border-white/[0.08] bg-[#090d1f]/60 hover:border-white/[0.16] hover:bg-[#090d1f]/90"
+        }`}
+      >
+        {/* Leading Icon */}
+        {Icon && (
+          <div
+            className={`pl-3.5 pr-1 flex items-center justify-center transition-colors duration-200 pointer-events-none ${
+              error
+                ? "text-rose-400"
+                : isFocused
+                ? "text-sky-400"
+                : "text-slate-400"
+            }`}
+          >
+            <Icon className="w-4 h-4" />
+          </div>
+        )}
+
         <input
-          className={`w-full h-14 bg-[#111736]/50 border ${
-            error
-              ? "border-red-500/50 focus:border-red-500"
-              : "border-white/5 focus:border-indigo-500/50"
-          } hover:bg-[#111736] focus:bg-[#111736] rounded-xl px-4 outline-none transition-all duration-300 text-white placeholder:text-slate-500/60 font-medium ${
-            type === "password" ? "tracking-[0.3em]" : "tracking-wide"
-          }`}
-          type={type}
-          placeholder={placeholder}
+          id={id}
+          type={actualType}
           value={value}
           onChange={onChange}
           onKeyDown={onKeyDown}
+          onKeyUp={handleKeyUp}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => {
+            setIsFocused(false);
+            setCapsLockActive(false);
+          }}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          disabled={disabled}
+          autoFocus={autoFocus}
+          className={`w-full h-12 bg-transparent text-white placeholder:text-slate-400 text-sm font-medium px-3.5 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+            isPassword && !showPassword ? "tracking-[0.15em]" : "tracking-normal"
+          }`}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
         />
-        {/* Subtle input background glow */}
-        <div className="absolute inset-0 -z-10 rounded-xl opacity-0 group-focus-within/input:opacity-100 ring-2 ring-indigo-500/20 blur-[2px] pointer-events-none transition-opacity duration-300"></div>
+
+        {/* Trailing Eye Toggle for Passwords */}
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="p-2.5 mr-1 text-slate-400 hover:text-sky-300 transition-colors rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-400/50"
+            title={showPassword ? "Hide password" : "Show password"}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            tabIndex={-1}
+          >
+            {showPassword ? (
+              <EyeOff className="w-4 h-4" />
+            ) : (
+              <Eye className="w-4 h-4" />
+            )}
+          </button>
+        )}
       </div>
+
+      {/* Caps Lock Indicator */}
+      {capsLockActive && (
+        <div className="flex items-center gap-1.5 text-amber-400 text-[11px] px-1 animate-in fade-in duration-200 font-medium">
+          <span>⚠️ Caps Lock is ON</span>
+        </div>
+      )}
+
+      {/* Error Message with Icon */}
       {error && (
-        <div className="flex items-center gap-1.5 text-red-500 px-1 mt-1 animate-in slide-in-from-top-1 fade-in duration-300">
-          <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-          <span className="text-[11px] font-bold">{error}</span>
+        <div
+          id={`${id}-error`}
+          role="alert"
+          className="flex items-center gap-1.5 text-rose-400 text-[11px] font-semibold px-1 pt-0.5 animate-in slide-in-from-top-1 fade-in duration-200"
+        >
+          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
     </div>
   );
 }
 
-// ── Shared Submit Button ──────────────────────────────────────────
-function SubmitButton({ onClick, loading, text, loadingText }) {
+// ── Primary Action Button ────────────────────────────────────────────
+function PrimaryButton({
+  children,
+  onClick,
+  loading = false,
+  loadingText = "Please wait...",
+  disabled = false,
+  icon: Icon = ArrowRight,
+}) {
   return (
     <button
-      className="w-full h-14 mt-8 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white rounded-xl text-sm font-bold uppercase tracking-[0.15em] shadow-lg shadow-indigo-500/25 transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
+      type="button"
       onClick={onClick}
-      disabled={loading}
+      disabled={disabled || loading}
+      className="relative w-full h-12 mt-2 rounded-xl font-bold text-sm text-white tracking-wide overflow-hidden transition-all duration-300 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2 group shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:shadow-[0_0_30px_rgba(14,165,233,0.5)] border border-sky-400/30"
+      style={{
+        background: "linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #004e92 100%)",
+      }}
     >
-      <span>{loading ? loadingText : text}</span>
-      {!loading && (
-        <span className="opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300">
-          →
-        </span>
+      {/* Light sheen animation */}
+      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
+
+      {loading ? (
+        <div className="flex items-center gap-2.5">
+          <svg
+            className="animate-spin h-4 w-4 text-white"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+          <span className="text-white/90">{loadingText}</span>
+        </div>
+      ) : (
+        <>
+          <span>{children}</span>
+          {Icon && (
+            <Icon className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+          )}
+        </>
       )}
     </button>
   );
 }
 
+// ── Header Brand / Title Section ──────────────────────────────────────
+function AuthHeader({ title, subtitle }) {
+  return (
+    <div className="text-center mb-7">
+      <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+        {title}
+      </h1>
 
-// ── Setup Page ──────────────────────────────────────
+      {subtitle && (
+        <p className="mt-2 text-xs sm:text-sm text-slate-400 font-normal leading-relaxed max-w-xs mx-auto">
+          {subtitle}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 1. LOGIN PAGE
+// ════════════════════════════════════════════════════════════════════
+export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
+  const [form, setForm] = useState({ username: "", password: "" });
+  const [errors, setErrors] = useState({});
+  const [globalError, setGlobalError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [shake, setShake] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+
+  const triggerShake = () => {
+    setShake(true);
+    setTimeout(() => setShake(false), 500);
+  };
+
+  const updateField = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (errors[key]) {
+      setErrors((prev) => ({ ...prev, [key]: "" }));
+    }
+    if (globalError) setGlobalError("");
+  };
+
+  const validate = () => {
+    const newErrors = {};
+    if (!form.username.trim()) {
+      newErrors.username = "Please enter your username or email";
+    }
+    if (!form.password) {
+      newErrors.password = "Please enter your password";
+    }
+    return newErrors;
+  };
+
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      triggerShake();
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const ok = await onLogin(form.username.trim(), form.password);
+      if (!ok) {
+        setGlobalError("Invalid username or password. Please try again.");
+        triggerShake();
+      }
+    } catch {
+      setGlobalError("A connection error occurred. Please try again.");
+      triggerShake();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AuthContainer shake={shake} dir="ltr">
+      <AuthHeader
+        title="Welcome Back"
+        subtitle="Sign in to manage classes, attendance, and student profiles"
+      />
+
+      {globalError && (
+        <div
+          role="alert"
+          className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold flex items-center gap-2.5 animate-in fade-in"
+        >
+          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+          <span>{globalError}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <FormInput
+          id="login-username"
+          label="Username or Email"
+          type="text"
+          value={form.username}
+          onChange={(e) => updateField("username", e.target.value)}
+          placeholder="e.g. admin or peter"
+          icon={User}
+          error={errors.username}
+          autoComplete="username"
+          autoFocus
+        />
+
+        <FormInput
+          id="login-password"
+          label="Password"
+          type="password"
+          value={form.password}
+          onChange={(e) => updateField("password", e.target.value)}
+          placeholder="••••••••"
+          icon={Lock}
+          error={errors.password}
+          autoComplete="current-password"
+          rightAction={
+            onForgot && (
+              <button
+                type="button"
+                onClick={onForgot}
+                className="text-xs font-semibold text-sky-400 hover:text-sky-300 transition-colors hover:underline focus:outline-none"
+              >
+                Forgot password?
+              </button>
+            )
+          }
+        />
+
+        {/* Remember me & Helper */}
+        <div className="flex items-center justify-between pt-1 pb-2">
+          <label className="flex items-center gap-2.5 cursor-pointer select-none group">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="w-4 h-4 rounded border-white/20 bg-slate-900/60 text-sky-500 focus:ring-1 focus:ring-sky-400 focus:ring-offset-0 cursor-pointer accent-sky-500"
+            />
+            <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">
+              Remember my session
+            </span>
+          </label>
+        </div>
+
+        <PrimaryButton
+          onClick={handleSubmit}
+          loading={loading}
+          loadingText="Authenticating..."
+        >
+          Sign In
+        </PrimaryButton>
+      </form>
+
+      {/* Footer link to Register or Setup */}
+      {(onGoRegister || onGoSetup) && (
+        <div className="mt-6 text-center">
+          <p className="text-xs text-slate-400">
+            Don&apos;t have an account?{" "}
+            <button
+              type="button"
+              onClick={onGoRegister || onGoSetup}
+              className="text-sky-400 hover:text-sky-300 font-bold hover:underline transition-colors focus:outline-none"
+            >
+              Create new account
+            </button>
+          </p>
+        </div>
+      )}
+    </AuthContainer>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 2. REGISTER PAGE
+// ════════════════════════════════════════════════════════════════════
+export function RegisterPage({ onDone, onGoLogin }) {
+  const [form, setForm] = useState({ username: "", password: "", confirm: "" });
+  const [errors, setErrors] = useState({});
+  const [globalError, setGlobalError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  const triggerShake = () => {
+    setShake(true);
+    setTimeout(() => setShake(false), 500);
+  };
+
+  const updateField = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: "" }));
+    if (globalError) setGlobalError("");
+  };
+
+  const validate = () => {
+    const e = {};
+    if (!form.username.trim()) e.username = "Username is required";
+    else if (form.username.trim().length < 3)
+      e.username = "Username must be at least 3 characters";
+
+    if (!form.password) e.password = "Password is required";
+    else if (form.password.length < 8)
+      e.password = "Password must be at least 8 characters";
+
+    if (form.password !== form.confirm) e.confirm = "Passwords do not match";
+    return e;
+  };
+
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    const valErrors = validate();
+    if (Object.keys(valErrors).length > 0) {
+      setErrors(valErrors);
+      triggerShake();
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await onDone(form.username.trim(), form.password);
+      if (result && !result.ok) {
+        setGlobalError(result.error || "Failed to create account");
+        triggerShake();
+      }
+    } catch {
+      setGlobalError("Network error. Please try again.");
+      triggerShake();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AuthContainer shake={shake} dir="ltr">
+      <AuthHeader
+        title="Join Sunday School"
+        subtitle="Create your servant account to access class attendance"
+      />
+
+      {globalError && (
+        <div
+          role="alert"
+          className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold flex items-center gap-2.5 animate-in fade-in"
+        >
+          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+          <span>{globalError}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <FormInput
+          id="reg-username"
+          label="Desired Username"
+          type="text"
+          value={form.username}
+          onChange={(e) => updateField("username", e.target.value)}
+          placeholder="e.g. mina or john"
+          icon={User}
+          error={errors.username}
+          autoFocus
+        />
+
+        <FormInput
+          id="reg-password"
+          label="Password (min. 8 characters)"
+          type="password"
+          value={form.password}
+          onChange={(e) => updateField("password", e.target.value)}
+          placeholder="••••••••"
+          icon={Lock}
+          error={errors.password}
+        />
+
+        <FormInput
+          id="reg-confirm"
+          label="Confirm Password"
+          type="password"
+          value={form.confirm}
+          onChange={(e) => updateField("confirm", e.target.value)}
+          placeholder="••••••••"
+          icon={Lock}
+          error={errors.confirm}
+        />
+
+        <PrimaryButton
+          onClick={handleSubmit}
+          loading={loading}
+          loadingText="Creating account..."
+        >
+          Create Account
+        </PrimaryButton>
+      </form>
+
+      <div className="mt-6 text-center">
+        <p className="text-xs text-slate-400">
+          Already have an account?{" "}
+          <button
+            type="button"
+            onClick={onGoLogin}
+            className="text-sky-400 hover:text-sky-300 font-bold hover:underline transition-colors focus:outline-none"
+          >
+            Sign in here
+          </button>
+        </p>
+      </div>
+    </AuthContainer>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 3. SETUP PAGE (Initial Admin Account Setup)
+// ════════════════════════════════════════════════════════════════════
 export function SetupPage({ onDone, onGoLogin }) {
   const [form, setForm] = useState({
     username: "",
@@ -138,425 +569,321 @@ export function SetupPage({ onDone, onGoLogin }) {
   const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
 
-  const upd = (k, v) => {
-    setForm((f) => ({ ...f, [k]: v }));
-    setErrors((e) => ({ ...e, [k]: "" }));
-    setGlobalError("");
+  const triggerShake = () => {
+    setShake(true);
+    setTimeout(() => setShake(false), 500);
   };
 
-  const submit = async () => {
+  const updateField = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: "" }));
+    if (globalError) setGlobalError("");
+  };
+
+  const validate = () => {
     const e = {};
-    if (!form.username.trim()) e.username = "Required";
-    if (form.password.length < 8) e.password = "At least 8 letters";
-    if (form.password !== form.confirm) e.confirm = "Does not match";
-    if (!form.secret.trim()) e.secret = "Secret key required";
-    if (Object.keys(e).length) {
-      setErrors(e);
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
+    if (!form.username.trim()) e.username = "Admin username is required";
+    if (!form.password) e.password = "Password is required";
+    else if (form.password.length < 8)
+      e.password = "Password must be at least 8 characters";
+    if (form.password !== form.confirm) e.confirm = "Passwords do not match";
+    if (!form.secret.trim())
+      e.secret = "Emergency recovery key is required";
+    return e;
+  };
+
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    const valErrors = validate();
+    if (Object.keys(valErrors).length > 0) {
+      setErrors(valErrors);
+      triggerShake();
       return;
     }
+
     setLoading(true);
-    const result = await onDone(
-      form.username.trim(),
-      form.password,
-      form.secret.trim(),
-    );
-    setLoading(false);
-    if (result && !result.ok) {
-      setGlobalError(result.error);
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
+    try {
+      const res = await onDone(
+        form.username.trim(),
+        form.password,
+        form.secret.trim()
+      );
+      if (res && !res.ok) {
+        setGlobalError(res.error || "Setup failed");
+        triggerShake();
+      }
+    } catch {
+      setGlobalError("Network error. Please try again.");
+      triggerShake();
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <PremiumAuthLayout
-      icon="🚀"
-      title="Setup Admin Account"
-      subtitle="The first step to get started"
-      shake={shake}
-      dir="ltr"
-    >
-      <SleekInput
-        label="Username"
-        type="text"
-        placeholder="e.g., admin"
-        value={form.username}
-        onChange={(e) => upd("username", e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-        error={errors.username ? "Username is required" : ""}
-        dir="ltr"
-      />
-      <SleekInput
-        label="Strong Password"
-        type="password"
-        placeholder="••••••••"
-        value={form.password}
-        onChange={(e) => upd("password", e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-        error={errors.password ? "At least 8 characters" : ""}
-        dir="ltr"
-      />
-      <SleekInput
-        label="Confirm Password"
-        type="password"
-        placeholder="••••••••"
-        value={form.confirm}
-        onChange={(e) => upd("confirm", e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-        error={errors.confirm ? "Passwords do not match" : ""}
-        dir="ltr"
-      />
-      <SleekInput
-        label="Emergency Security Key"
-        type="password"
-        placeholder="Keep it in a safe place"
-        value={form.secret}
-        onChange={(e) => upd("secret", e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-        error={errors.secret ? "This code is very important" : ""}
-        dir="ltr"
+    <AuthContainer shake={shake} dir="ltr">
+      <AuthHeader
+        title="Admin Setup"
+        subtitle="Configure the master administrative credentials for this instance"
       />
 
       {globalError && (
-        <div className="px-4 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 mt-2 text-[13px] font-bold text-center">
-          {globalError}
+        <div
+          role="alert"
+          className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold flex items-center gap-2.5"
+        >
+          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+          <span>{globalError}</span>
         </div>
       )}
 
-      <SubmitButton 
-        onClick={submit} 
-        loading={loading} 
-        text="Sign Up" 
-        loadingText="Saving data..." 
-      />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <FormInput
+          id="setup-username"
+          label="Admin Username"
+          type="text"
+          value={form.username}
+          onChange={(e) => updateField("username", e.target.value)}
+          placeholder="admin"
+          icon={User}
+          error={errors.username}
+          autoFocus
+        />
 
-      <div className="text-center pt-8 mt-4 border-t border-white/[0.05]">
-        <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest" dir="ltr">
-          Already have an account?{" "}
-          <button
-            className="text-indigo-400 hover:text-indigo-300 transition-colors font-bold hover:underline underline-offset-4"
-            onClick={onGoLogin}
-          >
-            Login here
-          </button>
-        </p>
-      </div>
-    </PremiumAuthLayout>
-  );
-}
+        <FormInput
+          id="setup-password"
+          label="Master Password (min. 8 characters)"
+          type="password"
+          value={form.password}
+          onChange={(e) => updateField("password", e.target.value)}
+          placeholder="••••••••"
+          icon={Lock}
+          error={errors.password}
+        />
 
-// ── Login Page ──────────────────────────────────────
-export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
-  const [form, setForm] = useState({ username: "", password: "" });
-  const [error, setError] = useState("");
-  const [shake, setShake] = useState(false);
-  const [loading, setLoading] = useState(false);
+        <FormInput
+          id="setup-confirm"
+          label="Confirm Master Password"
+          type="password"
+          value={form.confirm}
+          onChange={(e) => updateField("confirm", e.target.value)}
+          placeholder="••••••••"
+          icon={Lock}
+          error={errors.confirm}
+        />
 
-  const upd = (k, v) => {
-    setForm((f) => ({ ...f, [k]: v }));
-    setError("");
-  };
+        <FormInput
+          id="setup-secret"
+          label="Emergency Recovery Key"
+          type="password"
+          value={form.secret}
+          onChange={(e) => updateField("secret", e.target.value)}
+          placeholder="Save this in a secure vault"
+          icon={KeyRound}
+          error={errors.secret}
+        />
 
-  const submit = async () => {
-    setLoading(true);
-    const ok = await onLogin(form.username, form.password);
-    setLoading(false);
-    if (!ok) {
-      setError("Incorrect username or password");
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
-    }
-  };
+        <PrimaryButton
+          onClick={handleSubmit}
+          loading={loading}
+          loadingText="Initializing system..."
+        >
+          Initialize Admin Account
+        </PrimaryButton>
+      </form>
 
-  const forgotButton = (
-    <button
-      className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest"
-      onClick={onForgot}
-    >
-      Forgot?
-    </button>
-  );
-
-  return (
-    <PremiumAuthLayout icon="👋" title="Welcome Back!" subtitle="Login to continue your work" shake={shake} dir="ltr">
-      <SleekInput
-        label="Username"
-        type="text"
-        placeholder="e.g., admin"
-        value={form.username}
-        onChange={(e) => upd("username", e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-        dir="ltr"
-      />
-      <SleekInput
-        label="Password"
-        type="password"
-        placeholder="••••••••"
-        value={form.password}
-        onChange={(e) => upd("password", e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-        rightElement={forgotButton}
-        dir="ltr"
-      />
-
-      {error && (
-        <div className="px-4 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 mt-2 text-[13px] font-bold text-center flex items-center justify-center gap-2">
-          <svg className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-          {error}
-        </div>
-      )}
-
-      <SubmitButton 
-        onClick={submit} 
-        loading={loading} 
-        text="Login" 
-        loadingText="Checking..." 
-      />
-
-      {(onGoSetup || onGoRegister) && (
-        <div className="text-center pt-8 mt-4 border-t border-white/[0.05]">
-          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest" dir="ltr">
-            Don't have an account?{" "}
+      {onGoLogin && (
+        <div className="mt-6 text-center">
+          <p className="text-xs text-slate-400">
+            Account already initialized?{" "}
             <button
-              className="text-indigo-400 hover:text-indigo-300 transition-colors font-bold hover:underline underline-offset-4"
-              onClick={onGoSetup || onGoRegister}
+              type="button"
+              onClick={onGoLogin}
+              className="text-sky-400 hover:text-sky-300 font-bold hover:underline transition-colors focus:outline-none"
             >
-              Register new account
+              Sign in
             </button>
           </p>
         </div>
       )}
-    </PremiumAuthLayout>
+    </AuthContainer>
   );
 }
 
-// ── Register (For normal users) ────────────────
-export function RegisterPage({ onDone, onGoLogin }) {
-  const [form, setForm] = useState({ username: "", password: "", confirm: "" });
-  const [errors, setErrors] = useState({});
-  const [globalError, setGlobalError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [shake, setShake] = useState(false);
-
-  const upd = (k, v) => {
-    setForm((f) => ({ ...f, [k]: v }));
-    setErrors((e) => ({ ...e, [k]: "" }));
-    setGlobalError("");
-  };
-
-  const submit = async () => {
-    const e = {};
-    if (!form.username.trim()) e.username = "Required";
-    if (form.password.length < 8) e.password = "At least 8 letters";
-    if (form.password !== form.confirm) e.confirm = "Does not match";
-    if (Object.keys(e).length) {
-      setErrors(e);
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
-      return;
-    }
-    setLoading(true);
-    const result = await onDone(form.username.trim(), form.password);
-    setLoading(false);
-    if (result && !result.ok) {
-      setGlobalError(result.error);
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
-    }
-  };
-
-  return (
-    <PremiumAuthLayout icon="✨" title="Create Account" subtitle="Join our platform" shake={shake} dir="ltr">
-      <SleekInput
-        label="Username"
-        type="text"
-        placeholder="user123"
-        value={form.username}
-        onChange={(e) => upd("username", e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-        error={errors.username}
-      />
-      <SleekInput
-        label="Password"
-        type="password"
-        placeholder="••••••••"
-        value={form.password}
-        onChange={(e) => upd("password", e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-        error={errors.password}
-      />
-      <SleekInput
-        label="Confirm Password"
-        type="password"
-        placeholder="••••••••"
-        value={form.confirm}
-        onChange={(e) => upd("confirm", e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && submit()}
-        error={errors.confirm}
-      />
-
-      {globalError && (
-        <div className="px-4 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 mt-2 text-[13px] font-bold text-center">
-          {globalError}
-        </div>
-      )}
-
-      <SubmitButton 
-        onClick={submit} 
-        loading={loading} 
-        text="Sign Up" 
-        loadingText="Creating..." 
-      />
-
-      <div className="text-center pt-8 mt-4 border-t border-white/[0.05]">
-        <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-widest">
-          Already have an account?{" "}
-          <button
-            className="text-indigo-400 hover:text-indigo-300 transition-colors font-bold hover:underline underline-offset-4"
-            onClick={onGoLogin}
-          >
-            Log in
-          </button>
-        </p>
-      </div>
-    </PremiumAuthLayout>
-  );
-}
-
-// ── Reset ──────────────────────────────────────
+// ════════════════════════════════════════════════════════════════════
+// 4. RESET PASSWORD PAGE
+// ════════════════════════════════════════════════════════════════════
 export function ResetPage({ onVerify, onReset, onBack }) {
-  const [step, setStep] = useState("verify");
+  const [step, setStep] = useState("verify"); // "verify" | "newpass"
   const [secret, setSecret] = useState("");
   const [form, setForm] = useState({ password: "", confirm: "" });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
 
-  const doShake = () => {
+  const triggerShake = () => {
     setShake(true);
     setTimeout(() => setShake(false), 500);
   };
 
-  const upd = (k, v) => {
-    setForm((f) => ({ ...f, [k]: v }));
-    setErrors((e) => ({ ...e, [k]: "" }));
-  };
-
-  const handleVerify = async () => {
-    setLoading(true);
-    const ok = await onVerify(secret);
-    setLoading(false);
-    if (ok) {
-      setStep("newpass");
-      setErrors({});
-    } else {
-      setErrors({ secret: "The secret key is incorrect" });
-      doShake();
-    }
-  };
-
-  const handleReset = () => {
-    const e = {};
-    if (form.password.length < 8) e.password = "At least 8 letters";
-    if (form.password !== form.confirm) e.confirm = "Does not match";
-    if (Object.keys(e).length) {
-      setErrors(e);
-      doShake();
+  const handleVerify = async (e) => {
+    if (e) e.preventDefault();
+    if (!secret.trim()) {
+      setErrors({ secret: "Please enter your emergency recovery key" });
+      triggerShake();
       return;
     }
+
+    setLoading(true);
+    try {
+      const ok = await onVerify(secret.trim());
+      if (ok) {
+        setStep("newpass");
+        setErrors({});
+      } else {
+        setErrors({ secret: "Incorrect recovery key" });
+        triggerShake();
+      }
+    } catch {
+      setErrors({ secret: "Verification failed. Please try again." });
+      triggerShake();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = (e) => {
+    if (e) e.preventDefault();
+    const errs = {};
+    if (!form.password) errs.password = "New password is required";
+    else if (form.password.length < 8)
+      errs.password = "Password must be at least 8 characters";
+    if (form.password !== form.confirm) errs.confirm = "Passwords do not match";
+
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      triggerShake();
+      return;
+    }
+
     onReset(form.password);
   };
 
   return (
-    <PremiumAuthLayout
-      icon={step === "verify" ? "🔑" : "🔓"}
-      title={step === "verify" ? "Reset Password" : "New Password"}
-      subtitle={
-        step === "verify"
-          ? "Verify identity"
-          : "Secure your account"
-      }
-      shake={shake}
-      dir="ltr"
-    >
+    <AuthContainer shake={shake} dir="ltr">
+      {/* Back button */}
       <button
-        className="absolute top-6 left-6 w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all border border-white/5"
+        type="button"
         onClick={onBack}
-        title="Back"
+        className="absolute top-6 left-6 p-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white border border-white/[0.08] transition-all flex items-center justify-center focus:outline-none"
+        title="Back to Login"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-        </svg>
+        <ArrowLeft className="w-4 h-4" />
       </button>
 
-      {/* Steps Indicator */}
-      <div className="flex justify-center mb-8">
-        <div className="flex items-center gap-3">
-          <div className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold ${step === "verify" || step === "newpass" ? "bg-indigo-500 text-white" : "bg-white/5 text-white/30"}`}>
-            1
-          </div>
-          <div className={`h-[2px] w-8 ${step === "newpass" ? "bg-indigo-500" : "bg-white/10"}`}></div>
-          <div className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold ${step === "newpass" ? "bg-indigo-500 text-white" : "bg-white/5 text-white/30"}`}>
-            2
-          </div>
+      <AuthHeader
+        title={step === "verify" ? "Recovery Key" : "Set New Password"}
+        subtitle={
+          step === "verify"
+            ? "Enter your emergency recovery key to verify your authority"
+            : "Choose a strong new password for your account"
+        }
+      />
+
+      {/* Stepper indicator */}
+      <div className="flex items-center justify-center gap-3 mb-6">
+        <div
+          className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-all ${
+            step === "verify"
+              ? "bg-sky-500 text-white shadow-[0_0_15px_rgba(14,165,233,0.5)]"
+              : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+          }`}
+        >
+          {step === "newpass" ? <CheckCircle2 className="w-4 h-4" /> : "1"}
+        </div>
+        <div
+          className={`h-0.5 w-10 transition-colors ${
+            step === "newpass" ? "bg-sky-500" : "bg-white/10"
+          }`}
+        />
+        <div
+          className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-all ${
+            step === "newpass"
+              ? "bg-sky-500 text-white shadow-[0_0_15px_rgba(14,165,233,0.5)]"
+              : "bg-white/5 text-slate-500 border border-white/5"
+          }`}
+        >
+          2
         </div>
       </div>
 
-      {step === "verify" && (
-        <>
-          <SleekInput
-            label="Secret Key"
+      {step === "verify" ? (
+        <form onSubmit={handleVerify} className="space-y-4">
+          <FormInput
+            id="reset-secret"
+            label="Emergency Recovery Key"
             type="password"
-            placeholder="••••••••••••"
             value={secret}
             onChange={(e) => {
               setSecret(e.target.value);
-              setErrors({});
+              if (errors.secret) setErrors({});
             }}
-            onKeyDown={(e) => e.key === "Enter" && handleVerify()}
+            placeholder="••••••••••••"
+            icon={KeyRound}
             error={errors.secret}
+            autoFocus
           />
-          <SubmitButton 
-            onClick={handleVerify} 
-            loading={loading} 
-            text="Verify Key" 
-            loadingText="Verifying..." 
-          />
-        </>
-      )}
 
-      {step === "newpass" && (
-        <>
-          <SleekInput
-            label="New Password"
+          <PrimaryButton
+            onClick={handleVerify}
+            loading={loading}
+            loadingText="Verifying key..."
+          >
+            Verify Recovery Key
+          </PrimaryButton>
+        </form>
+      ) : (
+        <form onSubmit={handleReset} className="space-y-4">
+          <FormInput
+            id="reset-new-pass"
+            label="New Master Password"
             type="password"
-            placeholder="••••••••"
             value={form.password}
-            onChange={(e) => upd("password", e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleReset()}
-            error={errors.password}
-          />
-          <SleekInput
-            label="Confirm Password"
-            type="password"
+            onChange={(e) => {
+              setForm((prev) => ({ ...prev, password: e.target.value }));
+              if (errors.password)
+                setErrors((prev) => ({ ...prev, password: "" }));
+            }}
             placeholder="••••••••"
+            icon={Lock}
+            error={errors.password}
+            autoFocus
+          />
+
+          <FormInput
+            id="reset-confirm-pass"
+            label="Confirm New Password"
+            type="password"
             value={form.confirm}
-            onChange={(e) => upd("confirm", e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleReset()}
+            onChange={(e) => {
+              setForm((prev) => ({ ...prev, confirm: e.target.value }));
+              if (errors.confirm)
+                setErrors((prev) => ({ ...prev, confirm: "" }));
+            }}
+            placeholder="••••••••"
+            icon={Lock}
             error={errors.confirm}
           />
-          <SubmitButton 
-            onClick={handleReset} 
-            loading={false} 
-            text="Save Password" 
-            loadingText="" 
-          />
-        </>
+
+          <PrimaryButton
+            onClick={handleReset}
+            loading={false}
+            icon={CheckCircle2}
+          >
+            Save & Update Password
+          </PrimaryButton>
+        </form>
       )}
-    </PremiumAuthLayout>
+    </AuthContainer>
   );
 }
