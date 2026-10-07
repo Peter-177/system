@@ -38,7 +38,6 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd, onGoDash
     });
   }, [query]);
 
-  // Input focus animation
   useEffect(() => {
     if (inputRef.current) {
       gsap.fromTo(
@@ -70,19 +69,19 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd, onGoDash
       <Navbar title="البحث" onBack={onBack} />
 
       <div
-        className="flex-1 w-full max-w-4xl mx-auto px-6 py-8 flex flex-col gap-6"
+        className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-5 sm:gap-6"
         dir="rtl"
       >
         {/* Search Bar - Modern Floating Pill */}
         <div className="relative group w-full" ref={inputRef}>
-          <div className="absolute inset-y-0 right-0 flex items-center pr-5 pointer-events-none text-base-content/40 group-focus-within:text-primary transition-colors">
-            <Search className="w-6 h-6" strokeWidth={2.5} />
+          <div className="absolute inset-y-0 right-0 flex items-center pr-4 sm:pr-5 pointer-events-none text-base-content/40 group-focus-within:text-primary transition-colors">
+            <Search className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />
           </div>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="اكتب اسم الطفل أو الكود بتاعه هنا..."
-            className="input w-full bg-[#011C40]/5 backdrop-blur-xl shadow-lg border border-[#011C40]/10 focus:border-primary/50 rounded-2xl pl-6 pr-14 h-16 text-lg font-black transition-all duration-300 placeholder:text-muted/60 text-text outline-none focus:shadow-[0_0_30px_rgba(2,56,89,0.1)]"
+            className="input w-full bg-[#011C40]/5 backdrop-blur-xl shadow-lg border border-[#011C40]/10 focus:border-primary/50 rounded-2xl pl-4 sm:pl-6 pr-12 sm:pr-14 h-14 sm:h-16 text-base sm:text-lg font-black transition-all duration-300 placeholder:text-muted/60 text-text outline-none focus:shadow-[0_0_30px_rgba(2,56,89,0.1)]"
             autoFocus
           />
 
@@ -91,7 +90,7 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd, onGoDash
         </div>
 
         {/* Action Buttons Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
           {/* Add Button */}
           {(currentUser?.role === "admin" ||
             currentUser?.permissions?.includes("perm_add_student")) && (
@@ -102,11 +101,11 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd, onGoDash
               whileHover={{ scale: 1.02, translateY: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={onGoAdd}
-              className="btn w-full bg-gradient-to-r from-[#4A7FA7] to-[#011C40] text-white border border-[#4A7FA7]/40 rounded-2xl h-16 font-black text-lg flex items-center justify-center gap-3 transition-all shadow-[0_0_25px_rgba(74,127,167,0.3)] cursor-pointer group relative overflow-hidden"
+              className="btn w-full bg-gradient-to-r from-[#4A7FA7] to-[#011C40] text-white border border-[#4A7FA7]/40 rounded-2xl h-14 sm:h-16 font-black text-base sm:text-lg flex items-center justify-center gap-2.5 sm:gap-3 transition-all shadow-[0_0_25px_rgba(74,127,167,0.3)] cursor-pointer group relative overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-              <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20">
-                <UserPlus className="w-5 h-5 text-white" strokeWidth={2.5} />
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20">
+                <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-white" strokeWidth={2.5} />
               </div>
               <span className="drop-shadow">ضيف طفل جديد</span>
             </Motion.button>
@@ -121,10 +120,10 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd, onGoDash
               whileHover={{ scale: 1.02, translateY: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={onGoDashboard}
-              className="btn w-full bg-slate-900/80 hover:bg-slate-800 text-sky-300 border border-sky-400/30 hover:border-sky-400/60 rounded-2xl h-16 font-black text-lg flex items-center justify-center gap-3 transition-all shadow-[0_0_25px_rgba(14,165,233,0.15)] cursor-pointer group"
+              className="btn w-full bg-slate-900/80 hover:bg-slate-800 text-sky-300 border border-sky-400/30 hover:border-sky-400/60 rounded-2xl h-14 sm:h-16 font-black text-base sm:text-lg flex items-center justify-center gap-2.5 sm:gap-3 transition-all shadow-[0_0_25px_rgba(14,165,233,0.15)] cursor-pointer group"
             >
-              <div className="w-9 h-9 rounded-xl bg-sky-500/10 flex items-center justify-center backdrop-blur-md border border-sky-400/20 text-sky-400">
-                <LayoutDashboard className="w-5 h-5" strokeWidth={2.5} />
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-sky-500/10 flex items-center justify-center backdrop-blur-md border border-sky-400/20 text-sky-400">
+                <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2.5} />
               </div>
               <span className="drop-shadow">Dashboard</span>
             </Motion.button>

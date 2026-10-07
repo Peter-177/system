@@ -79,7 +79,7 @@ export function SummerSection({ onGoHome, currentUser }) {
   const confirmRemoveAttendance = () => {
     if (!studentToRemove) return;
     const log = summerAttendanceDB.get(studentToRemove.qrId);
-    const todayEntry = log.find(e => e.timestamp.slice(0, 10) === todayISO());
+    const todayEntry = log.find(e => e.timestamp && e.timestamp.slice(0, 10) === todayISO());
     if (todayEntry) {
       summerAttendanceDB.remove(studentToRemove.qrId, todayEntry.recordId || todayEntry.id);
       setUpdateTrigger(prev => prev + 1);
@@ -110,7 +110,7 @@ export function SummerSection({ onGoHome, currentUser }) {
     let removedCount = 0;
     filteredStudents.forEach(student => {
       const log = summerAttendanceDB.get(student.qrId);
-      const todayEntry = log.find(e => e.timestamp.slice(0, 10) === todayISO());
+      const todayEntry = log.find(e => e.timestamp && e.timestamp.slice(0, 10) === todayISO());
       if (todayEntry) {
         summerAttendanceDB.remove(student.qrId, todayEntry.recordId || todayEntry.id);
         removedCount++;
@@ -210,9 +210,9 @@ export function SummerSection({ onGoHome, currentUser }) {
       </div>
 
       <div
-        className="summer-stadium-content max-w-7xl mx-auto px-6 lg:px-12 relative z-10 flex flex-col items-center w-full min-h-full py-12"
+        className="summer-stadium-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 relative z-10 flex flex-col items-center w-full min-h-full py-6 sm:py-12"
       >
-        <header className="w-full flex justify-between items-center mb-12" dir="rtl">
+        <header className="w-full flex justify-between items-center mb-6 sm:mb-12 gap-3" dir="rtl">
           <button
             onClick={() => {
               if (internalView !== "menu") {
@@ -221,14 +221,14 @@ export function SummerSection({ onGoHome, currentUser }) {
                 if (onGoHome) onGoHome();
               }
             }}
-            className="group flex items-center gap-4 px-6 py-3 bg-emerald-900/60 backdrop-blur-3xl border border-white/5 rounded-2xl text-emerald-100 font-extrabold text-xs hover:bg-emerald-500 hover:text-white transition-all shadow-2xl"
+            className="group flex items-center gap-2 sm:gap-4 px-3.5 sm:px-6 py-2.5 sm:py-3 bg-emerald-900/60 backdrop-blur-3xl border border-white/5 rounded-xl sm:rounded-2xl text-emerald-100 font-extrabold text-xs hover:bg-emerald-500 hover:text-white transition-all shadow-2xl shrink-0 min-h-[44px]"
           >
             <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
             <span>{internalView === "menu" ? "رجوع للرئيسية" : "يلا نرجع للملعب"}</span>
           </button>
 
-          <div className="flex items-center gap-6">
-            <div className="px-5 py-2.5 bg-lime-500/10 text-lime-400 text-[10px] font-black tracking-[0.4em] uppercase rounded-xl border border-lime-500/20 backdrop-blur-md">
+          <div className="flex items-center gap-2 sm:gap-6">
+            <div className="px-3 sm:px-5 py-2 sm:py-2.5 bg-lime-500/10 text-lime-400 text-[9px] sm:text-[10px] font-black tracking-wider sm:tracking-[0.4em] uppercase rounded-xl border border-lime-500/20 backdrop-blur-md truncate max-w-[130px] sm:max-w-none">
               {internalView === "menu" ? "ملعبنا الصيفي الجميل" : internalView.toUpperCase()}
             </div>
           </div>
@@ -243,14 +243,14 @@ export function SummerSection({ onGoHome, currentUser }) {
               exit={{ opacity: 0, scale: 0.95 }}
               className="w-full flex flex-col items-center"
             >
-              <div className="text-center w-full mb-16 relative">
-                <h1 className="text-5xl md:text-7xl font-black text-white mb-4 tracking-tighter leading-none flex items-center justify-center gap-6">
+              <div className="text-center w-full mb-8 sm:mb-16 relative">
+                <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-white mb-2 sm:mb-4 tracking-tighter leading-none flex items-center justify-center gap-3 sm:gap-6 flex-wrap">
                   النادي <span className="text-lime-400 italic">الصيفي</span>
                 </h1>
-                <p className="text-emerald-300/40 text-[10px] font-black uppercase tracking-[0.8em] mt-2">نادي صيف 2026</p>
+                <p className="text-emerald-300/40 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.4em] sm:tracking-[0.8em] mt-1 sm:mt-2">نادي صيف 2026</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl" dir="rtl">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 w-full max-w-6xl" dir="rtl">
                 {summerCards.map((card, idx) => (
                   <motion.button
                     key={idx}
@@ -258,24 +258,24 @@ export function SummerSection({ onGoHome, currentUser }) {
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 + idx * 0.1, duration: 0.8 }}
-                    whileHover={{ y: -12 }}
+                    whileHover={{ y: -8 }}
                     whileTap={{ scale: 0.97 }}
-                    className={`relative tech-panel !p-10 flex flex-col items-center text-center gap-6 overflow-hidden group border-white/10 transition-all duration-500 bg-gradient-to-br ${card.color}`}
+                    className={`relative tech-panel !p-6 sm:!p-10 flex flex-col items-center text-center gap-4 sm:gap-6 overflow-hidden group border-white/10 transition-all duration-500 bg-gradient-to-br ${card.color} rounded-2xl sm:rounded-3xl cursor-pointer`}
                   >
-                    <div className={`w-20 h-20 rounded-3xl bg-slate-950/80 border border-white/5 flex items-center justify-center ${card.accent} group-hover:scale-110 transition-transform duration-700 shadow-2xl relative z-10`}>
+                    <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-slate-950/80 border border-white/5 flex items-center justify-center ${card.accent} group-hover:scale-110 transition-transform duration-700 shadow-2xl relative z-10`}>
                       {card.icon}
                     </div>
 
-                    <div className="space-y-2 relative z-10">
-                      <h3 className="text-2xl font-black text-white tracking-tighter group-hover:text-emerald-400 transition-colors">
+                    <div className="space-y-1.5 sm:space-y-2 relative z-10">
+                      <h3 className="text-xl sm:text-2xl font-black text-white tracking-tighter group-hover:text-emerald-400 transition-colors">
                         {card.label}
                       </h3>
-                      <p className={`text-[9px] font-black uppercase tracking-[0.4em] ${card.accent} opacity-60`}>
+                      <p className={`text-[9px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] ${card.accent} opacity-60`}>
                         {card.subLabel}
                       </p>
                     </div>
                     
-                    <div className="mt-4 flex items-center gap-2 text-white/20 group-hover:text-white/40 transition-colors">
+                    <div className="mt-2 sm:mt-4 flex items-center gap-2 text-white/40 group-hover:text-white/60 transition-colors">
                        <span className="text-[9px] font-black uppercase tracking-widest">افتح الصفحة</span>
                        <ArrowRight size={12} />
                     </div>
@@ -291,29 +291,29 @@ export function SummerSection({ onGoHome, currentUser }) {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="w-full max-w-4xl flex flex-col gap-8"
+              className="w-full max-w-4xl flex flex-col gap-5 sm:gap-8"
               dir="rtl"
             >
               <div className="relative w-full group">
                   <div className="absolute inset-0 bg-lime-400/5 blur-3xl group-focus-within:bg-lime-400/10 transition-colors pointer-events-none"></div>
-                  <Search className="absolute right-6 top-1/2 -translate-y-1/2 text-lime-400/40" />
+                  <Search className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 text-lime-400/40 w-5 h-5 sm:w-6 sm:h-6" />
                   <input 
                     autoFocus
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="ابحث عن اسم الطفل أو الكود هنا..."
-                    className="w-full h-16 bg-emerald-950/40 backdrop-blur-3xl border border-white/10 rounded-[2rem] pr-16 pl-8 text-white font-bold placeholder:text-emerald-100/20 focus:outline-none focus:border-lime-400/40 transition-all shadow-2xl"
+                    className="w-full h-14 sm:h-16 bg-emerald-950/40 backdrop-blur-3xl border border-white/10 rounded-2xl sm:rounded-[2rem] pr-12 sm:pr-16 pl-6 sm:pl-8 text-white font-bold text-sm sm:text-base placeholder:text-emerald-100/20 focus:outline-none focus:border-lime-400/40 transition-all shadow-2xl"
                   />
               </div>
 
               {internalView === "attendance" && filteredStudents.length > 0 && (() => {
                 const allPresent = filteredStudents.every(s => registeredToday(summerAttendanceDB.get(s.qrId)));
                 return (
-                  <div className="flex justify-end w-full px-2 mt-[-1rem]">
+                  <div className="flex justify-end w-full px-1 sm:px-2 mt-[-0.5rem] sm:mt-[-1rem]">
                     <button
                       onClick={allPresent ? handleRemoveAll : handleMarkAllPresent}
-                      className={`flex items-center gap-2 px-5 py-2.5 font-black rounded-xl transition-colors shadow-lg ${
+                      className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 font-black text-xs sm:text-sm rounded-xl transition-colors shadow-lg min-h-[44px] ${
                         allPresent
                           ? "bg-red-500 text-white hover:bg-red-600"
                           : "bg-lime-500 text-emerald-950 hover:bg-lime-400"
@@ -326,7 +326,7 @@ export function SummerSection({ onGoHome, currentUser }) {
                 );
               })()}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 max-h-[60vh] overflow-y-auto pr-1 sm:pr-2 custom-scrollbar">
                   {filteredStudents.map((s, idx) => {
                     const isPresent = registeredToday(summerAttendanceDB.get(s.qrId));
                     return (
@@ -338,13 +338,13 @@ export function SummerSection({ onGoHome, currentUser }) {
                           setSelectedStudent(s);
                           setInternalView("profile");
                         } : undefined}
-                        className={`p-4 rounded-3xl border backdrop-blur-xl flex items-center justify-between transition-all ${
+                        className={`p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border backdrop-blur-xl flex items-center justify-between transition-all ${
                           internalView === "search" ? "cursor-pointer hover:bg-white/10" : ""
                         } ${
                           isPresent ? "bg-lime-500/10 border-lime-500/30" : "bg-white/5 border-white/5"
                         }`}
                       >
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4 min-w-0 pr-1">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -352,13 +352,13 @@ export function SummerSection({ onGoHome, currentUser }) {
                                 setPrevView(internalView);
                                 setInternalView("profile");
                               }}
-                              className="rounded-full ring-2 ring-transparent hover:ring-lime-400/60 transition-all cursor-pointer shrink-0"
+                              className="rounded-full ring-2 ring-transparent hover:ring-lime-400/60 transition-all cursor-pointer shrink-0 min-w-[40px] min-h-[40px]"
                               title="عرض الملف الشخصي"
                             >
                               <Avatar name={s.name} image={s.image} size="md" />
                             </button>
-                            <div className="flex flex-col">
-                                <span className={`font-black tracking-tight text-white`}>{s.name}</span>
+                            <div className="flex flex-col min-w-0">
+                                <span className="font-black tracking-tight text-white text-sm sm:text-base truncate">{s.name}</span>
                                 <span className="text-[10px] uppercase font-bold opacity-40 text-emerald-100">{s.qrId}</span>
                             </div>
                         </div>
@@ -366,14 +366,14 @@ export function SummerSection({ onGoHome, currentUser }) {
                         {internalView === "attendance" && (
                            <button 
                              onClick={() => handleToggleAttendance(s)}
-                             className={`p-2 rounded-xl transition-all ${isPresent ? 'bg-lime-500 text-emerald-950 shadow-lg hover:bg-red-500 hover:text-white' : 'bg-white/5 text-emerald-100/40 hover:bg-white/10'}`}
+                             className={`p-2.5 sm:p-2 rounded-xl transition-all shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center ${isPresent ? 'bg-lime-500 text-emerald-950 shadow-lg hover:bg-red-500 hover:text-white' : 'bg-white/5 text-emerald-100/40 hover:bg-white/10'}`}
                              title={isPresent ? "مسح الحضور" : "تسجيل الحضور"}
                            >
                               {isPresent ? <CheckCircle2 size={18} strokeWidth={3} /> : <Target size={18} />}
                            </button>
                         )}
                         {internalView === "search" && (
-                          <div className="text-white/40">
+                          <div className="text-white/40 shrink-0">
                             <ArrowRight size={18} className="rotate-180" />
                           </div>
                         )}

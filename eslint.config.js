@@ -5,7 +5,14 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // Ignore generated output, third-party skill scripts, and non-project directories
+  globalIgnores([
+    'dist/**',
+    '.agents/**',
+    'backups/**',
+    'design-system/**',
+    '**/*.txt',
+  ]),
   {
     files: ['**/*.{js,jsx}'],
     extends: [

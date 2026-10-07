@@ -143,7 +143,7 @@ export function PersonalAttendancePage({ person, onBack }) {
                       </div>
 
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <DeleteBtn onClick={() => handleRemove(entry.id)} />
+                        <DeleteBtn onClick={() => handleRemove(entry.recordId || entry.id)} />
                       </div>
                     </div>
                   </motion.div>

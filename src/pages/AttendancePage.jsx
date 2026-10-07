@@ -198,18 +198,18 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
       <Navbar onBack={onBack} title="تسجيل الحضور" right={saveBtn} />
 
       <div
-        className="flex-1 w-full max-w-5xl mx-auto px-6 py-10 flex flex-col gap-8"
+        className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-6 sm:gap-8"
         dir="rtl"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="lg:col-span-12 space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
+          <div className="lg:col-span-12 space-y-6 sm:space-y-8">
             <header className="flex flex-col sm:flex-row sm:items-end justify-between items-start gap-4">
               <div>
                 <div className="flex items-center gap-3">
-                  <h2 className="text-3xl font-black text-white tracking-tight">
+                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                     يلا نحضّرهم
                   </h2>
-                  <span className="text-xs font-mono font-bold text-sky-400 bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20 shadow-inner">
+                  <span className="text-[10px] sm:text-xs font-mono font-bold text-sky-400 bg-sky-500/10 px-2.5 sm:px-3 py-1 rounded-full border border-sky-500/20 shadow-inner">
                     {formattedSelectedDate}
                   </span>
                 </div>
@@ -218,14 +218,14 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onGoHistory}
-                className="flex items-center gap-3 px-6 py-3 bg-slate-900 text-white border border-white/10 rounded-2xl font-black text-xs hover:bg-slate-800 transition-all uppercase tracking-widest shadow-lg"
+                className="flex items-center gap-2.5 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 bg-slate-900 text-white border border-white/10 rounded-2xl font-black text-xs hover:bg-slate-800 transition-all uppercase tracking-widest shadow-lg min-h-[44px]"
               >
-                <CalendarDays className="w-5 h-5 text-sky-400" />
+                <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" />
                 سجل الحضور
               </motion.button>
             </header>
 
-            <div className="admin-panel shadow-admin-lg grid grid-cols-1 md:grid-cols-12 gap-6 p-8">
+            <div className="admin-panel shadow-admin-lg grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl">
               {/* Quick Search */}
               <div className="md:col-span-5 space-y-2 relative">
                 <label className="text-[10px] font-black text-sky-300/60 uppercase tracking-widest flex items-center gap-2 mr-1">
@@ -239,7 +239,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="اكتب اسم الطفل أو الكود بتاعه..."
-                    className="admin-input h-14 pl-4 pr-12 w-full text-white placeholder:text-slate-500"
+                    className="admin-input h-12 sm:h-14 pl-4 pr-12 w-full text-white placeholder:text-slate-500 text-sm sm:text-base"
                   />
                   <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
                     <Search className="w-5 h-5" />
@@ -257,12 +257,12 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                       {suggestions.map((s) => (
                         <button
                           key={s.qrId}
-                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all text-right group"
+                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all text-right group min-h-[44px]"
                           onClick={() => addPerson(s)}
                         >
                           <Avatar name={s.name} size="sm" />
-                          <div className="flex flex-col">
-                            <span className="font-bold text-white group-hover:text-sky-400 transition-colors">
+                          <div className="flex flex-col min-w-0 pr-1">
+                            <span className="font-bold text-white group-hover:text-sky-400 transition-colors text-sm truncate">
                               {s.name}
                             </span>
                             <span className="text-[10px] text-slate-400 font-mono">
@@ -283,7 +283,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                   حضر فصل
                 </label>
                 <select
-                  className="admin-input h-14 text-white"
+                  className="admin-input h-12 sm:h-14 text-white text-sm sm:text-base"
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
                 >
@@ -318,7 +318,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className={`admin-input h-14 font-mono text-center font-bold [color-scheme:dark] transition-all ${
+                    className={`admin-input h-12 sm:h-14 font-mono text-center font-bold [color-scheme:dark] transition-all text-sm sm:text-base ${
                       selectedDate !== todayISO()
                         ? "border-amber-500/50 bg-amber-950/20 text-amber-200 focus:border-amber-400"
                         : "text-white"
@@ -335,37 +335,37 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                   initial={{ opacity: 0, y: -10, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                  className="bg-amber-500/10 border-2 border-amber-500/30 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-amber-200 shadow-xl relative overflow-hidden"
+                  className="bg-amber-500/10 border-2 border-amber-500/30 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 text-amber-200 shadow-xl relative overflow-hidden"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-                      <CalendarDays className="w-6 h-6" />
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                      <CalendarDays className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     <div>
-                      <div className="text-base font-black text-white">
+                      <div className="text-sm sm:text-base font-black text-white">
                         تنبيه: أنت تقوم بتسجيل الحضور لتاريخ مخصص
                       </div>
-                      <div className="text-xs text-amber-300/80 font-bold mt-1">
-                        اليوم المختار: {formattedSelectedDate} ({selectedDate}) — أي طفل هتحضّره هيتسجل في اليوم ده
+                      <div className="text-[11px] sm:text-xs text-amber-300/80 font-bold mt-0.5 sm:mt-1">
+                        اليوم المختار: {formattedSelectedDate} ({selectedDate})
                       </div>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setSelectedDate(todayISO())}
-                    className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-2xl transition-all shrink-0 cursor-pointer shadow-lg"
+                    className="w-full sm:w-auto px-4 sm:px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl sm:rounded-2xl transition-all shrink-0 cursor-pointer shadow-lg min-h-[44px]"
                   >
                     الرجوع للنهاردة
                   </button>
                 </motion.div>
               )}
             </AnimatePresence>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
               {/* Attendance List - Now First (Right in RTL) */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 mb-4">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex items-center gap-3 mb-3 sm:mb-4">
                   <span className="w-1.5 h-5 bg-orange-500 rounded-full"></span>
-                  <h3 className="text-lg font-black text-white">
+                  <h3 className="text-base sm:text-lg font-black text-white">
                     الناس اللي حضرت
                   </h3>
                   <span className="text-xs bg-sky-500/20 border border-sky-500/30 px-2 py-0.5 rounded-full text-sky-300 font-black">
@@ -374,11 +374,11 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                 </div>
 
                 {pendingList.length === 0 ? (
-                  <div className="py-20 border-2 border-dashed border-slate-100 rounded-[2.5rem] flex flex-col items-center justify-center text-center space-y-4">
-                    <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-300">
-                      <UserCheck className="w-8 h-8 opacity-40" />
+                  <div className="py-12 sm:py-20 border-2 border-dashed border-white/10 rounded-2xl sm:rounded-[2.5rem] flex flex-col items-center justify-center text-center space-y-3 sm:space-y-4 bg-slate-900/20">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-slate-800/50 flex items-center justify-center text-slate-400">
+                      <UserCheck className="w-6 h-6 sm:w-8 sm:h-8 opacity-40" />
                     </div>
-                    <p className="font-bold text-slate-400 text-sm max-w-[200px]">
+                    <p className="font-bold text-slate-400 text-xs sm:text-sm max-w-[200px]">
                       ضيف الأطفال من هنا أو دور عليهم فوق عشان تحضرهم
                     </p>
                   </div>
@@ -387,19 +387,19 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                     variants={containerVariants}
                     initial="hidden"
                     animate="show"
-                    className="space-y-3"
+                    className="space-y-2.5 sm:space-y-3"
                   >
                     {pendingList.map((p) => (
                       <motion.div
                         key={p.qrId}
                         variants={itemVariants}
                         layout
-                        className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between group"
+                        className="bg-slate-900/60 p-3.5 sm:p-5 rounded-2xl border border-white/10 shadow-sm flex items-center justify-between group"
                       >
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4 min-w-0 pr-1">
                           <Avatar name={p.name} size="sm" />
-                          <div className="flex flex-col">
-                            <span className="font-bold text-slate-900">
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-bold text-white text-sm sm:text-base truncate">
                               {p.name}
                             </span>
                             <span className="text-[10px] text-slate-400 font-mono uppercase">
@@ -409,7 +409,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                         </div>
                         <button
                           onClick={() => removePerson(p.qrId)}
-                          className="w-8 h-8 rounded-full hover:bg-red-50 text-slate-300 hover:text-red-500 transition-all flex items-center justify-center"
+                          className="w-9 h-9 sm:w-8 sm:h-8 rounded-full hover:bg-red-500/10 text-slate-400 hover:text-red-400 transition-all flex items-center justify-center shrink-0 min-w-[36px] min-h-[36px]"
                         >
                           <X className="w-5 h-5" />
                         </button>
@@ -418,10 +418,10 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
 
                     <button
                       onClick={handleSave}
-                      className="admin-btn-primary w-full h-16 mt-6 shadow-indigo-600/20"
+                      className="admin-btn-primary w-full h-14 sm:h-16 mt-4 sm:mt-6 shadow-indigo-600/20 text-sm sm:text-base px-3"
                     >
-                      <Save className="w-6 h-6" />
-                      <span>
+                      <Save className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
+                      <span className="truncate">
                         تمام، حضّر الـ {pendingList.length} طفل دول {selectedDate === todayISO() ? "" : `(ليوم ${selectedDate})`}
                       </span>
                     </button>

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Page, ModernNavbar } from "../components/UI";
 import { motion } from "framer-motion";
 import {
@@ -127,6 +127,26 @@ export function HomePage({
   ].filter((c) => c.show);
 
 
+  const [isInsideSummer, setIsInsideSummer] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const portal = document.getElementById("summer-portal");
+      if (!portal) return;
+      const rect = portal.getBoundingClientRect();
+      // When summer portal is active / at or near top
+      if (rect.top <= 120) {
+        setIsInsideSummer(true);
+      } else {
+        setIsInsideSummer(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   // Memoize the scroll handler to prevent PortalDive component re-renders/GSAP resets
   const handleGoHome = React.useCallback(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -144,6 +164,7 @@ export function HomePage({
           onGoAdmin={onGoAdmin}
           onGoSummer={onGoSummer}
           activePage="home"
+          hidden={isInsideSummer}
         />
 
         <main className="px-8 sm:px-16 lg:px-24 pt-48 pb-40 max-w-7xl mx-auto w-full flex flex-col justify-center min-h-[80vh]">
@@ -268,15 +289,14 @@ function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame, currentUse
           "mid",
         );
 
-        // 4. Hide Global Dashboard UI (Navbar & Sidebar)
+        // 4. Hide Global Dashboard UI (Navbar)
         tl.to(
-          [".modern-navbar-container", ".sidebar-container"],
+          ".modern-navbar-container",
           {
             autoAlpha: 0,
             y: -150,
-            x: 100,
             duration: 0.3,
-            stagger: 0.05,
+            ease: "power2.in",
           },
           "start",
         );

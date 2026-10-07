@@ -248,35 +248,35 @@ export function SummerGameArena() {
         <ResultsView teams={teams} games={games} />
       ) : (
       <div className="flex-1 w-full flex flex-col relative z-10" dir="rtl">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-lime-500/5 rounded-full blur-[150px] -z-10 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[280px] h-[280px] sm:w-[500px] sm:h-[500px] max-w-full bg-lime-500/5 rounded-full blur-[100px] sm:blur-[150px] -z-10 pointer-events-none" />
         
-        <div className="w-full max-w-[95rem] mx-auto h-full flex flex-col lg:flex-row p-4 lg:p-10 gap-8 relative pb-32">
+        <div className="w-full max-w-[95rem] mx-auto h-full flex flex-col lg:flex-row p-3 sm:p-6 lg:p-10 gap-6 lg:gap-8 relative pb-32">
           
           {/* Admin Panel */}
           <Motion.div 
             initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-            className="w-full lg:w-[360px] bg-emerald-950/40 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] p-6 flex flex-col shrink-0 h-full relative"
+            className="w-full lg:w-[360px] bg-emerald-950/40 backdrop-blur-3xl border border-white/5 rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-6 flex flex-col shrink-0 h-full relative"
           >
-            <h3 className="text-xl font-black text-white flex items-center gap-3 mb-6 pb-4 border-b border-white/5">
+            <h3 className="text-lg sm:text-xl font-black text-white flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-white/5">
               <Settings className="text-lime-400" size={22} /> إدارة اللعبة
             </h3>
 
             <button
               type="button"
               onClick={openTeamNameModal}
-              className="w-full flex items-center justify-center gap-3 font-extrabold mb-8 rounded-xl px-4 py-3 bg-emerald-900/60 backdrop-blur-3xl border border-lime-500/20 text-lime-400 hover:bg-lime-500 hover:text-slate-900 transition-all shadow-xl"
+              className="w-full flex items-center justify-center gap-2 sm:gap-3 font-extrabold mb-6 sm:mb-8 rounded-xl px-4 py-3 sm:py-3.5 bg-emerald-900/60 backdrop-blur-3xl border border-lime-500/20 text-lime-400 hover:bg-lime-500 hover:text-slate-900 transition-all shadow-xl min-h-[44px]"
             >
               <Plus size={18} strokeWidth={3} /> إضافة فريق
             </button>
 
             {/* Games List */}
-            <div className="flex flex-col gap-4 mb-8">
+            <div className="flex flex-col gap-4 mb-6 sm:mb-8">
                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-lime-400 uppercase tracking-widest">إدارة الجولات / النقاط</span>
+                  <span className="text-[11px] sm:text-xs font-black text-lime-400 uppercase tracking-wider sm:tracking-widest">إدارة الجولات / النقاط</span>
                   <button
                     type="button"
                     onClick={openGameNameModal}
-                    className="bg-lime-500/10 text-lime-400 text-[10px] font-black tracking-[0.4em] uppercase rounded-lg px-3 py-1.5 border border-lime-500/20 backdrop-blur-md cursor-pointer hover:bg-lime-500/20 transition-colors"
+                    className="bg-lime-500/10 text-lime-400 text-[9px] sm:text-[10px] font-black tracking-wider sm:tracking-[0.4em] uppercase rounded-lg px-2.5 sm:px-3 py-1.5 border border-lime-500/20 backdrop-blur-md cursor-pointer hover:bg-lime-500/20 transition-colors min-h-[36px] flex items-center"
                   >
                      + جولة جديدة
                   </button>
@@ -284,22 +284,22 @@ export function SummerGameArena() {
                
                <div className="flex flex-col gap-3 overflow-y-auto max-h-[35vh] custom-scrollbar pr-1">
                   {games.map(game => (
-                     <div key={game.id} className="bg-slate-950/40 p-4 rounded-2xl border border-white/5 group/game">
-                        <div className="flex justify-between items-center mb-3">
+                     <div key={game.id} className="bg-slate-950/40 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-white/5 group/game">
+                        <div className="flex justify-between items-center mb-2.5 sm:mb-3">
                            <span className="text-[11px] font-bold text-slate-300">{game.name}</span>
-                           <button onClick={() => handleRemoveGame(game.id)} className="opacity-0 group-hover/game:opacity-100 text-slate-600 hover:text-rose-500 transition-all p-1">
+                           <button onClick={() => handleRemoveGame(game.id)} className="opacity-100 sm:opacity-0 sm:group-hover/game:opacity-100 text-slate-500 hover:text-rose-500 transition-all p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center">
                               <Minus size={12} strokeWidth={3} />
                            </button>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                            {teams.map(team => (
                               <div key={team.id} className="flex flex-col gap-1">
-                                 <span className={`text-[8px] font-black truncate text-right ${team.theme.accent}`}>{team.name}</span>
+                                 <span className={`text-[9px] sm:text-[8px] font-black truncate text-right ${team.theme.accent}`}>{team.name}</span>
                                  <input 
                                     type="text" value={game.scores[team.id] || ""}
                                     onChange={(e) => handleUpdateScore(game.id, team.id, e.target.value)}
                                     placeholder="0"
-                                    className="tech-input !h-8 !rounded-lg !text-[10px] !bg-slate-900 !px-1 text-center"
+                                    className="tech-input !h-9 sm:!h-8 !rounded-lg !text-xs sm:!text-[10px] !bg-slate-900 !px-1 text-center font-bold"
                                  />
                               </div>
                            ))}
@@ -315,31 +315,31 @@ export function SummerGameArena() {
                   <span className="font-black text-slate-300 text-sm flex items-center gap-2">
                      <Users size={16} className="text-lime-500" /> الفرق والأعضاء
                   </span>
-                  <button onClick={() => setShowMembers(!showMembers)} className="bg-emerald-500/10 text-emerald-400 text-[10px] font-black tracking-[0.4em] uppercase rounded-lg px-3 py-1.5 border border-emerald-500/20 backdrop-blur-md cursor-pointer">
+                  <button onClick={() => setShowMembers(!showMembers)} className="bg-emerald-500/10 text-emerald-400 text-[9px] sm:text-[10px] font-black tracking-wider sm:tracking-[0.4em] uppercase rounded-lg px-2.5 sm:px-3 py-1.5 border border-emerald-500/20 backdrop-blur-md cursor-pointer min-h-[36px] flex items-center">
                      {showMembers ? "إخفاء" : "عرض"}
                   </button>
                </div>
                
                <AnimatePresence>
                  {showMembers && (
-                    <Motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-y-auto pr-2 flex flex-col gap-4 custom-scrollbar lg:max-h-[35vh]">
+                    <Motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-y-auto pr-1 sm:pr-2 flex flex-col gap-3 sm:gap-4 custom-scrollbar lg:max-h-[35vh]">
                       {teams.map(team => (
-                        <div key={team.id} className={`bg-slate-900/40 border ${team.theme.border} rounded-xl p-4 flex flex-col gap-3 group/team`}>
-                          <div className="flex justify-between items-start gap-3">
+                        <div key={team.id} className={`bg-slate-900/40 border ${team.theme.border} rounded-xl p-3 sm:p-4 flex flex-col gap-3 group/team`}>
+                          <div className="flex justify-between items-start gap-2 sm:gap-3">
                             <span className={`font-bold text-sm leading-snug min-w-0 flex-1 text-right ${team.theme.accent}`}>{team.name}</span>
                             <div className="flex shrink-0 items-center gap-1.5">
                                <button
                                  type="button"
                                  onClick={() => openRenameTeamModal(team.id)}
-                                 className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 text-slate-400 hover:text-amber-400 border border-white/5"
+                                 className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center bg-slate-800 text-slate-400 hover:text-amber-400 border border-white/5"
                                  title="تغيير اسم الفريق"
                                >
                                  <Pencil size={14} strokeWidth={2.5} />
                                </button>
-                               <button type="button" onClick={() => { setAddingToTeam(addingToTeam === team.id ? null : team.id); setNewMemberName(""); }} className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 text-slate-400 hover:text-lime-400 border border-white/5" title="عضو">
+                               <button type="button" onClick={() => { setAddingToTeam(addingToTeam === team.id ? null : team.id); setNewMemberName(""); }} className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center bg-slate-800 text-slate-400 hover:text-lime-400 border border-white/5" title="عضو">
                                  {addingToTeam === team.id ? <Minus size={12} strokeWidth={3} /> : <Plus size={12} strokeWidth={3} />}
                                </button>
-                               <button type="button" onClick={() => { if(window.confirm(`حذف ${team.name}؟`)) handleRemoveTeam(team.id) }} className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-800 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors border border-rose-500/20" title="حذف الفريق">
+                               <button type="button" onClick={() => { if(window.confirm(`حذف ${team.name}؟`)) handleRemoveTeam(team.id) }} className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center bg-slate-800 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors border border-rose-500/20" title="حذف الفريق">
                                  <Minus size={12} strokeWidth={2} />
                                </button>
                             </div>
@@ -352,12 +352,12 @@ export function SummerGameArena() {
                                 <input 
                                   type="text" value={newMemberName} onChange={(e) => setNewMemberName(e.target.value)}
                                   onKeyDown={(e) => e.key === "Enter" && handleAddMember(team.id)}
-                                  placeholder="ابحث..." className="tech-input !h-9 !text-xs !pr-9 !pl-3 !rounded-lg" autoFocus
+                                  placeholder="ابحث..." className="tech-input !h-10 sm:!h-9 !text-xs !pr-9 !pl-3 !rounded-lg" autoFocus
                                 />
                                 {searchResults.length > 0 && (
                                   <div className="absolute top-full left-0 right-0 z-[100] bg-slate-900 border border-lime-500/20 mt-1 rounded-lg overflow-hidden shadow-2xl">
                                     {searchResults.map(s => (
-                                      <button key={s.id} onClick={() => handleAddMember(team.id, s.name)} className="w-full text-right p-2.5 hover:bg-lime-500/10 flex items-center justify-between border-b border-white/5 last:border-0 text-xs text-slate-300">
+                                      <button key={s.id} onClick={() => handleAddMember(team.id, s.name)} className="w-full text-right p-2.5 hover:bg-lime-500/10 flex items-center justify-between border-b border-white/5 last:border-0 text-xs text-slate-300 min-h-[38px]">
                                         <span>{s.name}</span>
                                         <span className="opacity-40">{s.id}</span>
                                       </button>
@@ -370,11 +370,11 @@ export function SummerGameArena() {
 
                           <div className="flex flex-col gap-1.5 mt-1">
                             {team.members.map((m, i) => (
-                              <div key={i} className="group/memb text-[11px] font-bold text-slate-300 flex items-center justify-between bg-black/20 px-3 py-2 rounded-lg">
+                              <div key={i} className="group/memb text-xs sm:text-[11px] font-bold text-slate-300 flex items-center justify-between bg-black/20 px-3 py-2 rounded-lg min-h-[36px]">
                                 <span className="flex items-center gap-2">
-                                   <div className={`w-1 h-1 rounded-full ${team.theme.bg.replace('/10', '')} bg-current`} /> {m}
+                                   <div className={`w-1.5 h-1.5 rounded-full ${team.theme.bg.replace('/10', '')} bg-current`} /> {m}
                                 </span>
-                                <button onClick={() => handleRemoveMember(team.id, i)} className="opacity-0 group-hover/memb:opacity-100 text-rose-500 p-0.5">×</button>
+                                <button onClick={() => handleRemoveMember(team.id, i)} className="opacity-100 sm:opacity-0 sm:group-hover/memb:opacity-100 text-rose-500 p-1 min-w-[28px] min-h-[28px] flex items-center justify-center">×</button>
                               </div>
                             ))}
                           </div>
@@ -387,7 +387,7 @@ export function SummerGameArena() {
           </Motion.div>
 
           {/* Teams Arena - SCORES LIST PER GAME */}
-          <div className={`flex-1 grid gap-6 h-fit ${
+          <div className={`flex-1 grid gap-4 sm:gap-6 h-fit ${
              teams.length === 1 ? 'grid-cols-1' :
              teams.length === 2 ? 'grid-cols-1 md:grid-cols-2' :
              'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
@@ -406,20 +406,20 @@ export function SummerGameArena() {
         </div>
 
         {/* Action Button: The Result */}
-        <div className="w-full flex flex-col items-center justify-center pt-8 pb-20 relative z-20">
+        <div className="w-full flex flex-col items-center justify-center pt-6 sm:pt-8 pb-16 sm:pb-20 relative z-20 px-4">
            {/* Visual Glow behind the button */}
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[200px] bg-lime-500/10 rounded-full blur-[100px] -z-10" />
+           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] sm:w-[400px] h-[150px] sm:h-[200px] max-w-full bg-lime-500/10 rounded-full blur-[80px] sm:blur-[100px] -z-10" />
            
            <Motion.button
               onClick={() => setShowResults(true)}
               whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
-              className="px-16 py-6 rounded-[2rem] bg-emerald-900/80 backdrop-blur-xl flex items-center gap-5 shadow-[0_25px_50px_rgba(0,0,0,0.4)] border border-lime-400/40 hover:bg-emerald-800 transition-all group relative overflow-hidden"
+              className="px-8 sm:px-16 py-4 sm:py-6 rounded-2xl sm:rounded-[2rem] bg-emerald-900/80 backdrop-blur-xl flex items-center justify-center gap-3 sm:gap-5 shadow-[0_25px_50px_rgba(0,0,0,0.4)] border border-lime-400/40 hover:bg-emerald-800 transition-all group relative overflow-hidden w-full max-w-xs sm:w-auto"
            >
               <div className="absolute inset-0 bg-gradient-to-r from-lime-600/20 to-emerald-600/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative flex items-center gap-5">
-                 <Trophy size={36} className="text-lime-400 drop-shadow-[0_0_15px_rgba(163,230,53,0.6)]" />
-                 <span className="text-4xl font-black tracking-tight text-white drop-shadow-lg">النتيجة</span>
+              <div className="relative flex items-center gap-3 sm:gap-5">
+                 <Trophy size={28} className="sm:w-9 sm:h-9 text-lime-400 drop-shadow-[0_0_15px_rgba(163,230,53,0.6)]" />
+                 <span className="text-2xl sm:text-4xl font-black tracking-tight text-white drop-shadow-lg">النتيجة</span>
               </div>
            </Motion.button>
         </div>
@@ -436,7 +436,7 @@ export function SummerGameArena() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md"
+            className="fixed inset-0 z-[300] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md"
             onClick={(e) => {
               if (e.target === e.currentTarget) closeNameModal();
             }}
@@ -446,13 +446,13 @@ export function SummerGameArena() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="w-full max-w-md rounded-[1.75rem] border border-white/10 bg-slate-900/95 p-6 shadow-[0_0_60px_rgba(0,0,0,0.45)]"
+              className="w-full max-w-md rounded-2xl sm:rounded-[1.75rem] border border-white/10 bg-slate-900/95 p-5 sm:p-6 shadow-[0_0_60px_rgba(0,0,0,0.45)]"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-start justify-between gap-4 mb-5">
+              <div className="flex items-start justify-between gap-4 mb-4 sm:mb-5">
                 <h4
                   id="game-name-modal-title"
-                  className="text-lg font-black text-white tracking-tight"
+                  className="text-base sm:text-lg font-black text-white tracking-tight"
                 >
                   {nameModal === "renameTeam"
                     ? "تعديل اسم الفريق"
@@ -463,7 +463,7 @@ export function SummerGameArena() {
                 <button
                   type="button"
                   onClick={closeNameModal}
-                  className="shrink-0 rounded-xl p-2 text-slate-500 hover:bg-white/5 hover:text-white transition-colors"
+                  className="shrink-0 rounded-xl p-2 text-slate-500 hover:bg-white/5 hover:text-white transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
                   aria-label="إغلاق"
                 >
                   <X className="w-5 h-5" />
@@ -471,17 +471,17 @@ export function SummerGameArena() {
               </div>
 
               {nameModal === "renameTeam" && (
-                <div className="mb-6">
+                <div className="mb-5 sm:mb-6">
                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
                      لون الفريق
                    </label>
-                   <div className="flex gap-2">
+                   <div className="flex gap-2 flex-wrap">
                       {GAME_TEAM_COLORS.map(c => (
                         <button
                           key={c.name}
                           type="button"
                           onClick={() => setModalThemeInput(c)}
-                          className={`w-10 h-10 rounded-xl border-2 transition-all ${c.bg} ${c.border} ${(modalThemeInput?.name === c.name) ? "scale-110 border-white/50 shadow-lg shadow-white/10" : "opacity-50 hover:opacity-100 hover:scale-105"}`}
+                          className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl border-2 transition-all ${c.bg} ${c.border} ${(modalThemeInput?.name === c.name) ? "scale-110 border-white/50 shadow-lg shadow-white/10" : "opacity-50 hover:opacity-100 hover:scale-105"}`}
                         />
                       ))}
                    </div>
@@ -521,7 +521,7 @@ export function SummerGameArena() {
                 <button
                   type="button"
                   onClick={closeNameModal}
-                  className="flex-1 h-12 rounded-xl border border-white/10 bg-slate-950/80 font-bold text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                  className="flex-1 h-12 rounded-xl border border-white/10 bg-slate-950/80 font-bold text-slate-400 hover:bg-slate-800 hover:text-white transition-colors min-h-[44px]"
                 >
                   إلغاء
                 </button>
@@ -534,7 +534,7 @@ export function SummerGameArena() {
                         ? confirmAddTeam
                         : confirmAddGame
                   }
-                  className="flex-1 h-12 rounded-xl font-extrabold bg-emerald-700/80 text-white hover:bg-emerald-600 transition-colors border border-emerald-500/30"
+                  className="flex-1 h-12 rounded-xl font-extrabold bg-emerald-700/80 text-white hover:bg-emerald-600 transition-colors border border-emerald-500/30 min-h-[44px]"
                 >
                   {nameModal === "renameTeam"
                     ? "حفظ"
@@ -579,9 +579,9 @@ const ResultsView = ({ teams, games }) => {
   const currentTeam = results[results.length - 1 - step];
 
   return (
-    <div className="flex-1 w-full flex flex-col items-center justify-center p-4 md:p-10 relative z-10 overflow-hidden" dir="rtl">
+    <div className="flex-1 w-full flex flex-col items-center justify-center p-3 sm:p-6 md:p-10 relative z-10 overflow-hidden" dir="rtl">
       {/* Dynamic Background */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-lime-500/10 rounded-full blur-[150px] -z-10 pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] max-w-full bg-lime-500/10 rounded-full blur-[100px] sm:blur-[150px] -z-10 pointer-events-none" />
       
       <AnimatePresence mode="wait">
         {!isFinalStep ? (
@@ -591,55 +591,59 @@ const ResultsView = ({ teams, games }) => {
             animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, scale: 1.1, y: -50, filter: "blur(10px)" }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col items-center gap-12 text-center"
+            className="flex flex-col items-center gap-6 sm:gap-12 text-center w-full max-w-2xl px-2"
           >
-            <div className="space-y-4">
-              <span className="text-lime-500/60 font-black uppercase tracking-[0.4em] text-xs">Team Result</span>
-              <h2 className="text-6xl md:text-8xl font-black text-white tracking-tighter drop-shadow-2xl">
+            <div className="space-y-2 sm:space-y-4">
+              <span className="text-lime-500/60 font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] text-[10px] sm:text-xs">Team Result</span>
+              <h2 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter drop-shadow-2xl break-words px-2">
                 {currentTeam.name}
               </h2>
             </div>
             
-            <div className={`relative px-12 py-8 rounded-[3rem] border-2 bg-slate-900/50 backdrop-blur-xl group ${currentTeam.theme.border} ${currentTeam.theme.accent}`}>
+            <div 
+              onClick={() => setStep(prev => Math.min(prev + 1, results.length))}
+              className={`relative px-6 sm:px-12 py-6 sm:py-8 rounded-3xl sm:rounded-[3rem] border-2 bg-slate-900/50 backdrop-blur-xl group cursor-pointer active:scale-98 transition-all ${currentTeam.theme.border} ${currentTeam.theme.accent}`}
+            >
                <Motion.span 
                  initial={{ opacity: 0, y: 20 }}
                  animate={{ opacity: 1, y: 0 }}
                  transition={{ delay: 0.3 }}
-                 className="text-8xl md:text-[12rem] font-black tabular-nums tracking-tighter block drop-shadow-[0_0_30px_rgba(0,0,0,0.5)]"
+                 className="text-6xl sm:text-8xl md:text-[10rem] lg:text-[12rem] font-black tabular-nums tracking-tighter block drop-shadow-[0_0_30px_rgba(0,0,0,0.5)]"
                >
                  {currentTeam.score}
                </Motion.span>
-               <span className="text-sm font-black uppercase tracking-[0.3em] opacity-40">Total Points</span>
+               <span className="text-xs sm:text-sm font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] opacity-40">Total Points</span>
             </div>
 
-            <Motion.div 
+            <Motion.button 
+               onClick={() => setStep(prev => Math.min(prev + 1, results.length))}
                initial={{ opacity: 0 }}
                animate={{ opacity: 1 }}
-               transition={{ delay: 1 }}
-               className="mt-12 flex items-center gap-4 text-slate-500/60 font-black uppercase tracking-widest text-[10px]"
+               transition={{ delay: 0.5 }}
+               className="mt-6 sm:mt-12 flex items-center justify-center gap-2 sm:gap-4 px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 active:scale-95 text-slate-300 font-black text-xs transition-all border border-white/10 shadow-lg cursor-pointer"
             >
-               <span>اضغط</span>
-               <div className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-slate-300">Enter</div>
-               <span>للفريق التالي</span>
-            </Motion.div>
+               <span>اضغط هنا أو</span>
+               <div className="px-2.5 py-1 rounded-lg border border-white/10 bg-white/5 text-slate-200 font-mono text-[10px]">Enter</div>
+               <span>للفريق التالي ⬅️</span>
+            </Motion.button>
           </Motion.div>
         ) : (
           <Motion.div 
             key="final-list"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="w-full max-w-4xl flex flex-col items-center gap-10 py-10"
+            className="w-full max-w-4xl flex flex-col items-center gap-6 sm:gap-10 py-6 sm:py-10 px-2 sm:px-4"
           >
             <Motion.h1 
                initial={{ y: -30, opacity: 0 }}
                animate={{ y: 0, opacity: 1 }}
-               className="text-4xl md:text-6xl font-black text-white tracking-tight drop-shadow-md text-center mb-4"
+               className="text-2xl sm:text-4xl md:text-6xl font-black text-white tracking-tight drop-shadow-md text-center mb-2 sm:mb-4"
             >
               الترتيب النهائي <br />
-              <span className="text-xs text-lime-500/40 uppercase tracking-[0.5em] font-bold">Consolidated Leaderboard</span>
+              <span className="text-[10px] sm:text-xs text-lime-500/40 uppercase tracking-[0.3em] sm:tracking-[0.5em] font-bold">Consolidated Leaderboard</span>
             </Motion.h1>
 
-            <div className="w-full flex flex-col gap-4 max-w-2xl">
+            <div className="w-full flex flex-col gap-3 sm:gap-4 max-w-2xl">
               {results.map((team, index) => {
                 const isWinner = index === 0; // First one in DESC sort is winner
                 return (
@@ -648,7 +652,7 @@ const ResultsView = ({ teams, games }) => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
                     key={team.id}
-                    className={`relative group overflow-hidden flex items-center justify-between p-6 px-8 rounded-[2rem] border transition-all duration-500 ${
+                    className={`relative group overflow-hidden flex items-center justify-between p-3.5 sm:p-6 px-4 sm:px-8 rounded-2xl sm:rounded-[2rem] border transition-all duration-500 gap-3 sm:gap-6 ${
                       isWinner 
                         ? 'bg-amber-400/10 border-amber-400/30' 
                         : 'bg-slate-900/40 border-white/5'
@@ -658,24 +662,24 @@ const ResultsView = ({ teams, games }) => {
                       <div className="absolute inset-0 bg-gradient-to-r from-amber-400/10 via-transparent to-transparent animate-pulse" />
                     )}
                     
-                    <div className="flex items-center gap-6 relative z-10">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl border-2 ${
+                    <div className="flex items-center gap-3 sm:gap-6 relative z-10 min-w-0">
+                      <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-black text-base sm:text-xl border-2 shrink-0 ${
                         isWinner 
                           ? 'bg-amber-400 border-amber-300 text-amber-950' 
                           : 'bg-slate-800 border-slate-700 text-slate-400'
                       }`}>
                          {index + 1}
                       </div>
-                      <span className={`text-2xl md:text-3xl font-black tracking-tight ${isWinner ? 'text-amber-400' : 'text-slate-200'}`}>
+                      <span className={`text-base sm:text-2xl md:text-3xl font-black tracking-tight truncate ${isWinner ? 'text-amber-400' : 'text-slate-200'}`}>
                         {team.name}
                       </span>
                     </div>
 
-                    <div className="flex flex-col items-end relative z-10">
-                      <span className={`text-4xl md:text-5xl font-black tabular-nums tracking-tighter ${isWinner ? 'text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.3)]' : 'text-white'}`}>
+                    <div className="flex flex-col items-end relative z-10 shrink-0">
+                      <span className={`text-2xl sm:text-4xl md:text-5xl font-black tabular-nums tracking-tighter ${isWinner ? 'text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.3)]' : 'text-white'}`}>
                         {team.score}
                       </span>
-                      <span className="text-[9px] font-black uppercase tracking-widest opacity-30">Points</span>
+                      <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest opacity-30">Points</span>
                     </div>
 
                     {isWinner && (
@@ -696,57 +700,57 @@ const ResultsView = ({ teams, games }) => {
 const TeamCard = ({ team, games, handleRemoveTeam, onRenameTeam, delay }) => {
   const { glow, accent, border } = team.theme;
   return (
-    <Motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }} className="flex flex-col relative group h-full min-h-[500px]">
-      <div className={`bg-emerald-950/40 backdrop-blur-3xl rounded-[2.5rem] p-6 flex-1 flex flex-col relative overflow-hidden h-full border ${border} hover:border-white/10 transition-all duration-500`}>
+    <Motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }} className="flex flex-col relative group h-full min-h-[400px] sm:min-h-[500px]">
+      <div className={`bg-emerald-950/40 backdrop-blur-3xl rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-6 flex-1 flex flex-col relative overflow-hidden h-full border ${border} hover:border-white/10 transition-all duration-500`}>
         <div className={`absolute top-0 inset-x-0 h-1 bg-gradient-to-r ${glow}`} />
         
         {/* تعديل اسم الفريق */}
         <button
            type="button"
            onClick={() => onRenameTeam?.(team.id)}
-           className="absolute top-4 start-4 z-30 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-slate-950/90 text-slate-500 shadow-lg backdrop-blur-sm transition-all hover:border-amber-500/40 hover:text-amber-400 opacity-0 group-hover:opacity-100"
+           className="absolute top-3 sm:top-4 start-3 sm:start-4 z-30 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-white/10 bg-slate-950/90 text-slate-400 sm:text-slate-500 shadow-lg backdrop-blur-sm transition-all hover:border-amber-500/40 hover:text-amber-400 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
            title="تغيير اسم الفريق"
         >
-           <Pencil size={18} strokeWidth={2.5} />
+           <Pencil size={16} strokeWidth={2.5} />
         </button>
 
-        {/* حذف الفريق — داخل البطاقة (كان -top/-left يُقصّ بسبب overflow-hidden) */}
+        {/* حذف الفريق — داخل البطاقة */}
         <button
            type="button"
            onClick={() => { if(window.confirm(`حذف ${team.name}؟`)) handleRemoveTeam(team.id) }}
-           className="absolute top-4 end-4 z-30 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-slate-950/90 text-slate-500 shadow-lg backdrop-blur-sm transition-all hover:border-rose-500/40 hover:text-rose-500 opacity-0 group-hover:opacity-100"
+           className="absolute top-3 sm:top-4 end-3 sm:end-4 z-30 flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-white/10 bg-slate-950/90 text-slate-400 sm:text-slate-500 shadow-lg backdrop-blur-sm transition-all hover:border-rose-500/40 hover:text-rose-500 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
            title="حذف الفريق"
         >
-           <Minus size={18} strokeWidth={3} />
+           <Minus size={16} strokeWidth={3} />
         </button>
 
-        <div className="w-full text-center relative z-10 mb-8 pt-4 px-4">
-           <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase mb-2 break-words">{team.name}</h2>
+        <div className="w-full text-center relative z-10 mb-6 sm:mb-8 pt-4 px-4">
+           <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white tracking-tighter uppercase mb-2 break-words">{team.name}</h2>
            <div className={`w-16 h-1 mx-auto bg-gradient-to-r ${glow} rounded-full opacity-60`} />
         </div>
 
         {/* List of Game Scores */}
-        <div className="flex-1 w-full relative z-10 flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-1 pb-4">
+        <div className="flex-1 w-full relative z-10 flex flex-col gap-3 sm:gap-4 overflow-y-auto custom-scrollbar pr-1 pb-4">
            {games.map((g, i) => (
              <Motion.div 
                key={g.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
-               className="bg-slate-950/60 border border-white/5 rounded-2xl p-6 flex items-center justify-between group/game hover:bg-slate-900/60 transition-colors"
+               className="bg-slate-950/60 border border-white/5 rounded-xl sm:rounded-2xl p-3.5 sm:p-6 flex items-center justify-between group/game hover:bg-slate-900/60 transition-colors"
              >
-                <div className="flex flex-col gap-1">
-                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{g.name}</span>
-                   <div className="flex items-center gap-2">
-                       <Trophy size={10} className={`${accent} opacity-50`} />
-                       <span className={`text-[10px] font-bold ${accent} opacity-40`}>نتيجة الجولة</span>
+                <div className="flex flex-col gap-1 min-w-0 pr-1">
+                   <span className="text-[11px] sm:text-[10px] font-black text-slate-400 uppercase tracking-wider sm:tracking-widest truncate">{g.name}</span>
+                   <div className="flex items-center gap-1.5 sm:gap-2">
+                       <Trophy size={10} className={`${accent} opacity-50 shrink-0`} />
+                       <span className={`text-[9px] sm:text-[10px] font-bold ${accent} opacity-40 truncate`}>نتيجة الجولة</span>
                    </div>
                 </div>
 
-                <div className="flex items-center gap-5">
-                   <div className="w-px h-12 bg-white/5" />
+                <div className="flex items-center gap-3 sm:gap-5 shrink-0">
+                   <div className="w-px h-10 sm:h-12 bg-white/5" />
                    <div className="flex flex-col items-end">
-                      <div className={`text-4xl md:text-5xl font-black tabular-nums bg-gradient-to-br ${glow} bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]`}>
+                      <div className={`text-3xl sm:text-4xl md:text-5xl font-black tabular-nums bg-gradient-to-br ${glow} bg-clip-text text-transparent drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]`}>
                          {g.scores[team.id] || '0'}
                       </div>
-                      <span className="text-[8px] font-black text-slate-700 uppercase tracking-tighter">Points</span>
+                      <span className="text-[8px] font-black text-slate-600 uppercase tracking-tighter">Points</span>
                    </div>
                 </div>
              </Motion.div>
@@ -755,7 +759,7 @@ const TeamCard = ({ team, games, handleRemoveTeam, onRenameTeam, delay }) => {
            {games.length === 0 && (
               <div className="flex-1 flex flex-col items-center justify-center opacity-30 gap-3 grayscale">
                  <Trophy size={48} />
-                 <span className="text-xs font-bold font-black uppercase tracking-widest">No Rounds Started</span>
+                 <span className="text-xs font-black uppercase tracking-widest">No Rounds Started</span>
               </div>
            )}
         </div>
