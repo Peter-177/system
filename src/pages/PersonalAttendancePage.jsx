@@ -17,7 +17,9 @@ export function PersonalAttendancePage({ person, onBack }) {
 
   const handleRemove = (eid) => {
     attendanceDB.remove(person.qrId, eid);
-    setLog(attendanceDB.get(person.qrId));
+    // Filter local state directly — don't re-read from storage
+    // (avoids stale-reference or recordId mismatch issues)
+    setLog(prev => prev.filter(e => (e.recordId || e.id) !== eid));
     toast.show("🗑️ اتمسح خلاص");
   };
 
@@ -104,7 +106,7 @@ export function PersonalAttendancePage({ person, onBack }) {
                       transition: { duration: 0.2 },
                     }}
                     layout
-                    key={entry.id}
+                    key={entry.recordId || entry.timestamp || i}
                     className={`group relative flex justify-between items-center p-5 rounded-[2.5rem] border transition-all duration-300 ${
                       i === 0
                         ? "bg-gradient-to-l from-[#10B981]/10 to-[#0F2545] border-[#10B981]/30 shadow-2xl"
