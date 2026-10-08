@@ -240,3 +240,66 @@
 ::-webkit-scrollbar-thumb {
   @apply bg-slate-800 rounded-full hover:bg-sky-500 transition-colors;
 }
+
+/* ── PRINT STYLES FOR REWARD CHECK ── */
+@media print {
+  @page {
+    size: landscape;
+    margin: 1cm;
+  }
+
+  body, html, #root {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body::after {
+    display: none !important;
+  }
+
+  .no-print,
+  .modern-navbar-container,
+  .navbar,
+  header,
+  footer,
+  nav,
+  button,
+  input,
+  .toast,
+  [role="dialog"] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #printable-check,
+  #printable-check * {
+    visibility: visible;
+  }
+
+  #printable-check {
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 900px !important;
+    margin: 1cm auto !important;
+    padding: 2rem !important;
+    background: #fbfdfa !important;
+    color: #064e3b !important;
+    border: 3px solid #065f46 !important;
+    border-radius: 1.5rem !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

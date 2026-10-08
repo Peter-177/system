@@ -4,7 +4,7 @@ import { Avatar } from "../components/UI";
 import { motion } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
 
-export function SummerProfile({ person, onBack, onGoCoupons }) {
+export function SummerProfile({ person, onBack, onGoCoupons, onGoCheck }) {
   const attendanceCount = summerAttendanceDB.get(person.qrId).length;
   const couponsLog = summerCouponsDB.get(person.qrId);
   const couponsCount = couponsLog.reduce((s, e) => s + e.amount, 0);
@@ -62,6 +62,24 @@ export function SummerProfile({ person, onBack, onGoCoupons }) {
                 <ChevronLeft className="text-white/40 group-hover:text-white transition-colors rotate-180" />
               </div>
             </button>
+
+            {onGoCheck && (
+              <button
+                onClick={onGoCheck}
+                className="bg-black/20 hover:bg-black/40 backdrop-blur-md rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 flex items-center justify-between border border-white/5 transition-all group cursor-pointer min-h-[56px]"
+              >
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <span className="text-2xl sm:text-3xl">🏆</span>
+                  <span className="text-base sm:text-lg font-black text-white">شيك المكافأة</span>
+                </div>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <span className="text-xs font-black text-amber-300 bg-amber-400/10 px-3 py-1 rounded-xl border border-amber-400/20">
+                    عرض وطباعة
+                  </span>
+                  <ChevronLeft className="text-white/40 group-hover:text-white transition-colors rotate-180" />
+                </div>
+              </button>
+            )}
           </div>
         </div>
       </div>

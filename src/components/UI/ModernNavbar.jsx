@@ -9,6 +9,7 @@ import {
   Layout,
   Search,
   Settings,
+  Award,
 } from "lucide-react";
 import { settingsDB } from "../../data/storage";
 import { useNavbarScroll } from "../../hooks/useNavbarScroll";
@@ -21,8 +22,9 @@ import { useNavbarScroll } from "../../hooks/useNavbarScroll";
  * @property {() => void} onGoClasses
  * @property {() => void} onGoSearch
  * @property {() => void} onGoSummer
+ * @property {() => void} [onGoCheck]
  * @property {() => void} [onGoAdmin]
- * @property {'home'|'summer'|'classes'|'search'|'admin'} [activePage]
+ * @property {'home'|'summer'|'classes'|'search'|'check'|'admin'} [activePage]
  */
 
 /**
@@ -116,6 +118,7 @@ export function ModernNavbar({
   onGoClasses,
   onGoSearch,
   onGoSummer,
+  onGoCheck,
   onGoAdmin,
   activePage = "home",
   hidden = false,

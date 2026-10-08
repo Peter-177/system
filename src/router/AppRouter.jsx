@@ -17,24 +17,54 @@ import { ClassesPage, CreateClassPage } from "../pages/ClassesPage";
 import { ClassDetailPage }          from "../pages/ClassDetailPage";
 import { AdminPage }                from "../pages/AdminPage";
 import { GamePage }                 from "../pages/GamePage";
+import { CheckPage }                from "../pages/CheckPage";
 
+function getInitialRouting() {
+  try {
+    const path = window.location.pathname;
+    if (path.startsWith("/check")) {
+      const parts = path.split("/").filter(Boolean);
+      const childId = parts[1] || null;
+      let person = null;
+      if (childId) {
+        const found = studentsDB.get(childId);
+        person = found ? { qrId: childId, ...found } : { qrId: childId };
+      }
+      return { page: "check", person };
+    }
+  } catch (e) {
+    console.error("Failed to parse initial route:", e);
+  }
+  return { page: "home", person: null };
+}
 
 export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret }) {
-  const [page,         setPageState]         = useState("home");
-  const [activePerson, setActivePersonState] = useState(null);
+  const initialRoute = getInitialRouting();
+  const [page,         setPageState]         = useState(initialRoute.page);
+  const [activePerson, setActivePersonState] = useState(initialRoute.person);
   const [pendingId,    setPendingId]    = useState("");
   const [activeClass,  setActiveClass]  = useState(null);
 
   const setPage = useCallback((newPage, customPerson = activePerson, replace = false, isSummer = false) => {
     if (!replace && newPage === page && JSON.stringify(customPerson) === JSON.stringify(activePerson)) return;
 
+    let targetUrl = "";
+    if (newPage === "check") {
+      targetUrl = customPerson?.qrId ? `/check/${customPerson.qrId}` : "/check";
+    } else if (newPage === "home") {
+      targetUrl = "/";
+    }
+
     const state = { page: newPage, person: customPerson, isSummer };
     if (replace) {
-      window.history.replaceState(state, "");
+      window.history.replaceState(state, "", targetUrl || undefined);
     } else {
-      window.history.pushState(state, "");
+      window.history.pushState(state, "", targetUrl || undefined);
     }
     setPageState(newPage);
+    if (customPerson !== undefined) {
+      setActivePersonState(customPerson);
+    }
   }, [activePerson, page]);
 
   const setActivePerson = useCallback((newPerson) => {
@@ -43,7 +73,9 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
   }, [page]);
 
   useEffect(() => {
-    window.history.replaceState({ page: "home", person: null }, "");
+    const init = getInitialRouting();
+    const initUrl = init.page === "check" ? (init.person?.qrId ? `/check/${init.person.qrId}` : "/check") : "/";
+    window.history.replaceState({ page: init.page, person: init.person }, "", initUrl);
 
     const onPopState = (e) => {
       if (e.state) {
@@ -60,6 +92,10 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
             }, 100);
           });
         }
+      } else {
+        const fallback = getInitialRouting();
+        setPageState(fallback.page);
+        setActivePersonState(fallback.person);
       }
     };
     window.addEventListener("popstate", onPopState);
@@ -106,6 +142,14 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
     onGoClasses:    () => setPage("classes"),
     onGoAdmin:      () => setPage("admin"),
     onGoGame:       () => setPage("game"),
+    onGoCheck:      (childId) => {
+      let p = null;
+      if (childId) {
+        const found = studentsDB.get(childId);
+        p = found ? { qrId: childId, ...found } : { qrId: childId };
+      }
+      setPage("check", p);
+    },
     onLogout
   };
 
@@ -114,6 +158,14 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
     onGoSearch:     () => setPage("search", activePerson, false, true),
     onGoAttendance: () => { setActivePerson(null); setPage("attendance", null, false, true); },
     onGoGame:       () => setPage("game", activePerson, false, true),
+    onGoCheck:      (childId) => {
+      let p = null;
+      if (childId) {
+        const found = studentsDB.get(childId);
+        p = found ? { qrId: childId, ...found } : { qrId: childId };
+      }
+      setPage("check", p, false, true);
+    },
   };
 
   switch (page) {
@@ -124,6 +176,7 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
           onGoSearch_Summer={summerProps.onGoSearch} 
           onGoAttendance_Summer={summerProps.onGoAttendance} 
           onGoGame_Summer={summerProps.onGoGame} 
+          onGoCheck_Summer={summerProps.onGoCheck}
         />
       );
     case "search":
@@ -170,7 +223,7 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
         />
       );
     case "student":
-      return <StudentPage currentUser={currentUser} person={activePerson} onBack={()=>window.history.back()} onGoAttendance={()=>setPage("student-attendance")} onGoEdit={()=>setPage("edit", activePerson, true)} onGoCoupons={()=>setPage("coupons")} />;
+      return <StudentPage currentUser={currentUser} person={activePerson} onBack={()=>window.history.back()} onGoAttendance={()=>setPage("student-attendance")} onGoEdit={()=>setPage("edit", activePerson, true)} onGoCoupons={()=>setPage("coupons")} onGoCheck={()=>setPage("check", activePerson)} />;
     case "add":
     case "add-form":
       return (
@@ -200,6 +253,28 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
       return <CouponsPage currentUser={currentUser} person={activePerson} onBack={()=>window.history.back()} />;
     case "game":
       return <GamePage {...homeProps} onBack={() => window.history.back()} />;
+    case "check":
+      return (
+        <CheckPage
+          currentUser={currentUser}
+          initialChildId={activePerson?.qrId}
+          onBack={() => {
+            if (window.history.length > 1) {
+              window.history.back();
+            } else {
+              setPage("home");
+            }
+          }}
+          onSelectChildId={(id) => {
+            if (id) {
+              const found = studentsDB.get(id);
+              setActivePersonState(found ? { qrId: id, ...found } : { qrId: id });
+            } else {
+              setActivePersonState(null);
+            }
+          }}
+        />
+      );
 
     default:
       return <HomePage {...homeProps} />;

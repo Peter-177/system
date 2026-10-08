@@ -31,7 +31,7 @@ const TechHeroCard = ({ card, index }) => {
       }}
       whileHover={{ y: -10, transition: { duration: 0.4 } }}
       whileTap={{ scale: 0.97 }}
-      className="tech-card group flex flex-col items-start text-right gap-8 relative overflow-hidden"
+      className="tech-card group flex flex-col items-start text-right gap-8 relative overflow-hidden cursor-pointer"
     >
       <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-sky-500/10 transition-colors"></div>
 
@@ -61,6 +61,7 @@ export function HomePage({
   currentUser,
   onGoSearch,
   onGoSummer,
+  onGoCheck,
   onGoAttendance,
   onGoVisits,
   onGoBirthday,
@@ -71,6 +72,7 @@ export function HomePage({
   onGoSearch_Summer,
   onGoAttendance_Summer,
   onGoGame_Summer,
+  onGoCheck_Summer,
 }) {
 
   const cards = [
@@ -81,6 +83,7 @@ export function HomePage({
       onClick: onGoSearch,
       show: true,
     },
+
     {
       label: "تسجيل الحضور",
       subLabel: "Attendance",
@@ -210,6 +213,7 @@ export function HomePage({
           onGoSearch={onGoSearch_Summer}
           onGoAttendance={onGoAttendance_Summer}
           onGoGame={onGoGame_Summer}
+          onGoCheck={onGoCheck_Summer || onGoCheck}
           currentUser={currentUser}
         />
       </div>
@@ -217,7 +221,7 @@ export function HomePage({
   );
 }
 
-function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame, currentUser }) {
+function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame, onGoCheck, currentUser }) {
   const portalSectionRef = useRef(null);
   const portalContentRef = useRef(null);
   const portalTextRef = useRef(null);
@@ -333,6 +337,7 @@ function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame, currentUse
           onGoSearch={onGoSearch}
           onGoAttendance={onGoAttendance}
           onGoGame={onGoGame}
+          onGoCheck={onGoCheck}
           currentUser={currentUser}
         />
       </div>

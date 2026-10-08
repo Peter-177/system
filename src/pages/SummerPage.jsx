@@ -7,7 +7,7 @@ import {
   ArrowRight,
   Target,
   CheckCircle2,
-  
+  Award,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { studentsDB, summerAttendanceDB } from "../data/storage";
@@ -20,7 +20,7 @@ import { SummerGameArena } from "./SummerGameArena";
 import { SummerProfile } from "./SummerProfile";
 import { SummerCoupons } from "./SummerCoupons";
 
-export function SummerSection({ onGoHome, currentUser }) {
+export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
   const sectionRef = useRef(null);
   const [internalView, setInternalView] = useState("menu"); // 'menu' | 'search' | 'attendance' | 'games' | 'profile' | 'coupons'
   const [searchQuery, setSearchQuery] = useState("");
@@ -142,13 +142,22 @@ export function SummerSection({ onGoHome, currentUser }) {
       glow: "bg-sky-400/20"
     },
     {
+      id: "check",
+      label: "شيك المكافأة",
+      subLabel: "REWARD CHECK",
+      icon: <Award className="w-10 h-10" />,
+      color: "from-amber-400/20 to-emerald-500/10",
+      accent: "text-amber-300",
+      glow: "bg-amber-400/20"
+    },
+    {
       id: "games",
       label: "الألعاب",
       subLabel: "GAME ARENA",
       icon: <Gamepad2 className="w-10 h-10" />,
-      color: "from-amber-400/20 to-emerald-500/10",
-      accent: "text-amber-400",
-      glow: "bg-amber-400/20"
+      color: "from-indigo-400/20 to-emerald-500/10",
+      accent: "text-indigo-300",
+      glow: "bg-indigo-400/20"
     }
   ];
 
@@ -250,17 +259,23 @@ export function SummerSection({ onGoHome, currentUser }) {
                 <p className="text-emerald-300/40 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.4em] sm:tracking-[0.8em] mt-1 sm:mt-2">نادي صيف 2026</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 w-full max-w-6xl" dir="rtl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full max-w-6xl" dir="rtl">
                 {summerCards.map((card, idx) => (
                   <motion.button
                     key={idx}
-                    onClick={() => setInternalView(card.id)}
+                    onClick={() => {
+                      if (card.id === "check" && onGoCheck) {
+                        onGoCheck();
+                      } else {
+                        setInternalView(card.id);
+                      }
+                    }}
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 + idx * 0.1, duration: 0.8 }}
                     whileHover={{ y: -8 }}
                     whileTap={{ scale: 0.97 }}
-                    className={`relative tech-panel !p-6 sm:!p-10 flex flex-col items-center text-center gap-4 sm:gap-6 overflow-hidden group border-white/10 transition-all duration-500 bg-gradient-to-br ${card.color} rounded-2xl sm:rounded-3xl cursor-pointer`}
+                    className={`relative tech-panel !p-6 sm:!p-8 flex flex-col items-center text-center gap-4 sm:gap-6 overflow-hidden group border-white/10 transition-all duration-500 bg-gradient-to-br ${card.color} rounded-2xl sm:rounded-3xl cursor-pointer`}
                   >
                     <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-slate-950/80 border border-white/5 flex items-center justify-center ${card.accent} group-hover:scale-110 transition-transform duration-700 shadow-2xl relative z-10`}>
                       {card.icon}
@@ -410,6 +425,7 @@ export function SummerSection({ onGoHome, currentUser }) {
                 person={selectedStudent}
                 onBack={() => setInternalView(prevView)}
                 onGoCoupons={() => setInternalView("coupons")}
+                onGoCheck={() => onGoCheck && onGoCheck(selectedStudent.qrId)}
               />
             </motion.div>
           )}

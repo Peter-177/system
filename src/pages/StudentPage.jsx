@@ -28,6 +28,7 @@ export function StudentPage({
   onGoAttendance,
   onGoEdit,
   onGoCoupons,
+  onGoCheck,
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -44,19 +45,29 @@ export function StudentPage({
         title={person.name}
         onBack={onBack}
         right={
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <button
               onClick={onGoAttendance}
-              className="px-4 py-2 bg-[#1A3D63] text-[#F6FAFD] text-xs font-black rounded-[2rem] shadow-xl hover:bg-[#4A7FA7] transition-all hover:scale-105"
+              className="px-3 sm:px-4 py-2 bg-[#1A3D63] text-[#F6FAFD] text-xs font-black rounded-[2rem] shadow-xl hover:bg-[#4A7FA7] transition-all hover:scale-105"
             >
               📋 {attendanceDB.get(person.qrId).length}
             </button>
             <button
               onClick={onGoCoupons}
-              className="px-4 py-2 bg-[#1A3D63] text-[#F6FAFD] text-xs font-black rounded-[2rem] shadow-xl hover:bg-[#4A7FA7] transition-all hover:scale-105"
+              className="px-3 sm:px-4 py-2 bg-[#1A3D63] text-[#F6FAFD] text-xs font-black rounded-[2rem] shadow-xl hover:bg-[#4A7FA7] transition-all hover:scale-105"
             >
-              🎟️ Coupons
+              🎟️
             </button>
+            {onGoCheck && (
+              <button
+                onClick={onGoCheck}
+                className="px-3 sm:px-4 py-2 bg-emerald-800 text-amber-300 text-xs font-black rounded-[2rem] shadow-xl hover:bg-emerald-700 transition-all hover:scale-105 flex items-center gap-1"
+                title="شيك المكافأة"
+              >
+                <span>🏆</span>
+                <span className="hidden sm:inline">شيك</span>
+              </button>
+            )}
           </div>
         }
       />
