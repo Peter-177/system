@@ -97,7 +97,7 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
         addedCount++;
       }
     });
-    
+
     if (addedCount > 0) {
       setUpdateTrigger(prev => prev + 1);
       toast.show(`✅ تم تسجيل حضور ${addedCount} أطفال بنجاح`);
@@ -126,7 +126,6 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
     {
       id: "search",
       label: "البحث",
-      subLabel: "SEARCH CENTRE",
       icon: <Search className="w-10 h-10" />,
       color: "from-lime-400/20 to-emerald-500/10",
       accent: "text-lime-400",
@@ -135,7 +134,6 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
     {
       id: "attendance",
       label: "سجل الحضور",
-      subLabel: "ATTENDANCE HUB",
       icon: <ClipboardList className="w-10 h-10" />,
       color: "from-sky-400/20 to-emerald-500/10",
       accent: "text-sky-400",
@@ -143,8 +141,7 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
     },
     {
       id: "check",
-      label: "شيك المكافأة",
-      subLabel: "REWARD CHECK",
+      label: "الشيكات",
       icon: <Award className="w-10 h-10" />,
       color: "from-amber-400/20 to-emerald-500/10",
       accent: "text-amber-300",
@@ -153,7 +150,6 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
     {
       id: "games",
       label: "الألعاب",
-      subLabel: "GAME ARENA",
       icon: <Gamepad2 className="w-10 h-10" />,
       color: "from-indigo-400/20 to-emerald-500/10",
       accent: "text-indigo-300",
@@ -195,18 +191,18 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
                   onClick={confirmRemoveAttendance}
                   className="flex-1 py-3.5 rounded-2xl bg-red-500 text-white font-black hover:bg-red-600 shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:shadow-[0_0_30px_rgba(239,68,68,0.5)] transition-all"
                 >
-                   امسح
+                  امسح
                 </button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
-      
+
       {/* Background Layer (Synchronized through GSAP in HomePage) */}
-      <div 
+      <div
         className="summer-bg-layer fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat"
-        style={{ 
+        style={{
           backgroundImage: `linear-gradient(to bottom, rgba(12, 92, 70, 0.72), rgba(4, 52, 40, 0.82)), url(${bgImage})`,
           transform: "scale(1.2)"
         }}
@@ -245,7 +241,7 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
 
         <AnimatePresence mode="wait">
           {internalView === "menu" && (
-            <motion.div 
+            <motion.div
               key="menu"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -289,10 +285,10 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
                         {card.subLabel}
                       </p>
                     </div>
-                    
+
                     <div className="mt-2 sm:mt-4 flex items-center gap-2 text-white/40 group-hover:text-white/60 transition-colors">
-                       <span className="text-[9px] font-black uppercase tracking-widest">افتح الصفحة</span>
-                       <ArrowRight size={12} />
+                      <span className="text-[9px] font-black uppercase tracking-widest">افتح الصفحة</span>
+                      <ArrowRight size={12} />
                     </div>
                   </motion.button>
                 ))}
@@ -301,7 +297,7 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
           )}
 
           {(internalView === "search" || internalView === "attendance") && (
-            <motion.div 
+            <motion.div
               key={internalView}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -310,16 +306,16 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
               dir="rtl"
             >
               <div className="relative w-full group">
-                  <div className="absolute inset-0 bg-lime-400/5 blur-3xl group-focus-within:bg-lime-400/10 transition-colors pointer-events-none"></div>
-                  <Search className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 text-lime-400/40 w-5 h-5 sm:w-6 sm:h-6" />
-                  <input 
-                    autoFocus
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="ابحث عن اسم الطفل أو الكود هنا..."
-                    className="w-full h-14 sm:h-16 bg-emerald-950/40 backdrop-blur-3xl border border-white/10 rounded-2xl sm:rounded-[2rem] pr-12 sm:pr-16 pl-6 sm:pl-8 text-white font-bold text-sm sm:text-base placeholder:text-emerald-100/20 focus:outline-none focus:border-lime-400/40 transition-all shadow-2xl"
-                  />
+                <div className="absolute inset-0 bg-lime-400/5 blur-3xl group-focus-within:bg-lime-400/10 transition-colors pointer-events-none"></div>
+                <Search className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 text-lime-400/40 w-5 h-5 sm:w-6 sm:h-6" />
+                <input
+                  autoFocus
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="ابحث عن اسم الطفل أو الكود هنا..."
+                  className="w-full h-14 sm:h-16 bg-emerald-950/40 backdrop-blur-3xl border border-white/10 rounded-2xl sm:rounded-[2rem] pr-12 sm:pr-16 pl-6 sm:pl-8 text-white font-bold text-sm sm:text-base placeholder:text-emerald-100/20 focus:outline-none focus:border-lime-400/40 transition-all shadow-2xl"
+                />
               </div>
 
               {internalView === "attendance" && filteredStudents.length > 0 && (() => {
@@ -328,11 +324,10 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
                   <div className="flex justify-end w-full px-1 sm:px-2 mt-[-0.5rem] sm:mt-[-1rem]">
                     <button
                       onClick={allPresent ? handleRemoveAll : handleMarkAllPresent}
-                      className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 font-black text-xs sm:text-sm rounded-xl transition-colors shadow-lg min-h-[44px] ${
-                        allPresent
+                      className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 font-black text-xs sm:text-sm rounded-xl transition-colors shadow-lg min-h-[44px] ${allPresent
                           ? "bg-red-500 text-white hover:bg-red-600"
                           : "bg-lime-500 text-emerald-950 hover:bg-lime-400"
-                      }`}
+                        }`}
                     >
                       <CheckCircle2 size={18} strokeWidth={3} />
                       {allPresent ? "مسح الكل" : "تسجيل الكل"}
@@ -342,73 +337,71 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
               })()}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 max-h-[60vh] overflow-y-auto pr-1 sm:pr-2 custom-scrollbar">
-                  {filteredStudents.map((s, idx) => {
-                    const isPresent = registeredToday(summerAttendanceDB.get(s.qrId));
-                    return (
-                      <motion.div
-                        key={s.qrId}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        onClick={internalView === "search" ? () => {
-                          setSelectedStudent(s);
-                          setInternalView("profile");
-                        } : undefined}
-                        className={`p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border backdrop-blur-xl flex items-center justify-between transition-all ${
-                          internalView === "search" ? "cursor-pointer hover:bg-white/10" : ""
-                        } ${
-                          isPresent ? "bg-lime-500/10 border-lime-500/30" : "bg-white/5 border-white/5"
+                {filteredStudents.map((s, idx) => {
+                  const isPresent = registeredToday(summerAttendanceDB.get(s.qrId));
+                  return (
+                    <motion.div
+                      key={s.qrId}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      onClick={internalView === "search" ? () => {
+                        setSelectedStudent(s);
+                        setInternalView("profile");
+                      } : undefined}
+                      className={`p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border backdrop-blur-xl flex items-center justify-between transition-all ${internalView === "search" ? "cursor-pointer hover:bg-white/10" : ""
+                        } ${isPresent ? "bg-lime-500/10 border-lime-500/30" : "bg-white/5 border-white/5"
                         }`}
-                      >
-                        <div className="flex items-center gap-3 sm:gap-4 min-w-0 pr-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedStudent(s);
-                                setPrevView(internalView);
-                                setInternalView("profile");
-                              }}
-                              className="rounded-full ring-2 ring-transparent hover:ring-lime-400/60 transition-all cursor-pointer shrink-0 min-w-[40px] min-h-[40px]"
-                              title="عرض الملف الشخصي"
-                            >
-                              <Avatar name={s.name} image={s.image} size="md" />
-                            </button>
-                            <div className="flex flex-col min-w-0">
-                                <span className="font-black tracking-tight text-white text-sm sm:text-base truncate">{s.name}</span>
-                                <span className="text-[10px] uppercase font-bold opacity-40 text-emerald-100">{s.qrId}</span>
-                            </div>
+                    >
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0 pr-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedStudent(s);
+                            setPrevView(internalView);
+                            setInternalView("profile");
+                          }}
+                          className="rounded-full ring-2 ring-transparent hover:ring-lime-400/60 transition-all cursor-pointer shrink-0 min-w-[40px] min-h-[40px]"
+                          title="عرض الملف الشخصي"
+                        >
+                          <Avatar name={s.name} image={s.image} size="md" />
+                        </button>
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-black tracking-tight text-white text-sm sm:text-base truncate">{s.name}</span>
+                          <span className="text-[10px] uppercase font-bold opacity-40 text-emerald-100">{s.qrId}</span>
                         </div>
+                      </div>
 
-                        {internalView === "attendance" && (
-                           <button 
-                             onClick={() => handleToggleAttendance(s)}
-                             className={`p-2.5 sm:p-2 rounded-xl transition-all shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center ${isPresent ? 'bg-lime-500 text-emerald-950 shadow-lg hover:bg-red-500 hover:text-white' : 'bg-white/5 text-emerald-100/40 hover:bg-white/10'}`}
-                             title={isPresent ? "مسح الحضور" : "تسجيل الحضور"}
-                           >
-                              {isPresent ? <CheckCircle2 size={18} strokeWidth={3} /> : <Target size={18} />}
-                           </button>
-                        )}
-                        {internalView === "search" && (
-                          <div className="text-white/40 shrink-0">
-                            <ArrowRight size={18} className="rotate-180" />
-                          </div>
-                        )}
-                      </motion.div>
-                    );
-                  })}
+                      {internalView === "attendance" && (
+                        <button
+                          onClick={() => handleToggleAttendance(s)}
+                          className={`p-2.5 sm:p-2 rounded-xl transition-all shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center ${isPresent ? 'bg-lime-500 text-emerald-950 shadow-lg hover:bg-red-500 hover:text-white' : 'bg-white/5 text-emerald-100/40 hover:bg-white/10'}`}
+                          title={isPresent ? "مسح الحضور" : "تسجيل الحضور"}
+                        >
+                          {isPresent ? <CheckCircle2 size={18} strokeWidth={3} /> : <Target size={18} />}
+                        </button>
+                      )}
+                      {internalView === "search" && (
+                        <div className="text-white/40 shrink-0">
+                          <ArrowRight size={18} className="rotate-180" />
+                        </div>
+                      )}
+                    </motion.div>
+                  );
+                })}
               </div>
             </motion.div>
           )}
 
           {internalView === "games" && (
-            <motion.div 
-               key="games"
-               initial={{ opacity: 0, scale: 0.95 }}
-               animate={{ opacity: 1, scale: 1 }}
-               exit={{ opacity: 0, scale: 1.05 }}
-               className="w-full h-full"
-               dir="rtl"
+            <motion.div
+              key="games"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="w-full h-full"
+              dir="rtl"
             >
-               <SummerGameArena />
+              <SummerGameArena />
             </motion.div>
           )}
 
@@ -449,8 +442,8 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
         </AnimatePresence>
 
         <div className="mt-12 flex flex-col items-center gap-4 opacity-20">
-            <div className="w-32 h-px bg-gradient-to-r from-transparent via-lime-500/50 to-transparent"></div>
-            <p className="text-[9px] font-black uppercase tracking-[0.5em] text-emerald-100">صيف 2026</p>
+          <div className="w-32 h-px bg-gradient-to-r from-transparent via-lime-500/50 to-transparent"></div>
+          <p className="text-[9px] font-black uppercase tracking-[0.5em] text-emerald-100">صيف 2026</p>
         </div>
       </div>
     </div>
