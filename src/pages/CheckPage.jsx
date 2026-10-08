@@ -105,7 +105,7 @@ export function CheckPage({
       {/* Page Header (hidden during print) */}
       <div className="no-print">
         <Navbar
-          title="شيك المكافأة"
+          title="الشيكات "
           onBack={() => {
             if (selectedChildId) {
               handleClearSelection();
@@ -115,13 +115,6 @@ export function CheckPage({
               window.history.back();
             }
           }}
-          right={
-            <div className="flex items-center gap-2">
-              <span className="hidden sm:inline text-xs font-black text-sky-400 bg-sky-500/10 px-3 py-1.5 rounded-xl border border-sky-500/20">
-                النادي الصيفي 2026 🌴
-              </span>
-            </div>
-          }
         />
       </div>
 
@@ -185,25 +178,7 @@ export function CheckPage({
         ) : (
           /* ── NO CHILD SELECTED: SHOW SEARCH & CHILDREN LIST ── */
           <div className="w-full flex flex-col gap-4 sm:gap-6">
-            {/* Header / Hero Banner */}
-            <div className="no-print relative overflow-hidden bg-gradient-to-br from-emerald-950/60 via-slate-900/60 to-slate-950/80 backdrop-blur-2xl border border-emerald-500/20 rounded-2xl sm:rounded-3xl p-4 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6 shadow-2xl">
-              <div className="space-y-1.5 sm:space-y-2 text-center sm:text-right">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-black">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>شيكات المكافأة الرسمية</span>
-                </div>
-                <h1 className="text-xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
-                  اختر الطفل لإصدار <span className="text-emerald-400">شيك المكافأة</span>
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-400 font-bold max-w-lg">
-                  ابحث باسم الطفل أو الكود لطباعة أو تحميل شيك بنكي مميز باسمه للمكافآت والتشجيع.
-                </p>
-              </div>
 
-              <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl sm:rounded-3xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 shadow-2xl">
-                <Award className="w-8 h-8 sm:w-12 sm:h-12" />
-              </div>
-            </div>
 
             {/* Search Bar with Real-time Arabic filtering */}
             <div className="no-print relative group w-full">
@@ -215,7 +190,7 @@ export function CheckPage({
                 ref={searchInputRef}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="ابحث عن اسم الطفل (مثال: أحمد، ابراهيم...) أو الكود..."
+                placeholder="ابحث عن اسم الطفل أو الكود..."
                 autoFocus
                 className="w-full bg-slate-900/60 backdrop-blur-xl border border-white/10 focus:border-emerald-500/60 rounded-2xl pr-14 pl-12 h-16 text-base sm:text-lg font-black text-white placeholder:text-slate-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-xl"
               />
@@ -287,9 +262,6 @@ export function CheckPage({
                         </div>
                       </div>
 
-                      <div className="w-10 h-10 rounded-xl bg-slate-800/60 group-hover:bg-emerald-500 group-hover:text-slate-950 text-slate-400 flex items-center justify-center transition-all shrink-0">
-                        <UserCheck className="w-5 h-5" />
-                      </div>
                     </motion.button>
                   ))
                 ) : (

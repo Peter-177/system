@@ -25,6 +25,87 @@ import {
 } from "lucide-react";
 import { useAttendanceContext } from "../context/AttendanceContext";
 
+// ─── Spring presets (apple-design §4) ────────────────────────────────────────
+const spring = { type: "spring", bounce: 0, duration: 0.35 };
+const springItem = { type: "spring", stiffness: 320, damping: 28 };
+
+// ─── Animation variants ───────────────────────────────────────────────────────
+const listVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.04, delayChildren: 0.05 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: springItem },
+  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.15 } },
+};
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+/** Inline section label — small, restrained, purposeful */
+function SectionLabel({ icon: Icon, children }) {
+  return (
+    <p className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-[0.12em] select-none">
+      <Icon className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
+      {children}
+    </p>
+  );
+}
+
+/** A single person in the pending list */
+function PendingCard({ person, onRemove }) {
+  return (
+    <motion.div
+      variants={itemVariants}
+      layout
+      className="group flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-slate-900/50 border border-white/[0.06] hover:border-white/10 transition-colors duration-200"
+    >
+      <div className="flex items-center gap-3 min-w-0">
+        <Avatar name={person.name} size="sm" />
+        <div className="flex flex-col min-w-0">
+          <span className="font-bold text-white text-sm truncate leading-snug">
+            {person.name}
+          </span>
+          <span className="text-[10px] text-slate-500 font-mono tracking-wide mt-0.5">
+            {person.qrId}
+          </span>
+        </div>
+      </div>
+
+      <button
+        onClick={() => onRemove(person.qrId)}
+        aria-label={`إزالة ${person.name}`}
+        className="flex items-center justify-center w-8 h-8 rounded-full text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all active:scale-90 focus-visible:ring-2 focus-visible:ring-red-500/50 focus-visible:outline-none shrink-0"
+      >
+        <X className="w-4 h-4" strokeWidth={2.5} />
+      </button>
+    </motion.div>
+  );
+}
+
+/** Empty state — minimal, legible, never opacity-hacked */
+function EmptySlot({ icon: Icon, title, subtitle }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 py-14 rounded-2xl border border-dashed border-white/[0.08] bg-slate-900/20">
+      <div className="w-11 h-11 rounded-2xl bg-slate-800/60 flex items-center justify-center text-slate-600">
+        <Icon className="w-5 h-5" strokeWidth={1.5} />
+      </div>
+      <div className="text-center space-y-1">
+        <p className="text-sm font-semibold text-slate-400">{title}</p>
+        {subtitle && (
+          <p className="text-xs text-slate-600 max-w-[200px] leading-relaxed">{subtitle}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+
 export function AttendancePage({ person, onBack, onGoHistory }) {
   const [query, setQuery] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
@@ -32,13 +113,14 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
   const { pendingList, setPendingList } = useAttendanceContext();
   const toast = useToast();
   const inputRef = useRef(null);
+  const suggestionsRef = useRef(null);
 
+  // ── Derived date label ───────────────────────────────────────────────────
   const formattedSelectedDate = useMemo(() => {
     if (!selectedDate) return "";
     try {
       const [y, m, d] = selectedDate.split("-").map(Number);
-      const dateObj = new Date(y, m - 1, d);
-      return dateObj.toLocaleDateString("ar-EG", {
+      return new Date(y, m - 1, d).toLocaleDateString("ar-EG", {
         weekday: "long",
         year: "numeric",
         month: "long",
@@ -49,6 +131,9 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
     }
   }, [selectedDate]);
 
+  const isCustomDate = selectedDate !== todayISO();
+
+  // ── Data ─────────────────────────────────────────────────────────────────
   const allClassesDB = classesDB.getAll();
   const classList = Object.entries(allClassesDB).map(([id, cls]) => ({
     id,
@@ -73,13 +158,13 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
     if (!selectedClass) return [];
     const targetClass = allClassesDB[selectedClass];
     if (!targetClass) return [];
-
     return allStudents
       .filter((s) => targetClass.grades?.includes(s.year))
-      .filter((s) => registeredToday(attendanceDB.get(s.qrId), selectedDate)) // Only show present students on selectedDate
+      .filter((s) => registeredToday(attendanceDB.get(s.qrId), selectedDate))
       .sort((a, b) => a.name.localeCompare(b.name, "ar"));
   }, [selectedClass, allStudents, allClassesDB, selectedDate]);
 
+  // ── Actions ──────────────────────────────────────────────────────────────
   const addPerson = (student) => {
     if (!student) return;
     if (pendingList.find((p) => p.qrId === student.qrId)) {
@@ -106,15 +191,12 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
     if (e.key === "Enter" && query.trim()) {
       const q = query.trim().toLowerCase();
       let match = allStudents.find((s) => s.qrId.toLowerCase() === q);
-      if (!match) {
-        match = allStudents.find((s) => s.name.toLowerCase().includes(q));
-      }
-      if (match) {
-        addPerson(match);
-      } else {
-        toast.show("ما لقيناش حد بالاسم أو الكود ده");
-      }
+      if (!match) match = allStudents.find((s) => s.name.toLowerCase().includes(q));
+      if (match) addPerson(match);
+      else toast.show("ما لقيناش حد بالاسم أو الكود ده");
     }
+    // Close suggestions on Escape
+    if (e.key === "Escape") setQuery("");
   };
 
   const removePerson = (qrId) => {
@@ -154,6 +236,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
     toast.show(`✅ تمام، حضرنا ${registeredCount} من الفصل ${dateLabel}`);
   };
 
+  // ── Search suggestions ───────────────────────────────────────────────────
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
@@ -161,33 +244,21 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
       .filter(
         (s) =>
           s.qrId.toLowerCase().includes(q) ||
-          (s.name && s.name.toLowerCase().includes(q)),
+          (s.name && s.name.toLowerCase().includes(q))
       )
       .slice(0, 5);
   }, [query, allStudents]);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.03 } },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { type: "spring", stiffness: 300, damping: 24 },
-    },
-  };
-
-  const saveBtn = pendingList.length > 0 && (
+  // ── Navbar right slot — save button (only when there's a pending list) ──
+  const navRight = pendingList.length > 0 && (
     <button
       onClick={handleSave}
-      className="btn btn-sm bg-indigo-600 text-white border-none hover:bg-indigo-700 px-4 flex items-center gap-2 shadow-lg shadow-indigo-600/20"
+      className="flex items-center gap-2 h-9 px-4 rounded-xl bg-sky-500 hover:bg-sky-400 active:scale-95 text-slate-950 font-black text-xs tracking-wide transition-all focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:outline-none shadow-lg shadow-sky-500/20"
     >
-      <Save className="w-4 h-4" />
+      <Save className="w-3.5 h-3.5 shrink-0" strokeWidth={2.5} />
       <span>
-        حفظ ({pendingList.length}) {selectedDate !== todayISO() ? `[${selectedDate}]` : ""}
+        حفظ ({pendingList.length})
+        {isCustomDate && <span className="opacity-70 mr-1"> [{selectedDate}]</span>}
       </span>
     </button>
   );
@@ -195,330 +266,367 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
   return (
     <Page>
       <Toast msg={toast.msg} />
-      <Navbar onBack={onBack} title="تسجيل الحضور" right={saveBtn} />
+      <Navbar onBack={onBack} title="تسجيل الحضور" right={navRight} />
 
       <div
-        className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 flex flex-col gap-6 sm:gap-8"
+        className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6"
         dir="rtl"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
-          <div className="lg:col-span-12 space-y-6 sm:space-y-8">
-            <header className="flex flex-col sm:flex-row sm:items-end justify-between items-start gap-4">
-              <div>
-                <div className="flex items-center gap-3">
-                  <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                    يلا نحضّرهم
-                  </h2>
-                  <span className="text-[10px] sm:text-xs font-mono font-bold text-sky-400 bg-sky-500/10 px-2.5 sm:px-3 py-1 rounded-full border border-sky-500/20 shadow-inner">
-                    {formattedSelectedDate}
-                  </span>
+        {/* ── Page header ─────────────────────────────────────────────────── */}
+        <header className="flex items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-none">
+              تسجيل الحضور
+            </h2>
+            <p className="text-xs text-slate-500 font-medium">
+              {formattedSelectedDate}
+            </p>
+          </div>
+
+          <button
+            onClick={onGoHistory}
+            className="flex items-center gap-2 h-10 px-4 rounded-xl bg-slate-900 border border-white/[0.07] text-slate-300 hover:text-white hover:border-white/15 font-bold text-xs tracking-wide transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-sky-500/50 focus-visible:outline-none"
+          >
+            <CalendarDays className="w-4 h-4 text-sky-400" strokeWidth={2} />
+            سجل الحضور
+          </button>
+        </header>
+
+        {/* ── Custom-date warning banner ───────────────────────────────────── */}
+        <AnimatePresence>
+          {isCustomDate && (
+            <motion.div
+              key="date-warning"
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={spring}
+              role="alert"
+              className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3.5 rounded-2xl border border-amber-500/25 bg-amber-500/[0.07]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400 shrink-0">
+                  <CalendarDays className="w-4 h-4" strokeWidth={2} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-amber-200 leading-snug">
+                    تسجيل لتاريخ مخصص
+                  </p>
+                  <p className="text-[11px] text-amber-400/70 mt-0.5">
+                    {formattedSelectedDate} · {selectedDate}
+                  </p>
                 </div>
               </div>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onGoHistory}
-                className="flex items-center gap-2.5 sm:gap-3 px-4 sm:px-6 py-2.5 sm:py-3 bg-slate-900 text-white border border-white/10 rounded-2xl font-black text-xs hover:bg-slate-800 transition-all uppercase tracking-widest shadow-lg min-h-[44px]"
+              <button
+                type="button"
+                onClick={() => setSelectedDate(todayISO())}
+                className="shrink-0 h-9 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black text-xs transition-all focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none"
               >
-                <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" />
-                سجل الحضور
-              </motion.button>
-            </header>
+                رجوع للنهاردة
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            <div className="admin-panel shadow-admin-lg grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl">
-              {/* Quick Search */}
-              <div className="md:col-span-5 space-y-2 relative">
-                <label className="text-[10px] font-black text-sky-300/60 uppercase tracking-widest flex items-center gap-2 mr-1">
-                  <Search className="w-4 h-4 text-sky-500" />
-                  دور بسرعة
-                </label>
-                <div className="relative">
-                  <input
-                    ref={inputRef}
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="اكتب اسم الطفل أو الكود بتاعه..."
-                    className="admin-input h-12 sm:h-14 pl-4 pr-12 w-full text-white placeholder:text-slate-500 text-sm sm:text-base"
-                  />
-                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
-                    <Search className="w-5 h-5" />
-                  </div>
-                </div>
+        {/* ── Controls panel ───────────────────────────────────────────────── */}
+        <div className="bg-slate-900/50 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4">
 
-                <AnimatePresence>
-                  {suggestions.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      className="absolute top-full left-0 right-0 mt-3 bg-slate-900 rounded-2xl shadow-admin-xl border border-white/10 p-2 flex flex-col gap-1 z-50 backdrop-blur-xl"
-                    >
-                      {suggestions.map((s) => (
-                        <button
-                          key={s.qrId}
-                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all text-right group min-h-[44px]"
-                          onClick={() => addPerson(s)}
-                        >
-                          <Avatar name={s.name} size="sm" />
-                          <div className="flex flex-col min-w-0 pr-1">
-                            <span className="font-bold text-white group-hover:text-sky-400 transition-colors text-sm truncate">
-                              {s.name}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-mono">
-                              {s.qrId}
-                            </span>
-                          </div>
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Class Filter */}
-              <div className="md:col-span-3 space-y-2">
-                <label className="text-[10px] font-black text-sky-300/60 uppercase tracking-widest flex items-center gap-2 mr-1">
-                  <Users className="w-4 h-4 text-sky-500" />
-                  حضر فصل
-                </label>
-                <select
-                  className="admin-input h-12 sm:h-14 text-white text-sm sm:text-base"
-                  value={selectedClass}
-                  onChange={(e) => setSelectedClass(e.target.value)}
+          {/* Search */}
+          <div className="sm:col-span-5 space-y-2 relative">
+            <SectionLabel icon={Search}>بحث سريع</SectionLabel>
+            <div className="relative">
+              <input
+                ref={inputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="اسم الطفل أو الكود..."
+                autoComplete="off"
+                aria-label="ابحث عن طفل"
+                aria-haspopup="listbox"
+                aria-expanded={suggestions.length > 0}
+                className="w-full h-12 bg-slate-950/60 border border-white/[0.08] focus:border-sky-500/40 rounded-xl pr-11 pl-11 text-sm sm:text-base text-white placeholder:text-slate-500 font-medium outline-none focus:ring-4 focus:ring-sky-500/[0.08] transition-all"
+              />
+              <Search
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"
+                strokeWidth={2}
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => { setQuery(""); inputRef.current?.focus(); }}
+                  aria-label="مسح البحث"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
                 >
-                  <option value="" className="bg-slate-950 text-white">اختر فصل...</option>
-                  {classList.map((cls) => (
-                    <option key={cls.id} value={cls.id} className="bg-slate-950 text-white">
-                      {cls.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Attendance Date Selector */}
-              <div className="md:col-span-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-black text-sky-300/60 uppercase tracking-widest flex items-center gap-2 mr-1">
-                    <CalendarDays className="w-4 h-4 text-sky-500" />
-                    تاريخ الحضور
-                  </label>
-                  {selectedDate !== todayISO() && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedDate(todayISO())}
-                      className="text-[10px] font-black text-amber-400 hover:text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/30 transition-all cursor-pointer"
-                    >
-                      رجوع للنهاردة
-                    </button>
-                  )}
-                </div>
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className={`admin-input h-12 sm:h-14 font-mono text-center font-bold [color-scheme:dark] transition-all text-sm sm:text-base ${
-                      selectedDate !== todayISO()
-                        ? "border-amber-500/50 bg-amber-950/20 text-amber-200 focus:border-amber-400"
-                        : "text-white"
-                    }`}
-                  />
-                </div>
-              </div>
+                  <X className="w-3.5 h-3.5" strokeWidth={2.5} />
+                </button>
+              )}
             </div>
 
-            {/* Custom Date Alert Banner */}
+            {/* Suggestions dropdown */}
             <AnimatePresence>
-              {selectedDate !== todayISO() && (
+              {suggestions.length > 0 && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                  key="suggestions"
+                  initial={{ opacity: 0, y: -4, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.98 }}
-                  className="bg-amber-500/10 border-2 border-amber-500/30 rounded-2xl sm:rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 text-amber-200 shadow-xl relative overflow-hidden"
+                  exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                  transition={spring}
+                  role="listbox"
+                  aria-label="نتائج البحث"
+                  ref={suggestionsRef}
+                  className="absolute top-full right-0 left-0 mt-2 bg-slate-900/95 backdrop-blur-xl border border-white/[0.08] rounded-xl shadow-2xl shadow-black/40 p-1.5 flex flex-col gap-0.5 z-50"
                 >
-                  <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-                      <CalendarDays className="w-5 h-5 sm:w-6 sm:h-6" />
-                    </div>
-                    <div>
-                      <div className="text-sm sm:text-base font-black text-white">
-                        تنبيه: أنت تقوم بتسجيل الحضور لتاريخ مخصص
+                  {suggestions.map((s) => (
+                    <button
+                      key={s.qrId}
+                      role="option"
+                      onClick={() => addPerson(s)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.05] transition-colors text-right group focus-visible:bg-white/[0.05] focus-visible:outline-none min-h-[44px]"
+                    >
+                      <Avatar name={s.name} size="sm" />
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-semibold text-white text-sm truncate group-hover:text-sky-300 transition-colors">
+                          {s.name}
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-mono mt-0.5">
+                          {s.qrId}
+                        </span>
                       </div>
-                      <div className="text-[11px] sm:text-xs text-amber-300/80 font-bold mt-0.5 sm:mt-1">
-                        اليوم المختار: {formattedSelectedDate} ({selectedDate})
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedDate(todayISO())}
-                    className="w-full sm:w-auto px-4 sm:px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl sm:rounded-2xl transition-all shrink-0 cursor-pointer shadow-lg min-h-[44px]"
-                  >
-                    الرجوع للنهاردة
-                  </button>
+                    </button>
+                  ))}
                 </motion.div>
               )}
             </AnimatePresence>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
-              {/* Attendance List - Now First (Right in RTL) */}
-              <div className="space-y-4 sm:space-y-6">
-                <div className="flex items-center gap-3 mb-3 sm:mb-4">
-                  <span className="w-1.5 h-5 bg-orange-500 rounded-full"></span>
-                  <h3 className="text-base sm:text-lg font-black text-white">
-                    الناس اللي حضرت
-                  </h3>
-                  <span className="text-xs bg-sky-500/20 border border-sky-500/30 px-2 py-0.5 rounded-full text-sky-300 font-black">
-                    {pendingList.length}
-                  </span>
-                </div>
-
-                {pendingList.length === 0 ? (
-                  <div className="py-12 sm:py-20 border-2 border-dashed border-white/10 rounded-2xl sm:rounded-[2.5rem] flex flex-col items-center justify-center text-center space-y-3 sm:space-y-4 bg-slate-900/20">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-slate-800/50 flex items-center justify-center text-slate-400">
-                      <UserCheck className="w-6 h-6 sm:w-8 sm:h-8 opacity-40" />
-                    </div>
-                    <p className="font-bold text-slate-400 text-xs sm:text-sm max-w-[200px]">
-                      ضيف الأطفال من هنا أو دور عليهم فوق عشان تحضرهم
-                    </p>
-                  </div>
-                ) : (
-                  <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="show"
-                    className="space-y-2.5 sm:space-y-3"
-                  >
-                    {pendingList.map((p) => (
-                      <motion.div
-                        key={p.qrId}
-                        variants={itemVariants}
-                        layout
-                        className="bg-slate-900/60 p-3.5 sm:p-5 rounded-2xl border border-white/10 shadow-sm flex items-center justify-between group"
-                      >
-                        <div className="flex items-center gap-3 sm:gap-4 min-w-0 pr-1">
-                          <Avatar name={p.name} size="sm" />
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-bold text-white text-sm sm:text-base truncate">
-                              {p.name}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-mono uppercase">
-                              {p.qrId}
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => removePerson(p.qrId)}
-                          className="w-9 h-9 sm:w-8 sm:h-8 rounded-full hover:bg-red-500/10 text-slate-400 hover:text-red-400 transition-all flex items-center justify-center shrink-0 min-w-[36px] min-h-[36px]"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
-                      </motion.div>
-                    ))}
-
-                    <button
-                      onClick={handleSave}
-                      className="admin-btn-primary w-full h-14 sm:h-16 mt-4 sm:mt-6 shadow-indigo-600/20 text-sm sm:text-base px-3"
-                    >
-                      <Save className="w-5 h-5 sm:w-6 sm:h-6 shrink-0" />
-                      <span className="truncate">
-                        تمام، حضّر الـ {pendingList.length} طفل دول {selectedDate === todayISO() ? "" : `(ليوم ${selectedDate})`}
-                      </span>
-                    </button>
-                  </motion.div>
-                )}
-              </div>
-
-              {/* Class Roster - Now Second (Left in RTL) */}
-              <div className="space-y-6">
-                <AnimatePresence mode="wait">
-                  {selectedClass ? (
-                    <motion.div
-                      key="roster"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="space-y-4"
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <span className="w-1.5 h-5 bg-indigo-600 rounded-full"></span>
-                          <h3 className="text-lg font-black text-white">
-                            أطفال {allClassesDB[selectedClass]?.name} الحاضرين {selectedDate === todayISO() ? "النهاردة" : `(${selectedDate})`}
-                          </h3>
-                          <span className="text-xs bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full text-emerald-400 font-black">
-                            {classRoster.length}
-                          </span>
-                        </div>
-                      </div>
-
-                      <motion.div
-                        variants={containerVariants}
-                        initial="hidden"
-                        animate="show"
-                        className="grid grid-cols-1 gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar"
-                      >
-                        {classRoster.length === 0 ? (
-                          <div className="py-12 border-2 border-dashed border-white/5 rounded-2xl text-center text-slate-400 font-bold text-sm">
-                            لسه مفيش حد اتسجل من الفصل ده {selectedDate === todayISO() ? "النهاردة" : `في يوم ${selectedDate}`}
-                          </div>
-                        ) : (
-                          classRoster.map((s) => {
-                            const hasAttended = registeredToday(
-                              attendanceDB.get(s.qrId),
-                              selectedDate,
-                            );
-                            const isPending = pendingList.some(
-                              (p) => p.qrId === s.qrId,
-                            );
-                            return (
-                              <button
-                                key={s.qrId}
-                                disabled={hasAttended}
-                                onClick={() => addPerson(s)}
-                                className={`flex items-center justify-between p-4 rounded-2xl border transition-all text-right group ${hasAttended ? "bg-emerald-50 border-emerald-100" : isPending ? "bg-indigo-50 border-indigo-200" : "bg-white border-slate-100 hover:border-slate-300"}`}
-                              >
-                                <div className="flex items-center gap-4">
-                                  <Avatar
-                                    name={s.name}
-                                    size="sm"
-                                    accent={hasAttended ? "emerald" : "indigo"}
-                                  />
-                                  <div className="flex flex-col">
-                                    <span
-                                      className={`font-bold ${hasAttended ? "text-emerald-700" : "text-slate-900"}`}
-                                    >
-                                      {s.name}
-                                    </span>
-                                    <span className="text-[10px] text-slate-400 font-mono uppercase">
-                                      {s.qrId}
-                                    </span>
-                                  </div>
-                                </div>
-                                {hasAttended && (
-                                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                                )}
-                                {isPending && !hasAttended && (
-                                  <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
-                                )}
-                              </button>
-                            );
-                          })
-                        )}
-                      </motion.div>
-                    </motion.div>
-                  ) : (
-                    <div className="py-20 flex flex-col items-center justify-center text-center space-y-4 opacity-30 grayscale">
-                      <Users className="w-16 h-16 text-slate-900" />
-                      <p className="font-black text-slate-900">
-                        اختار الفصل من فوق عشان تعرف مين اللي جه
-                      </p>
-                    </div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
           </div>
+
+          {/* Class selector */}
+          <div className="sm:col-span-3 space-y-2">
+            <SectionLabel icon={Users}>حضر فصل</SectionLabel>
+            <select
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              aria-label="اختر الفصل"
+              className="w-full h-12 bg-slate-950/60 border border-white/[0.08] focus:border-sky-500/40 rounded-xl px-4 text-sm text-white font-medium outline-none focus:ring-4 focus:ring-sky-500/[0.08] transition-all [color-scheme:dark] appearance-none cursor-pointer"
+            >
+              <option value="">اختر فصل...</option>
+              {classList.map((cls) => (
+                <option key={cls.id} value={cls.id}>
+                  {cls.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Date picker */}
+          <div className="sm:col-span-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <SectionLabel icon={CalendarDays}>تاريخ الحضور</SectionLabel>
+              {isCustomDate && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedDate(todayISO())}
+                  className="text-[10px] font-bold text-amber-400 hover:text-amber-300 transition-colors"
+                >
+                  رجوع للنهاردة ↩
+                </button>
+              )}
+            </div>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              aria-label="تاريخ التسجيل"
+              className={`w-full h-12 bg-slate-950/60 border rounded-xl px-4 text-sm font-mono font-bold text-center outline-none focus:ring-4 transition-all [color-scheme:dark] ${
+                isCustomDate
+                  ? "border-amber-500/40 bg-amber-950/20 text-amber-200 focus:border-amber-400 focus:ring-amber-500/[0.08]"
+                  : "border-white/[0.08] text-white focus:border-sky-500/40 focus:ring-sky-500/[0.08]"
+              }`}
+            />
+          </div>
+        </div>
+
+        {/* ── Two-column content ───────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* LEFT COL: Pending attendance list */}
+          <section aria-label="قائمة الحضور" className="space-y-3">
+            {/* Section header */}
+            <div className="flex items-center gap-2.5 px-0.5">
+              <h3 className="text-sm font-black text-white">الحاضرين</h3>
+              <AnimatePresence mode="popLayout">
+                {pendingList.length > 0 && (
+                  <motion.span
+                    key={pendingList.length}
+                    initial={{ scale: 0.7, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.7, opacity: 0 }}
+                    transition={spring}
+                    className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-sky-500/20 border border-sky-500/30 text-sky-300 text-[10px] font-black tabular-nums"
+                  >
+                    {pendingList.length}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* List body */}
+            {pendingList.length === 0 ? (
+              <EmptySlot
+                icon={UserCheck}
+                title="القائمة فاضية"
+                subtitle="ضيف الأطفال من البحث أو بالمسح"
+              />
+            ) : (
+              <motion.div
+                variants={listVariants}
+                initial="hidden"
+                animate="show"
+                className="space-y-2"
+              >
+                <AnimatePresence initial={false}>
+                  {pendingList.map((p) => (
+                    <PendingCard key={p.qrId} person={p} onRemove={removePerson} />
+                  ))}
+                </AnimatePresence>
+
+                {/* Save CTA — contextual, discoverable */}
+                <motion.button
+                  layout
+                  onClick={handleSave}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ ...spring, delay: 0.1 }}
+                  className="w-full mt-2 h-13 flex items-center justify-center gap-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 active:scale-[0.98] text-slate-950 font-black text-sm tracking-wide transition-all shadow-lg shadow-sky-500/20 focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:outline-none"
+                >
+                  <Save className="w-4 h-4 shrink-0" strokeWidth={2.5} />
+                  <span>
+                    حضّر الـ {pendingList.length} طفل دول
+                    {isCustomDate && (
+                      <span className="font-medium opacity-70 mr-1">
+                        ({selectedDate})
+                      </span>
+                    )}
+                  </span>
+                </motion.button>
+              </motion.div>
+            )}
+          </section>
+
+          {/* RIGHT COL: Class roster (present students) */}
+          <section aria-label="حضور الفصل" className="space-y-3">
+            <div className="flex items-center gap-2.5 px-0.5">
+              <h3 className="text-sm font-black text-white">
+                {selectedClass
+                  ? `الفصل: ${allClassesDB[selectedClass]?.name}`
+                  : "عرض الفصل"}
+              </h3>
+              {selectedClass && classRoster.length > 0 && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-black">
+                  {classRoster.length}
+                </span>
+              )}
+            </div>
+
+            <AnimatePresence mode="wait">
+              {!selectedClass ? (
+                <motion.div
+                  key="no-class"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={spring}
+                >
+                  <EmptySlot
+                    icon={Users}
+                    title="اختار فصل"
+                    subtitle="اختار فصل من فوق عشان تشوف مين الحاضرين"
+                  />
+                </motion.div>
+              ) : classRoster.length === 0 ? (
+                <motion.div
+                  key="empty-roster"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={spring}
+                >
+                  <EmptySlot
+                    icon={UserCheck}
+                    title="لسه مفيش حاضرين"
+                    subtitle={
+                      isCustomDate
+                        ? `مفيش تسجيل من الفصل ده في ${selectedDate}`
+                        : "مفيش حد اتسجل من الفصل ده النهارده"
+                    }
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={`roster-${selectedClass}`}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={spring}
+                  className="space-y-1.5 max-h-[480px] overflow-y-auto pr-0.5"
+                >
+                  {classRoster.map((s) => {
+                    const hasAttended = registeredToday(
+                      attendanceDB.get(s.qrId),
+                      selectedDate
+                    );
+                    const isPending = pendingList.some((p) => p.qrId === s.qrId);
+                    return (
+                      <button
+                        key={s.qrId}
+                        disabled={hasAttended}
+                        onClick={() => addPerson(s)}
+                        aria-pressed={hasAttended}
+                        className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-right transition-all duration-200 min-h-[52px] focus-visible:ring-2 focus-visible:ring-sky-500/50 focus-visible:outline-none ${
+                          hasAttended
+                            ? "bg-emerald-500/[0.07] border-emerald-500/20 cursor-default"
+                            : isPending
+                            ? "bg-sky-500/[0.07] border-sky-500/20 hover:border-sky-500/35"
+                            : "bg-slate-900/40 border-white/[0.06] hover:bg-slate-800/40 hover:border-white/10 active:scale-[0.99]"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <Avatar
+                            name={s.name}
+                            size="sm"
+                            accent={hasAttended ? "emerald" : undefined}
+                          />
+                          <div className="flex flex-col min-w-0 text-right">
+                            <span
+                              className={`font-semibold text-sm truncate leading-snug ${
+                                hasAttended ? "text-emerald-300" : "text-white"
+                              }`}
+                            >
+                              {s.name}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-mono mt-0.5">
+                              {s.qrId}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0">
+                          {hasAttended ? (
+                            <CheckCircle2
+                              className="w-4.5 h-4.5 text-emerald-400"
+                              strokeWidth={2}
+                            />
+                          ) : isPending ? (
+                            <span className="w-2 h-2 rounded-full bg-sky-400 block" />
+                          ) : null}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
         </div>
       </div>
     </Page>

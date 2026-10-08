@@ -190,7 +190,7 @@ export function HomePage({
               </h1>
 
               <div className="pt-10 flex flex-col items-start gap-4">
-                
+
               </div>
             </motion.div>
           </header>
@@ -208,8 +208,8 @@ export function HomePage({
           </div>
         </main>
 
-        <PortalDive 
-          onGoHome={handleGoHome} 
+        <PortalDive
+          onGoHome={handleGoHome}
           onGoSearch={onGoSearch_Summer}
           onGoAttendance={onGoAttendance_Summer}
           onGoGame={onGoGame_Summer}
@@ -332,8 +332,8 @@ function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame, onGoCheck,
           willChange: "clip-path, opacity",
         }}
       >
-        <SummerSection 
-          onGoHome={onGoHome} 
+        <SummerSection
+          onGoHome={onGoHome}
           onGoSearch={onGoSearch}
           onGoAttendance={onGoAttendance}
           onGoGame={onGoGame}
