@@ -1,22 +1,41 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Page, Navbar, StudentMiniCard } from "../components/UI";
 import { studentsDB } from "../data/storage";
 import { motion as Motion, AnimatePresence } from "framer-motion";
-import { Search, UserPlus, FileQuestion, LayoutDashboard } from "lucide-react";
+import {
+  Search,
+  UserPlus,
+  FileQuestion,
+  LayoutDashboard,
+  ArrowRight,
+  ArrowLeft,
+  X,
+  Sparkles,
+  ChevronLeft,
+  ChevronRight,
+  GraduationCap,
+  Phone,
+} from "lucide-react";
 import { gsap } from "gsap";
+import { useT } from "../hooks/useT";
+import { useAppContext } from "../context/AppContext";
 
 export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd, onGoDashboard }) {
   const [query, setQuery] = useState("");
   const inputRef = useRef(null);
+  const t = useT();
+  const { lang } = useAppContext();
 
-  // FIXED: Read directly from DB to avoid staleness issues
+  const BackIcon = lang === "ar" ? ArrowRight : ArrowLeft;
+  const ChevronIcon = lang === "ar" ? ChevronLeft : ChevronRight;
+
+  // Read directly from DB to avoid staleness issues
   const filtered = useMemo(() => {
     const db = studentsDB.getAll();
     const students = Object.keys(db).map((id) => ({ qrId: id, ...db[id] }));
 
     const normalizeArabic = (text) => {
       if (!text) return "";
-      return text.replace(/[أإآا]/g, 'ا');
+      return text.replace(/[أإآا]/g, "ا");
     };
 
     const q = normalizeArabic(query.trim().toLowerCase());
@@ -42,8 +61,8 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd, onGoDash
     if (inputRef.current) {
       gsap.fromTo(
         inputRef.current,
-        { y: -20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8, ease: "power3.out", delay: 0.1 },
+        { y: -16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "power2.out", delay: 0.05 }
       );
     }
   }, []);
@@ -52,142 +71,273 @@ export function SearchPage({ currentUser, onBack, onGoStudent, onGoAdd, onGoDash
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
+      transition: { staggerChildren: 0.04 },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, x: -20 },
+    hidden: { opacity: 0, y: 15 },
     show: {
       opacity: 1,
-      x: 0,
-      transition: { type: "spring", stiffness: 300, damping: 24 },
+      y: 0,
+      transition: { duration: 0.25 },
     },
   };
 
+  // Neo-brutalist avatar palette cycling
+  const avatarColors = ["bg-[#FACC15]", "bg-[#38BDF8]", "bg-[#A3E635]", "bg-[#FB923C]", "bg-[#F472B6]"];
+  const getAvatarBg = (str = "") => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return avatarColors[Math.abs(hash) % avatarColors.length];
+  };
+
   return (
-    <Page>
-      <Navbar title="البحث" onBack={onBack} />
+    <div
+      className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      {/* ── Neo-Brutalist Navbar ── */}
+      <header className="sticky top-0 z-50 bg-[#FACC15] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+          {/* Back Button */}
+          {onBack ? (
+            <button
+              onClick={onBack}
+              className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-[0px_0px_0px_#000000] hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer rounded-none"
+              aria-label={t("back")}
+            >
+              <BackIcon className="w-5 h-5 stroke-[2.5]" />
+              <span>{t("back")}</span>
+            </button>
+          ) : (
+            <div className="w-10" />
+          )}
 
-      <div
-        className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-5 sm:gap-6"
-        dir="rtl"
-      >
-        {/* Search Bar - Modern Floating Pill */}
-        <div className="relative group w-full" ref={inputRef}>
-          <div className="absolute inset-y-0 right-0 flex items-center pr-4 sm:pr-5 pointer-events-none text-base-content/40 group-focus-within:text-primary transition-colors">
-            <Search className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={2.5} />
+          {/* Title */}
+          <div className="flex items-center gap-2">
+            <span className="bg-black text-[#FACC15] px-2.5 py-0.5 border-2 border-black font-black text-xs uppercase tracking-widest hidden sm:inline-block">
+              SEARCH
+            </span>
+            <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase">
+              {t("searchTitle")}
+            </h1>
           </div>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="اكتب اسم الطفل أو الكود بتاعه هنا..."
-            className="input w-full bg-[#011C40]/5 backdrop-blur-xl shadow-lg border border-[#011C40]/10 focus:border-primary/50 rounded-2xl pl-4 sm:pl-6 pr-12 sm:pr-14 h-14 sm:h-16 text-base sm:text-lg font-black transition-all duration-300 placeholder:text-muted/60 text-text outline-none focus:shadow-[0_0_30px_rgba(2,56,89,0.1)]"
-            autoFocus
-          />
 
-          {/* subtle glow behind search bar */}
-          <div className="absolute inset-0 -z-10 bg-primary/5 blur-xl rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-500"></div>
+          {/* Student Count Badge in Navbar */}
+          <div className="bg-white text-black border-2 border-black px-3 py-1 font-black text-xs sm:text-sm uppercase shadow-[2px_2px_0px_#000000]">
+            <span>{filtered.length} {t("checkServantCount")}</span>
+          </div>
+        </div>
+      </header>
+
+      {/* ── Main Content Area ── */}
+      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
+        {/* ── Search Input Box ── */}
+        <div className="w-full" ref={inputRef}>
+          <div className="relative flex items-center bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] focus-within:shadow-[8px_8px_0px_#000000] transition-all duration-200">
+            {/* Search Icon Container */}
+            <div className="bg-[#38BDF8] text-black border-x-[3px] border-black p-3.5 sm:p-4.5 flex items-center justify-center shrink-0">
+              <Search className="w-6 h-6 sm:w-7 sm:h-7 stroke-[3]" />
+            </div>
+
+            {/* Input */}
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t("searchPlaceholder")}
+              className="w-full bg-transparent px-4 sm:px-6 py-3.5 sm:py-4 text-black font-black text-lg sm:text-xl placeholder:text-black/40 outline-none"
+              autoFocus
+            />
+
+            {/* Clear Button */}
+            {query && (
+              <button
+                onClick={() => setQuery("")}
+                className="mx-3 sm:mx-4 bg-[#F472B6] text-black border-2 border-black p-1.5 sm:p-2 shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer shrink-0"
+                title={t("cancel")}
+              >
+                <X className="w-5 h-5 stroke-[3]" />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Action Buttons Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
-          {/* Add Button */}
+        {/* ── Action Buttons Row ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Add Student Button */}
           {(currentUser?.role === "admin" ||
             currentUser?.permissions?.includes("perm_add_student")) && (
-            <Motion.button
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              whileHover={{ scale: 1.02, translateY: -2 }}
-              whileTap={{ scale: 0.98 }}
+            <button
               onClick={onGoAdd}
-              className="btn w-full bg-gradient-to-r from-[#4A7FA7] to-[#011C40] text-white border border-[#4A7FA7]/40 rounded-2xl h-14 sm:h-16 font-black text-base sm:text-lg flex items-center justify-center gap-2.5 sm:gap-3 transition-all shadow-[0_0_25px_rgba(74,127,167,0.3)] cursor-pointer group relative overflow-hidden"
+              className="w-full bg-[#A3E635] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-[0px_0px_0px_#000000] hover:translate-x-1 hover:translate-y-1 active:shadow-none active:translate-x-1 active:translate-y-1 font-black text-base sm:text-lg py-3.5 sm:py-4 px-6 flex items-center justify-center gap-3 uppercase transition-all cursor-pointer rounded-none"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/20">
-                <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-white" strokeWidth={2.5} />
+              <div className="bg-white text-black p-1.5 border-2 border-black shadow-[2px_2px_0px_#000000]">
+                <UserPlus className="w-5 h-5 stroke-[3]" />
               </div>
-              <span className="drop-shadow">ضيف طفل جديد</span>
-            </Motion.button>
+              <span>{t("searchAddNew")}</span>
+            </button>
           )}
 
           {/* Dashboard Button */}
           {onGoDashboard && (
-            <Motion.button
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              whileHover={{ scale: 1.02, translateY: -2 }}
-              whileTap={{ scale: 0.98 }}
+            <button
               onClick={onGoDashboard}
-              className="btn w-full bg-slate-900/80 hover:bg-slate-800 text-sky-300 border border-sky-400/30 hover:border-sky-400/60 rounded-2xl h-14 sm:h-16 font-black text-base sm:text-lg flex items-center justify-center gap-2.5 sm:gap-3 transition-all shadow-[0_0_25px_rgba(14,165,233,0.15)] cursor-pointer group"
+              className="w-full bg-[#38BDF8] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-[0px_0px_0px_#000000] hover:translate-x-1 hover:translate-y-1 active:shadow-none active:translate-x-1 active:translate-y-1 font-black text-base sm:text-lg py-3.5 sm:py-4 px-6 flex items-center justify-center gap-3 uppercase transition-all cursor-pointer rounded-none"
             >
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-sky-500/10 flex items-center justify-center backdrop-blur-md border border-sky-400/20 text-sky-400">
-                <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={2.5} />
+              <div className="bg-white text-black p-1.5 border-2 border-black shadow-[2px_2px_0px_#000000]">
+                <LayoutDashboard className="w-5 h-5 stroke-[3]" />
               </div>
-              <span className="drop-shadow">Dashboard</span>
-            </Motion.button>
+              <span>{t("searchDashboard")}</span>
+            </button>
           )}
         </div>
 
-
-        {/* Results Info */}
+        {/* ── Active Filter / Query Info Banner ── */}
         <AnimatePresence>
           {query.trim() && (
             <Motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="text-sm font-bold text-base-content/50 px-3 tracking-wide"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-center justify-between bg-[#FEF08A] border-2 border-black px-4 py-2.5 shadow-[3px_3px_0px_#000000]"
             >
-              لقينا كام واحد؟{" "}
-              <span className="text-primary">{filtered.length}</span>
+              <div className="flex items-center gap-2 font-black text-sm sm:text-base text-black">
+                <Sparkles className="w-4 h-4 stroke-[3] text-black" />
+                <span>{t("checkResults")}</span>
+                <span className="bg-black text-white px-2 py-0.5 border border-black font-black">
+                  "{query}"
+                </span>
+              </div>
+              <span className="bg-white text-black border-2 border-black px-2.5 py-0.5 font-black text-xs uppercase">
+                {filtered.length}
+              </span>
             </Motion.div>
           )}
         </AnimatePresence>
 
-        {/* Results List */}
-        <div className="flex flex-col gap-4 pb-20 w-full relative">
+        {/* ── Results Section ── */}
+        <div className="flex flex-col gap-4 pb-16 w-full">
           {filtered.length === 0 ? (
+            /* ── Empty State Card ── */
             <Motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-              className="flex flex-col items-center justify-center py-20 text-base-content/40 gap-4"
+              transition={{ duration: 0.2 }}
+              className="w-full bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-8 sm:p-12 flex flex-col items-center justify-center text-center gap-4 my-6"
             >
-              <div className="w-20 h-20 rounded-full bg-surface-brighter flex items-center justify-center mb-2">
-                <FileQuestion
-                  className="w-10 h-10 opacity-50"
-                  strokeWidth={1.5}
-                />
+              <div className="w-20 h-20 bg-[#F472B6] border-[3px] border-black shadow-[4px_4px_0px_#000000] flex items-center justify-center text-black">
+                <FileQuestion className="w-10 h-10 stroke-[2.5]" />
               </div>
-              <span className="text-lg font-medium tracking-wider">
-                للأسف، مفيش حد بالاسم ده. اتأكد من الاسم تاني!
-              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-black uppercase tracking-tight">
+                {t("checkNotFound")}
+              </h2>
+              <p className="text-sm sm:text-base font-bold text-black/70 max-w-md">
+                {t("checkNotFoundSub")}
+              </p>
+              {query && (
+                <button
+                  onClick={() => setQuery("")}
+                  className="mt-2 bg-[#FACC15] text-black border-2 border-black px-5 py-2 font-black uppercase text-sm shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
+                >
+                  {t("checkClearSearch")}
+                </button>
+              )}
             </Motion.div>
           ) : (
+            /* ── Student Cards Grid ── */
             <Motion.div
               variants={listVariants}
               initial="hidden"
               animate="show"
-              className="w-full grid grid-cols-1 md:grid-cols-2 gap-4"
+              className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
             >
-              {filtered.map((student) => (
-                <Motion.button
-                  key={student.qrId}
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.02, x: -8 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => onGoStudent(student.qrId)}
-                  className="block text-right w-full bg-background backdrop-blur-md border border-[#011C40]/10 hover:border-[#023859]/40 rounded-[2rem] shadow-xl transition-all duration-300 cursor-pointer overflow-hidden group"
-                >
-                  <StudentMiniCard person={student} />
-                </Motion.button>
-              ))}
+              {filtered.map((student) => {
+                const avatarBg = getAvatarBg(student.name || student.qrId);
+                return (
+                  <Motion.div
+                    key={student.qrId}
+                    variants={itemVariants}
+                    onClick={() => onGoStudent(student.qrId)}
+                    className={`bg-white border-[3px] border-black shadow-[5px_5px_0px_#000000] hover:shadow-[0px_0px_0px_#000000] hover:translate-x-[5px] hover:translate-y-[5px] active:shadow-none active:translate-x-[5px] active:translate-y-[5px] p-5 cursor-pointer transition-all duration-150 flex flex-col justify-between gap-4 group select-none relative ${lang === 'ar' ? 'text-right' : 'text-left'}`}
+                  >
+                    {/* Top Row: Tags / Badges */}
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      {/* Stage/Year Tag */}
+                      {student.year ? (
+                        <span className="inline-flex items-center gap-1 bg-[#38BDF8] text-black border-2 border-black px-2.5 py-0.5 text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_#000000]">
+                          <GraduationCap className="w-3.5 h-3.5 stroke-[2.5]" />
+                          {student.year}
+                        </span>
+                      ) : (
+                        <span className="bg-[#FEF08A] text-black border-2 border-black px-2.5 py-0.5 text-xs font-black uppercase tracking-wider">
+                          {t("homeServant")}
+                        </span>
+                      )}
+
+                      {/* QR Code / ID Badge */}
+                      <span className="bg-black text-white border-2 border-black px-2.5 py-0.5 text-xs font-mono font-black uppercase tracking-wider shadow-[2px_2px_0px_#000000]">
+                        #{student.qrId}
+                      </span>
+                    </div>
+
+                    {/* Middle Row: Avatar + Student Info */}
+                    <div className="flex items-center gap-4">
+                      {/* Brutalist Avatar */}
+                      <div
+                        className={`w-14 h-14 sm:w-16 sm:h-16 shrink-0 border-[3px] border-black shadow-[3px_3px_0px_#000000] ${avatarBg} text-black font-black text-2xl sm:text-3xl flex items-center justify-center overflow-hidden`}
+                      >
+                        {student.image ? (
+                          <img
+                            src={student.image}
+                            alt={student.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span>{(student.name || "M")?.[0]?.toUpperCase()}</span>
+                        )}
+                      </div>
+
+                      {/* Name & Details */}
+                      <div className={`flex-1 min-w-0 ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                        <h3 className="font-black text-lg sm:text-xl text-black truncate tracking-tight group-hover:underline underline-offset-4 decoration-2">
+                          {student.name || "N/A"}
+                        </h3>
+                        {student.phone ? (
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-black/70 mt-1">
+                            <Phone className="w-3.5 h-3.5 stroke-[2.5] text-black" />
+                            <span dir="ltr">{student.phone}</span>
+                          </div>
+                        ) : (
+                          <div className="text-xs font-bold text-black/40 mt-1">
+                            -
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bottom Row: View Profile Action Button */}
+                    <div className="pt-3 border-t-2 border-black flex items-center justify-between mt-1">
+                      <span className="text-xs font-black uppercase text-black/60 tracking-wider">
+                        {t("open")}
+                      </span>
+                      <div className="bg-[#FACC15] group-hover:bg-[#A3E635] text-black border-2 border-black px-3 py-1 text-xs font-black uppercase shadow-[2px_2px_0px_#000000] flex items-center gap-1 transition-colors">
+                        <span>{t("enter")}</span>
+                        <ChevronIcon className="w-4 h-4 stroke-[3]" />
+                      </div>
+                    </div>
+                  </Motion.div>
+                );
+              })}
             </Motion.div>
           )}
         </div>
-      </div>
-    </Page>
+      </main>
+    </div>
   );
 }
+
+

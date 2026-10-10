@@ -1,16 +1,10 @@
 import { useState, useMemo } from "react";
-import { Printer, Download, Calendar, Award } from "lucide-react";
+import { Printer, Download, Calendar, Trophy, Asterisk } from "lucide-react";
 import { toPng } from "html-to-image";
 
 /**
  * RewardCheck Component
- * Displays a clean, bank-style reward check tailored to user specifications:
- * - Date display
- * - Child name on "ادفعوا لأمر" line
- * - Amount in numbers only
- * - School year line
- * - Cleaned-up header & bottom
- * - Print and Download buttons
+ * Displays a Neo Brutalism style reward check.
  *
  * @param {Object} props
  * @param {import('../types/index.d.ts').StudentWithId} props.child - The selected student
@@ -26,21 +20,15 @@ export function RewardCheck({
 }) {
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Format today's date in Arabic
   const formattedDate = useMemo(() => {
     if (date) return date;
     const now = new Date();
     return now.toLocaleDateString("ar-EG", {
       year: "numeric",
-      month: "long",
+      month: "numeric",
       day: "numeric",
     });
   }, [date]);
-
-  const isoDate = useMemo(() => {
-    const now = new Date();
-    return `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}`;
-  }, []);
 
   const serialNumber = useMemo(() => {
     const rawId = child?.qrId || "000";
@@ -58,9 +46,9 @@ export function RewardCheck({
     if (!el) return;
     setIsDownloading(true);
     try {
-      // Run twice – first call "warms up" fonts/styles, second gives clean output
-      await toPng(el, { pixelRatio: 2, backgroundColor: "#fbfdfa" });
-      const dataUrl = await toPng(el, { pixelRatio: 2, backgroundColor: "#fbfdfa" });
+      // Warm up
+      await toPng(el, { pixelRatio: 2, backgroundColor: "#FFFFFF" });
+      const dataUrl = await toPng(el, { pixelRatio: 2, backgroundColor: "#FFFFFF" });
 
       const cleanName = (child?.name || "طالب").replace(/\s+/g, "_");
       const link = document.createElement("a");
@@ -78,117 +66,132 @@ export function RewardCheck({
   if (!child) return null;
 
   return (
-    <div className="w-full flex flex-col items-center gap-4 sm:gap-6" dir="rtl">
+    <div className="w-full flex flex-col items-center gap-6" dir="rtl">
       {/* ── THE PRINTABLE CHECK CONTAINER ── */}
       <div
         id="printable-check"
-        className="reward-check-card relative w-full max-w-4xl bg-[#fbfdfa] text-slate-900 rounded-2xl sm:rounded-3xl p-4 sm:p-8 md:p-10 shadow-2xl border-2 sm:border-4 border-emerald-800/40 overflow-hidden select-text transition-all"
+        className="w-full max-w-4xl bg-[#FACC15] border-[4px] border-black p-6 sm:p-10 relative overflow-hidden"
         style={{
-          boxShadow: "0 25px 60px -15px rgba(2, 44, 34, 0.4)",
+          boxShadow: "10px 10px 0px #000000",
         }}
       >
-        {/* Intricate Security Background Pattern */}
+        {/* Decorative BG Stripes */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.05] z-0"
+          className="absolute inset-0 opacity-10 pointer-events-none"
           style={{
-            backgroundImage: `radial-gradient(#065f46 1.5px, transparent 1.5px), radial-gradient(#047857 1.5px, #fbfdfa 1.5px)`,
-            backgroundSize: "24px 24px",
-            backgroundPosition: "0 0, 12px 12px",
+            backgroundImage: "repeating-linear-gradient(45deg, #000 0, #000 2px, transparent 2px, transparent 10px)",
           }}
         />
 
-        {/* Guilloche border lines */}
-        <div className="absolute inset-1.5 sm:inset-3 border-2 border-dashed border-emerald-800/30 rounded-xl sm:rounded-2xl pointer-events-none z-0" />
-        <div className="absolute inset-2.5 sm:inset-4 border border-emerald-900/20 rounded-lg sm:rounded-xl pointer-events-none z-0" />
+        {/* Inner Border */}
+        <div className="relative z-10 border-[3px] border-black bg-white p-6 flex flex-col gap-8 shadow-[4px_4px_0px_#000000]">
+          
+          {/* Header Row */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-[3px] border-black pb-4 border-dashed">
+            {/* Title / Logo area */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-black text-[#FACC15] flex items-center justify-center border-2 border-black">
+                <Trophy className="w-6 h-6 stroke-[3]" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-black text-2xl text-black tracking-tight leading-none">شيك مكافأة</span>
+                <span className="font-black text-[10px] uppercase tracking-widest text-black/60">Reward Check</span>
+              </div>
+            </div>
 
-        {/* ── CHECK CONTENT (Z-10) ── */}
-        <div className="relative z-10 flex flex-col gap-4 sm:gap-6 md:gap-7">
-          {/* Header Row: Check Title Badge, Serial Number, Date Only */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-emerald-900/15 pb-3 sm:pb-5">
-            {/* Right: Check Title */}
-
-            {/* Left: Serial Number & Date Only */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
-              <div className="flex items-center gap-1.5 font-bold text-slate-700 text-[11px] sm:text-xs">
-                <Calendar className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                <span className="text-slate-500 text-[10px] sm:text-[11px]">التاريخ:</span>
-                <span className="font-bold text-slate-900">{formattedDate}</span>
+            {/* Meta data */}
+            <div className="flex gap-4">
+              <div className="flex flex-col border-r-2 border-black pr-4">
+                <span className="font-black text-[10px] uppercase text-black/60 tracking-wider">Date</span>
+                <span className="font-black text-sm text-black flex items-center gap-1"><Calendar className="w-3 h-3" /> {formattedDate}</span>
+              </div>
+              <div className="flex flex-col border-r-2 border-black pr-4">
+                <span className="font-black text-[10px] uppercase text-black/60 tracking-wider">Serial</span>
+                <span className="font-mono font-black text-sm text-black">{serialNumber}</span>
               </div>
             </div>
           </div>
 
-          {/* Middle Body: Pay to the order of + Amount Box (Numbers Only) */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4 pt-1">
-            {/* Pay to Order Line */}
-            <div className="flex-1 flex flex-col sm:flex-row items-start sm:items-baseline gap-1.5 sm:gap-4">
-
-              <span className="text-sm sm:text-base font-black text-emerald-950 whitespace-nowrap shrink-0">
-                الأسم:
-              </span>
-              <div className="flex-1 w-full border-b-2 border-emerald-900/40 pb-1.5 px-2 sm:px-3">
-                <span className="text-xl sm:text-2xl md:text-3xl font-black text-emerald-950 tracking-tight font-serif drop-shadow-sm break-words">
+          {/* Check Body */}
+          <div className="flex flex-col gap-6">
+            
+            {/* Pay to the order of */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-2">
+              <span className="font-black text-sm uppercase text-black whitespace-nowrap mb-1">الاســم:</span>
+              <div className="flex-1 w-full border-b-[3px] border-black pb-1 relative">
+                <div className="absolute -bottom-1.5 right-0 w-full h-[3px] bg-black opacity-30" />
+                <span className="text-3xl sm:text-5xl font-black text-black break-words px-2 relative z-10">
                   {child.name}
                 </span>
               </div>
             </div>
+
+            {/* School Year */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-2">
+              <span className="font-black text-sm uppercase text-black whitespace-nowrap mb-1">السنة الدراسية:</span>
+              <div className="flex-1 w-full border-b-[3px] border-black pb-1 relative flex justify-between items-end px-2">
+                <div className="absolute -bottom-1.5 right-0 w-full h-[3px] bg-black opacity-30" />
+                <span className="text-xl sm:text-2xl font-black text-black relative z-10">
+                  {child.year || "مرحلة ابتدائية"}
+                </span>
+                <span className="bg-black text-white font-mono text-xs font-black px-2 py-0.5 relative z-10">
+                  ID: {child.qrId}
+                </span>
+              </div>
+            </div>
+
+            {/* Amount */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-2">
+              <span className="font-black text-sm uppercase text-black whitespace-nowrap mb-1">المبلــغ:</span>
+              <div className="flex-1 w-full border-b-[3px] border-black pb-1 relative flex items-end px-2">
+                <div className="absolute -bottom-1.5 right-0 w-full h-[3px] bg-black opacity-30" />
+                <div className="flex items-center gap-4 relative z-10 w-full">
+                  <div className="flex items-center gap-2 bg-[#A3E635] border-2 border-black shadow-[2px_2px_0px_#000000] px-4 py-1">
+                    <Asterisk className="w-4 h-4 stroke-[3]" />
+                    <span className="text-3xl sm:text-4xl font-black font-mono text-black tabular-nums">{points}</span>
+                    <Asterisk className="w-4 h-4 stroke-[3]" />
+                  </div>
+                  <span className="font-black text-xl text-black">نقطة</span>
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          {/* School Year Line (Replacing Purpose / Reason as requested) */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-baseline gap-1.5 sm:gap-4">
-            <span className="text-sm sm:text-base font-black text-emerald-950 whitespace-nowrap shrink-0">
-              السنة الدراسية:
-            </span>
-            <div className="flex-1 w-full border-b-2 border-dashed border-emerald-900/30 pb-2 px-2.5 sm:px-3 bg-emerald-50/50 rounded-lg flex flex-wrap items-center justify-between gap-2">
-              <span className="text-sm sm:text-base md:text-lg font-bold text-emerald-950 font-serif">
-                {child.year || "مرحلة ابتدائية"}
-              </span>
-              <span className="text-[11px] sm:text-xs font-mono text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md">
-                كود الطفل: {child.qrId}
-              </span>
+          {/* Footer Signature */}
+          <div className="flex justify-end mt-4">
+            <div className="w-48 border-t-[3px] border-black pt-2 text-center">
+              <span className="font-black text-xs uppercase text-black">توقيع المسؤول</span>
             </div>
           </div>
 
-          {/* Amount in Numbers Row */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-baseline gap-1.5 sm:gap-4">
-            <span className="text-sm sm:text-base font-black text-emerald-950 whitespace-nowrap shrink-0">
-              المبلغ:
-            </span>
-            <div className="flex-1 w-full border-b border-emerald-900/20 pb-1.5 px-2.5 sm:px-3 flex items-center gap-2">
-              <span className="text-xl sm:text-2xl font-black text-emerald-950 font-mono">
-                {points}
-              </span>
-              <span className="text-sm font-bold text-emerald-800">
-                نقطة
-              </span>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* ── ACTION BUTTONS ROW (HIDDEN IN PRINT) ── */}
-      <div className="no-print w-full max-w-4xl flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 pt-1 sm:pt-2">
-        <div className="text-[11px] sm:text-xs text-slate-400 font-bold text-center sm:text-right">
-          * يمكنك طباعة الشيك مباشرة أو تحميله كصورة عالية الجودة
+      <div className="no-print w-full max-w-4xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="text-xs text-black font-black bg-white border-2 border-black px-3 py-2 shadow-[2px_2px_0px_#000000]">
+          * للطباعة أو التحميل المباشر
         </div>
 
-        <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
-          {/* Download Check Button */}
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          {/* Download */}
           <button
             onClick={handleDownload}
             disabled={isDownloading}
-            className="tech-btn-secondary flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-7 py-3 sm:py-3.5 text-xs sm:text-sm font-black text-sky-400 rounded-xl sm:rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer min-h-[44px] disabled:opacity-50"
+            className="flex-1 sm:flex-none bg-[#38BDF8] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 px-6 py-3 font-black text-sm uppercase disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>{isDownloading ? "Pending..." : "Download"}</span>
+            <Download className="w-5 h-5 stroke-[2.5]" />
+            <span>{isDownloading ? "جارٍ التحميل..." : "تحميل كصورة"}</span>
           </button>
 
-          {/* Print Check Button */}
+          {/* Print */}
           <button
             onClick={handlePrint}
-            className="tech-btn-primary flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 sm:px-8 py-3 sm:py-3.5 text-xs sm:text-sm font-black text-white rounded-xl sm:rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer min-h-[44px]"
+            className="flex-1 sm:flex-none bg-[#A3E635] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 px-8 py-3 font-black text-sm uppercase cursor-pointer"
           >
-            <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>Print</span>
+            <Printer className="w-5 h-5 stroke-[2.5]" />
+            <span>طباعة</span>
           </button>
         </div>
       </div>

@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { studentsDB, classesDB } from "../data/storage";
-import { Page, Navbar, Empty, Avatar, Toast } from "../components/UI";
+import { Toast } from "../components/UI";
 import { useToast } from "../hooks/useToast";
+import { ArrowRight, Search, Ticket, Users, Lock, ChevronLeft } from "lucide-react";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 
 export function ClassDetailPage({
   classId,
@@ -14,28 +16,22 @@ export function ClassDetailPage({
   const [query, setQuery] = useState("");
   const toast = useToast();
 
-  // Security check: ensure user has permission for this class, or is admin
   const hasAccess =
     currentUser?.role === "admin" ||
     (currentUser?.permissions || []).includes(classId);
 
-  // Get all students
   const allStudents = useMemo(() => {
     if (!cls || !hasAccess) return [];
     const students = studentsDB.getAll();
     const result = [];
     Object.entries(students).forEach(([qrId, student]) => {
-      // Filter by grades assigned to this class
-      if (student.year && cls.grades.includes(student.year)) {
+      if (student.year && cls.grades?.includes(student.year)) {
         result.push({ qrId, ...student });
       }
     });
-
-    // Sort alphabetically
     return result.sort((a, b) => a.name.localeCompare(b.name, "ar"));
   }, [cls, hasAccess]);
 
-  // Filter by search query
   const filtered = useMemo(() => {
     if (!query.trim()) return allStudents;
     const q = query.trim().toLowerCase();
@@ -45,128 +41,175 @@ export function ClassDetailPage({
     );
   }, [allStudents, query]);
 
+  const avatarColors = ["bg-[#FACC15]", "bg-[#38BDF8]", "bg-[#A3E635]", "bg-[#FB923C]", "bg-[#F472B6]"];
+  const getAvatarBg = (str = "") => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return avatarColors[Math.abs(hash) % avatarColors.length];
+  };
+
   if (!cls) {
     return (
-      <Page>
-        <Navbar title="مش موجود" onBack={onBack} />
-        <Empty message="الفصل ده مش موجود أو اتمسح" icon="🚫" />
-      </Page>
+      <div className="min-h-screen bg-[#FDF8F0] text-black font-sans flex flex-col items-center justify-center p-4" dir="rtl">
+        <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_#000000] p-8 max-w-md w-full text-center space-y-4">
+          <h2 className="text-2xl font-black text-black uppercase">الفصل غير موجود</h2>
+          <p className="text-sm font-bold text-black/60">تم حذف هذا الفصل أو الرابط غير صحيح</p>
+          <button
+            onClick={onBack}
+            className="w-full bg-[#FACC15] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] py-3 font-black text-sm uppercase cursor-pointer"
+          >
+            رجوع للفصول
+          </button>
+        </div>
+      </div>
     );
   }
 
   if (!hasAccess) {
     return (
-      <Page>
-        <Navbar title="مينفعش تدخل هنا" onBack={onBack} />
-        <Empty message="معندكش صلاحية تدخل الفصل ده" icon="🔒" />
-      </Page>
+      <div className="min-h-screen bg-[#FDF8F0] text-black font-sans flex flex-col items-center justify-center p-4" dir="rtl">
+        <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_#000000] p-8 max-w-md w-full text-center space-y-4">
+          <div className="w-16 h-16 bg-[#EF4444] text-white border-[3px] border-black flex items-center justify-center mx-auto">
+            <Lock size={32} strokeWidth={2.5} />
+          </div>
+          <h2 className="text-2xl font-black text-black uppercase">غير مصرح بالدخول</h2>
+          <p className="text-sm font-bold text-black/60">ليس لديك صلاحية للوصول لهذا الفصل</p>
+          <button
+            onClick={onBack}
+            className="w-full bg-[#FACC15] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] py-3 font-black text-sm uppercase cursor-pointer"
+          >
+            رجوع
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Page>
+    <div className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col" dir="rtl">
       <Toast msg={toast.msg} />
-      <Navbar title={cls.name} onBack={onBack} />
 
-      <div
-        className="flex-1 px-5 py-6 max-w-lg mx-auto w-full animate-slideUp"
-        dir="rtl"
-      >
-        {/* Search Bar - Modern Floating Pill */}
-        <div className="relative group mb-6">
-          <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-base-content/40 group-focus-within:text-primary transition-colors">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+      {/* ── Neo-Brutalist Navbar ── */}
+      <header className="sticky top-0 z-50 bg-[#38BDF8] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+          <button
+            onClick={onBack}
+            className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+            <span>رجوع</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <span className="bg-black text-[#38BDF8] px-2.5 py-0.5 border-2 border-black font-black text-xs uppercase tracking-widest hidden sm:inline-block">
+              CLASS
+            </span>
+            <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase truncate max-w-xs sm:max-w-none">
+              {cls.name}
+            </h1>
+          </div>
+
+          <div className="bg-white text-black border-2 border-black px-3 py-1 font-black text-xs sm:text-sm uppercase shadow-[2px_2px_0px_#000000]">
+            <span>{filtered.length} مخدوم</span>
+          </div>
+        </div>
+      </header>
+
+      {/* ── Main Content ── */}
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
+        {/* Search Box */}
+        <div className="relative flex items-center bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] focus-within:shadow-[8px_8px_0px_#000000] transition-all">
+          <div className="bg-[#FACC15] text-black border-l-[3px] border-black p-4 flex items-center justify-center shrink-0">
+            <Search className="w-6 h-6 stroke-[3]" />
           </div>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="دور بالاسم أو الكود..."
-            className="input w-full bg-[#0F2545] shadow-inner hover:shadow-md focus:shadow-md border-[#1A3D63]/40 focus:border-[#4A7FA7] rounded-full pl-4 pr-11 h-14 text-[15px] font-bold text-[#F6FAFD] transition-all duration-300 placeholder:text-[#B3CFE5]/30 outline-none"
+            placeholder="ابحث بالاسم أو الكود في هذا الفصل..."
+            className="w-full bg-transparent px-4 py-4 text-black font-black text-lg placeholder:text-black/30 outline-none"
           />
         </div>
 
-        {/* Results Info */}
-        <div className="text-xs font-bold text-base-content/40 px-2 mb-3">
-          العدد: {filtered.length} من {allStudents.length}
+        {/* Grades Pill Strip */}
+        <div className="flex flex-wrap items-center gap-2 px-1">
+          <span className="text-xs font-black uppercase text-black/60">المراحل التابعة:</span>
+          {cls.grades?.map((g) => (
+            <span key={g} className="bg-[#FEF08A] border-2 border-black px-2.5 py-0.5 font-black text-xs text-black">
+              {g}
+            </span>
+          ))}
         </div>
 
-        {/* Student List */}
+        {/* Student Cards List */}
         {filtered.length === 0 ? (
-          <Empty message="مافيش عيال هنا" icon="👥" />
+          <div className="py-16 text-center bg-white border-[3px] border-black border-dashed p-8 shadow-[6px_6px_0px_#000000]">
+            <p className="font-black text-black text-lg uppercase">
+              لا يوجد مخدومين في هذا الفصل مطابقين للبحث
+            </p>
+          </div>
         ) : (
-          <div className="flex flex-col gap-3 pb-24">
-            {filtered.map((s, i) => (
-              <div
-                key={s.qrId}
-                className="group relative rounded-[1.25rem] p-3.5 flex items-center gap-3.5 bg-base-100 hover:bg-base-200 border border-base-200 shadow-sm hover:shadow-md transition-all duration-300 animate-fadeIn"
-                style={{ animationDelay: `${i * 30}ms` }}
-              >
-                {/* Edge Highlight */}
-                <div
-                  className="absolute inset-y-0 right-0 w-1.5 rounded-r-[1.25rem] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  style={{ backgroundColor: s.accent }}
-                ></div>
-
-                <div
-                  className="cursor-pointer"
-                  onClick={() => onGoStudent(s.qrId)}
-                >
-                  <Avatar
-                    src={s.image}
-                    accent={s.accent}
-                    fallback={s.name?.charAt(0)}
-                    size="sm"
-                  />
-                </div>
-
-                <div
-                  className="flex-1 min-w-0 pr-1 cursor-pointer"
-                  onClick={() => onGoStudent(s.qrId)}
-                >
-                  <div className="font-bold text-[15px] truncate group-hover:text-primary transition-colors">
-                    {s.name}
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="font-mono text-[11px] font-semibold text-base-content/40 tracking-wider bg-base-200 px-1.5 py-0.5 rounded-md">
-                      {s.qrId}
-                    </span>
-                    {s.year && (
-                      <span className="text-[11px] text-base-content/50">
-                        {s.year}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1.5 shrink-0">
-                  <button
-                    className="btn btn-xs rounded-lg bg-warning/10 text-warning-content border-warning/20 hover:bg-warning hover:border-warning transition-colors w-16 shadow-none"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onGoCoupons(s);
-                    }}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-16">
+            <AnimatePresence>
+              {filtered.map((s, i) => {
+                const avatarBg = getAvatarBg(s.name);
+                return (
+                  <Motion.div
+                    key={s.qrId}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: Math.min(i * 0.02, 0.3) }}
+                    className="bg-white border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all p-4 flex items-center justify-between gap-3 group"
                   >
-                    كوبون
-                  </button>
-                </div>
-              </div>
-            ))}
+                    <div
+                      className="flex items-center gap-3.5 min-w-0 cursor-pointer flex-1"
+                      onClick={() => onGoStudent(s.qrId)}
+                    >
+                      <div className={`w-12 h-12 border-[3px] border-black shadow-[2px_2px_0px_#000000] ${avatarBg} flex items-center justify-center overflow-hidden shrink-0`}>
+                        {s.image ? (
+                          <img src={s.image} alt={s.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="font-black text-xl text-black">
+                            {(s.name || "م")?.[0]?.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-black text-base text-black group-hover:underline truncate">
+                          {s.name}
+                        </span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] font-mono font-black text-white bg-black px-2 py-0.5 border border-black">
+                            #{s.qrId}
+                          </span>
+                          {s.year && (
+                            <span className="text-[10px] font-black text-black bg-[#FEF08A] px-2 py-0.5 border border-black">
+                              {s.year}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onGoCoupons(s);
+                      }}
+                      className="bg-[#FACC15] hover:bg-[#A3E635] text-black border-2 border-black px-3 py-1.5 font-black text-xs uppercase shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all flex items-center gap-1 cursor-pointer shrink-0"
+                      title="كوبونات"
+                    >
+                      <Ticket className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>كوبون</span>
+                    </button>
+                  </Motion.div>
+                );
+              })}
+            </AnimatePresence>
           </div>
         )}
-      </div>
-    </Page>
+      </main>
+    </div>
   );
 }

@@ -1,20 +1,19 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { visitsDB, studentsDB } from "../data/storage";
 import { buildVisitEntry, visitedToday } from "../utils/helpers";
-import { Page, Navbar, StudentMiniCard, Toast } from "../components/UI";
+import { Toast } from "../components/UI";
 import { useToast } from "../hooks/useToast";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   CalendarDays,
   X,
-  Users,
   Home as HomeIcon,
   CheckCircle2,
   AlertTriangle,
-  Info,
+  ArrowRight,
+  UserCheck,
 } from "lucide-react";
-import { gsap } from "gsap";
 
 export function VisitsPage({ onBack, onGoVisitsHistory }) {
   const [query, setQuery] = useState("");
@@ -50,7 +49,7 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
       const q = query.trim().toLowerCase();
       let match = allStudents.find((s) => s.qrId.toLowerCase() === q);
       if (!match) {
-        match = allStudents.find((s) => s.name.toLowerCase().includes(q));
+        match = allStudents.find((s) => s.name && s.name.toLowerCase().includes(q));
       }
       if (match) {
         addPerson(match);
@@ -94,236 +93,258 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
-    return allStudents.filter(s => {
+    return allStudents.filter((s) => {
       const log = visitsDB.get(s.qrId);
-      if (!log || log.length === 0) return true; // Never visited
-
+      if (!log || log.length === 0) return true;
       const lastVisit = new Date(log[log.length - 1].timestamp);
       return lastVisit < threeMonthsAgo;
     });
   }, [allStudents]);
 
-  // Framer Motion Variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.05 } },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { type: "spring", stiffness: 300, damping: 24 },
-    },
+  const avatarColors = ["bg-[#FACC15]", "bg-[#38BDF8]", "bg-[#A3E635]", "bg-[#FB923C]", "bg-[#F472B6]"];
+  const getAvatarBg = (str = "") => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return avatarColors[Math.abs(hash) % avatarColors.length];
   };
 
   return (
-    <Page>
+    <div className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col" dir="rtl">
       <Toast msg={toast.msg} />
-      <Navbar onBack={onBack} title="تسجيل الزيارات" />
 
-      <div
-        className="flex-1 w-full max-w-4xl mx-auto px-6 py-8 flex flex-col gap-6"
-        dir="rtl"
-      >
-        {/* Missing Visits Notification */}
+      {/* ── Neo-Brutalist Navbar ── */}
+      <header className="sticky top-0 z-50 bg-[#FB923C] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+          {/* Back Button */}
+          {onBack ? (
+            <button
+              onClick={onBack}
+              className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+              <span>رجوع</span>
+            </button>
+          ) : (
+            <div className="w-10" />
+          )}
+
+          {/* Title */}
+          <div className="flex items-center gap-2">
+            <span className="bg-black text-[#FB923C] px-2.5 py-0.5 border-2 border-black font-black text-xs uppercase tracking-widest hidden sm:inline-block">
+              VISITS
+            </span>
+            <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase flex items-center gap-2">
+              تسجيل الافتقاد والزيارات
+            </h1>
+          </div>
+
+          {/* History Button */}
+          <button
+            onClick={onGoVisitsHistory}
+            className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 font-black text-xs sm:text-sm uppercase shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none flex items-center gap-2 transition-all cursor-pointer"
+          >
+            <CalendarDays className="w-4 h-4 stroke-[2.5]" />
+            <span className="hidden sm:inline">سجل الزيارات</span>
+          </button>
+        </div>
+      </header>
+
+      {/* ── Main Content ── */}
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
+        
+        {/* Missing Visits Banner */}
         <AnimatePresence>
           {showNotification && missingVisits.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-              animate={{ opacity: 1, height: "auto", marginBottom: 24 }}
-              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-              className="bg-amber-500/10 border border-amber-500/30 rounded-[2rem] overflow-hidden"
+            <Motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-[#FEF08A] border-[3px] border-black shadow-[6px_6px_0px_#000000] p-5 sm:p-6 flex flex-col gap-4 overflow-hidden"
             >
-              <div className="p-6 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-amber-500">
-                    <AlertTriangle className="w-6 h-6" />
-                    <h3 className="text-lg font-black tracking-tight">مخدومين لم تتم زيارتهم منذ 3 شهور</h3>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-black text-[#FEF08A] flex items-center justify-center border-2 border-black">
+                    <AlertTriangle className="w-5 h-5 stroke-[2.5]" />
                   </div>
-                  <button 
-                    onClick={() => setShowNotification(false)}
-                    className="p-2 hover:bg-amber-500/10 rounded-full text-amber-500/50 transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  <h3 className="text-base sm:text-lg font-black text-black uppercase">
+                    مخدومين لم تتم زيارتهم منذ 3 أشهر ({missingVisits.length} مخدوم)
+                  </h3>
                 </div>
-                
-                <div className="flex flex-wrap gap-2 text-white">
-                  {missingVisits.map(s => (
-                    <div key={s.qrId} className="px-3 py-1.5 bg-[#0F2545] border border-[#1A3D63] rounded-xl text-xs font-bold flex items-center gap-2">
-                       <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                       {s.name}
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="flex items-center gap-2 text-[10px] text-amber-500/60 font-black uppercase tracking-widest mt-1">
-                  <Info className="w-3.5 h-3.5" />
-                  <span>برجاء المتابعة مع هؤلاء المخدومين في أقرب وقت.</span>
-                </div>
+                <button
+                  onClick={() => setShowNotification(false)}
+                  className="p-1 bg-white border-2 border-black hover:bg-black hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4 stroke-[3]" />
+                </button>
               </div>
-            </motion.div>
+
+              <div className="flex flex-wrap gap-2">
+                {missingVisits.slice(0, 15).map((s) => (
+                  <button
+                    key={s.qrId}
+                    onClick={() => addPerson(s)}
+                    className="px-3 py-1 bg-white border-2 border-black text-xs font-black text-black hover:bg-[#FACC15] shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <span>+</span>
+                    <span>{s.name}</span>
+                  </button>
+                ))}
+                {missingVisits.length > 15 && (
+                  <span className="px-3 py-1 bg-black text-white text-xs font-black">
+                    +{missingVisits.length - 15} آخرين
+                  </span>
+                )}
+              </div>
+            </Motion.div>
           )}
         </AnimatePresence>
-        {/* Top Controls Box */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col gap-4 bg-[#0F2545] backdrop-blur-md p-6 rounded-[2rem] border border-[#1A3D63]/30 shadow-2xl relative"
-        >
-          <div className="flex gap-3 relative">
-            <div className="flex-1 relative group rounded-2xl">
-              <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-[#B3CFE5]/40 group-focus-within:text-[#4A7FA7] transition-colors">
-                <Search className="w-5 h-5" />
-              </div>
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="دور بالاسم أو الكود..."
-                className="input w-full bg-[#0A1931] shadow-inner focus:shadow-md border-[#1A3D63]/40 focus:border-[#4A7FA7] rounded-2xl pl-4 pr-11 h-14 font-black text-[#F6FAFD] transition-all duration-300 placeholder:text-[#B3CFE5]/30 outline-none"
-                autoFocus
-              />
 
-              {/* Suggestions Dropdown - Moved inside relative container */}
-              <AnimatePresence>
-                {suggestions.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="absolute top-full left-0 right-0 mt-2 bg-[#0F2545]/98 backdrop-blur-2xl rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-[#1A3D63]/50 p-2 flex flex-col gap-1 z-[100]"
-                  >
-                    {suggestions.map((s) => (
-                      <button
-                        key={s.qrId}
-                        className="btn btn-ghost justify-start font-black h-14 rounded-xl text-[15px] text-[#F6FAFD] hover:bg-[#1A3D63]/60 transition-all flex items-center gap-3 px-4 border-none"
-                        onClick={() => addPerson(s)}
-                      >
-                        <div className="w-8 h-8 rounded-full bg-[#1A3D63] flex items-center justify-center text-xs opacity-80 border border-[#4A7FA7]/20 uppercase">
-                          {s.name?.[0] || "؟"}
-                        </div>
-                        <span>{s.name}</span>
-                        <span className="opacity-40 text-[10px] ml-auto font-mono bg-[#0A1931] px-2 py-1 rounded-md tracking-tighter">
-                          {s.qrId}
-                        </span>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+        {/* Search & Input Box */}
+        <div className="w-full relative">
+          <div className="relative flex items-center bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] focus-within:shadow-[8px_8px_0px_#000000] transition-all">
+            <div className="bg-[#38BDF8] text-black border-l-[3px] border-black p-4 flex items-center justify-center shrink-0">
+              <Search className="w-6 h-6 stroke-[3]" />
             </div>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onGoVisitsHistory}
-              className="btn bg-[#1A3D63] hover:bg-[#4A7FA7] text-[#F6FAFD] border border-[#1A3D63]/40 shadow-2xl rounded-2xl px-5 h-14 flex items-center gap-2 font-black transition-all duration-300"
-              title="تاريخ الزيارات"
-            >
-              <CalendarDays className="w-5 h-5" />
-              <span className="hidden sm:inline">السجل</span>
-            </motion.button>
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="اكتب اسم المخدوم أو الكود واضغط Enter لإضافته..."
+              autoFocus
+              className="w-full bg-transparent px-4 py-4 text-black font-black text-lg placeholder:text-black/30 outline-none"
+            />
           </div>
-        </motion.div>
 
-        {/* Pending List Section Header */}
-        <div className="flex items-center gap-4 mt-2 px-2">
-          <div className="h-px bg-[#1A3D63]/30 flex-1"></div>
-          <span className="text-[10px] font-black text-[#B3CFE5]/40 uppercase tracking-[0.3em] px-4 py-1.5 bg-[#1A3D63]/20 rounded-full border border-[#1A3D63]/30">
-            قائمة الزيارة{" "}
-            {pendingList.length > 0 && (
-              <span className="text-secondary ml-1">
-                ({pendingList.length})
-              </span>
-            )}
-          </span>
-          <div className="h-px bg-[#1A3D63]/30 flex-1"></div>
-        </div>
-
-        {/* List Content */}
-        <div className="flex-1 flex flex-col gap-3 min-h-[300px]">
-          <AnimatePresence mode="popLayout">
-            {pendingList.length === 0 ? (
-              <motion.div
-                key="empty-state"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+          {/* Search Suggestions Dropdown */}
+          <AnimatePresence>
+            {suggestions.length > 0 && (
+              <Motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="flex flex-col items-center justify-center text-[#B3CFE5]/20 py-20 gap-4 bg-[#0F2545]/30 rounded-[2.5rem] border border-dashed border-[#1A3D63]/40"
+                className="absolute top-full left-0 right-0 mt-2 bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-2 flex flex-col gap-1 z-[100]"
               >
-                <div className="w-20 h-20 rounded-full bg-[#1A3D63]/10 flex items-center justify-center border border-[#1A3D63]/20">
-                  <HomeIcon className="w-10 h-10 opacity-30" />
-                </div>
-                <span className="text-sm font-black uppercase tracking-wider text-center">
-                  اختر مخدومين لإضافتهم للقائمة
-                </span>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="active-list"
-                variants={containerVariants}
-                initial="hidden"
-                animate="show"
-                className="grid grid-cols-1 md:grid-cols-2 gap-4"
-              >
-                {pendingList.map((p) => (
-                  <motion.div
-                    key={p.qrId}
-                    variants={itemVariants}
-                    layout
-                    className="bg-[#0F2545] p-1 pr-1 rounded-[2.5rem] border border-[#1A3D63]/50 shadow-2xl group relative overflow-hidden flex items-center"
+                {suggestions.map((s) => (
+                  <button
+                    key={s.qrId}
+                    className="p-3 text-right font-black text-sm text-black hover:bg-[#FACC15] transition-colors flex items-center justify-between border-b-2 border-black last:border-0 cursor-pointer"
+                    onClick={() => addPerson(s)}
                   >
-                    <div
-                      className="absolute inset-y-0 right-0 w-2"
-                      style={{ backgroundColor: p.accent || "#4A7FA7" }}
-                    ></div>
-                    <div className="flex-1 min-w-0 pointer-events-none pr-1">
-                      <StudentMiniCard person={p} />
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 border-2 border-black ${getAvatarBg(s.name)} flex items-center justify-center text-xs font-black`}>
+                        {(s.name || "م")?.[0]?.toUpperCase()}
+                      </div>
+                      <span>{s.name}</span>
                     </div>
-                    <div className="pr-4 z-10">
-                      <motion.button
-                        whileHover={{ scale: 1.1, rotate: 90 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => removePerson(p.qrId)}
-                        className="btn btn-ghost btn-circle btn-sm text-[#B3CFE5]/40 hover:text-error hover:bg-error/10 border-none transition-all"
-                        title="إزالة"
-                      >
-                        <X className="w-5 h-5" />
-                      </motion.button>
-                    </div>
-                  </motion.div>
+                    <span className="font-mono text-xs font-bold text-black/60 bg-[#FDF8F0] px-2 py-0.5 border border-black">
+                      #{s.qrId}
+                    </span>
+                  </button>
                 ))}
-              </motion.div>
+              </Motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Save Button */}
+        {/* Pending Visit List Section */}
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-lg sm:text-xl font-black text-black uppercase tracking-tight">
+            قائمة المخدومين المطلوب تسجيلهم
+          </h2>
+          <span className="bg-[#A3E635] text-black border-2 border-black px-3 py-1 font-black text-xs uppercase shadow-[2px_2px_0px_#000000]">
+            {pendingList.length} مخدومين
+          </span>
+        </div>
+
+        {/* Pending Cards */}
+        <div className="flex flex-col gap-3 min-h-[250px]">
+          <AnimatePresence mode="popLayout">
+            {pendingList.length === 0 ? (
+              <div className="py-16 flex flex-col items-center justify-center text-center gap-4 bg-white border-[3px] border-black border-dashed p-8 shadow-[6px_6px_0px_#000000]">
+                <div className="w-16 h-16 bg-[#FB923C] border-[3px] border-black shadow-[4px_4px_0px_#000000] flex items-center justify-center">
+                  <HomeIcon className="w-8 h-8 stroke-[2.5] text-black" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-xl font-black text-black uppercase">
+                    القائمة فارغة
+                  </h3>
+                  <p className="text-sm text-black/60 font-bold">
+                    ابحث عن مخدوم وأضفه للقائمة ثم اضغط حفظ لتسجيل الزيارة
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {pendingList.map((p) => {
+                  const avatarBg = getAvatarBg(p.name);
+                  return (
+                    <Motion.div
+                      layout
+                      key={p.qrId}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      className="bg-white border-[3px] border-black shadow-[4px_4px_0px_#000000] p-4 flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-12 h-12 border-[3px] border-black shadow-[2px_2px_0px_#000000] ${avatarBg} flex items-center justify-center overflow-hidden shrink-0`}>
+                          {p.image ? (
+                            <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="font-black text-xl text-black">
+                              {(p.name || "م")?.[0]?.toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-black text-black text-base truncate">
+                            {p.name}
+                          </span>
+                          <span className="font-mono text-xs font-black text-black/60">
+                            #{p.qrId} {p.year ? `• ${p.year}` : ""}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => removePerson(p.qrId)}
+                        className="w-9 h-9 bg-[#EF4444] text-white border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 flex items-center justify-center transition-all cursor-pointer shrink-0"
+                        title="إزالة من القائمة"
+                      >
+                        <X className="w-4 h-4 stroke-[3]" />
+                      </button>
+                    </Motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Floating / Sticky Save Action Button */}
         <AnimatePresence>
           {pendingList.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
+            <Motion.div
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 50, transition: { duration: 0.2 } }}
-              className="sticky bottom-6 mt-auto pt-4 z-40"
+              exit={{ opacity: 0, y: 30 }}
+              className="sticky bottom-6 z-40"
             >
               <button
                 onClick={handleSave}
-                className="w-full h-16 bg-[#1A3D63] hover:bg-[#4A7FA7] text-[#F6FAFD] text-xl font-black shadow-[0_20px_50px_rgba(0,0,0,0.4)] rounded-2xl group overflow-hidden relative border border-[#4A7FA7]/30 flex items-center justify-center gap-3 transition-all"
+                className="w-full bg-[#A3E635] text-black border-[4px] border-black shadow-[8px_8px_0px_#000000] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] active:shadow-none py-5 font-black text-xl sm:text-2xl uppercase transition-all flex items-center justify-center gap-3 cursor-pointer"
               >
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                <CheckCircle2 className="w-6 h-6" />
-                <span>سجلنا {pendingList.length} زيارات</span>
+                <CheckCircle2 className="w-7 h-7 stroke-[3]" />
+                <span>تسجيل واكتمال ({pendingList.length}) زيارة</span>
               </button>
-            </motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
-      </div>
-    </Page>
+      </main>
+    </div>
   );
 }

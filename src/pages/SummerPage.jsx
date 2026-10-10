@@ -1,24 +1,30 @@
 import { useRef, useState, useEffect, useMemo } from "react";
 import {
   ChevronLeft,
+  ChevronRight,
   Search,
   ClipboardList,
   Gamepad2,
   ArrowRight,
+  ArrowLeft,
   Target,
   CheckCircle2,
   Award,
+  X,
+  AlertTriangle,
+  Sparkles,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import { studentsDB, summerAttendanceDB } from "../data/storage";
 import { buildAttendanceEntry, registeredToday, todayISO } from "../utils/helpers";
 import { useToast } from "../hooks/useToast";
-import { Avatar, Toast } from "../components/UI";
+import { Toast } from "../components/UI";
 
-import bgImage from "../assets/studium.png";
 import { SummerGameArena } from "./SummerGameArena";
 import { SummerProfile } from "./SummerProfile";
 import { SummerCoupons } from "./SummerCoupons";
+import { useT } from "../hooks/useT";
+import { useAppContext } from "../context/AppContext";
 
 export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
   const sectionRef = useRef(null);
@@ -29,35 +35,43 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
   const [studentToRemove, setStudentToRemove] = useState(null);
   const [updateTrigger, setUpdateTrigger] = useState(0);
   const toast = useToast();
+  const t = useT();
+  const { lang } = useAppContext();
+
+  const BackIcon = lang === "ar" ? ArrowRight : ArrowLeft;
+  const ChevronIcon = lang === "ar" ? ChevronLeft : ChevronRight;
 
   const filteredStudents = useMemo(() => {
     const db = studentsDB.getAll();
-    const allStudents = Object.keys(db).map(id => ({ qrId: id, ...db[id] }));
+    const allStudents = Object.keys(db).map((id) => ({ qrId: id, ...db[id] }));
 
     const normalizeArabic = (text) => {
       if (!text) return "";
-      return text.replace(/[أإآا]/g, 'ا');
+      return text.replace(/[أإآا]/g, "ا");
     };
 
-    const sortAr = (arr) => [...arr].sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", "ar"));
+    const sortAr = (arr) =>
+      [...arr].sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", lang === "ar" ? "ar" : "en"));
 
     const q = normalizeArabic(searchQuery.toLowerCase().trim());
 
     if (internalView === "attendance" && !q) {
       // Default: show only students with prior summer attendance
-      return sortAr(allStudents.filter(s => summerAttendanceDB.get(s.qrId).length > 0));
+      return sortAr(allStudents.filter((s) => summerAttendanceDB.get(s.qrId).length > 0));
     }
 
     if (!q) {
       return sortAr(allStudents);
     }
 
-    return sortAr(allStudents.filter((s) => {
-      const normalizedName = normalizeArabic(s.name?.toLowerCase());
-      const normalizedId = normalizeArabic(s.qrId?.toLowerCase());
-      return normalizedName.startsWith(q) || normalizedId.includes(q);
-    }));
-  }, [searchQuery, internalView, updateTrigger]);
+    return sortAr(
+      allStudents.filter((s) => {
+        const normalizedName = normalizeArabic(s.name?.toLowerCase());
+        const normalizedId = normalizeArabic(s.qrId?.toLowerCase());
+        return normalizedName.startsWith(q) || normalizedId.includes(q);
+      })
+    );
+  }, [searchQuery, internalView, updateTrigger, lang]);
 
   useEffect(() => {
     if (sectionRef.current) {
@@ -71,26 +85,26 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
       setStudentToRemove(student);
     } else {
       summerAttendanceDB.add(student.qrId, buildAttendanceEntry());
-      setUpdateTrigger(prev => prev + 1);
-      toast.show(`⚽ هدف! تم تسجيل حضور ${student.name}`);
+      setUpdateTrigger((prev) => prev + 1);
+      toast.show(`⚽ ${student.name}`);
     }
   };
 
   const confirmRemoveAttendance = () => {
     if (!studentToRemove) return;
     const log = summerAttendanceDB.get(studentToRemove.qrId);
-    const todayEntry = log.find(e => e.timestamp && e.timestamp.slice(0, 10) === todayISO());
+    const todayEntry = log.find((e) => e.timestamp && e.timestamp.slice(0, 10) === todayISO());
     if (todayEntry) {
       summerAttendanceDB.remove(studentToRemove.qrId, todayEntry.recordId || todayEntry.id);
-      setUpdateTrigger(prev => prev + 1);
-      toast.show(`🗑️ تم مسح حضور ${studentToRemove.name}`);
+      setUpdateTrigger((prev) => prev + 1);
+      toast.show(`🗑️ ${studentToRemove.name}`);
     }
     setStudentToRemove(null);
   };
 
   const handleMarkAllPresent = () => {
     let addedCount = 0;
-    filteredStudents.forEach(student => {
+    filteredStudents.forEach((student) => {
       const log = summerAttendanceDB.get(student.qrId);
       if (!registeredToday(log)) {
         summerAttendanceDB.add(student.qrId, buildAttendanceEntry());
@@ -99,125 +113,83 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
     });
 
     if (addedCount > 0) {
-      setUpdateTrigger(prev => prev + 1);
-      toast.show(`✅ تم تسجيل حضور ${addedCount} أطفال بنجاح`);
-    } else {
-      toast.show(`ℹ️ مفيش حد جديد يتسجل، كلهم متسجلين`);
+      setUpdateTrigger((prev) => prev + 1);
+      toast.show(`✅ ${addedCount}`);
     }
   };
 
   const handleRemoveAll = () => {
     let removedCount = 0;
-    filteredStudents.forEach(student => {
+    filteredStudents.forEach((student) => {
       const log = summerAttendanceDB.get(student.qrId);
-      const todayEntry = log.find(e => e.timestamp && e.timestamp.slice(0, 10) === todayISO());
+      const todayEntry = log.find((e) => e.timestamp && e.timestamp.slice(0, 10) === todayISO());
       if (todayEntry) {
         summerAttendanceDB.remove(student.qrId, todayEntry.recordId || todayEntry.id);
         removedCount++;
       }
     });
     if (removedCount > 0) {
-      setUpdateTrigger(prev => prev + 1);
-      toast.show(`🗑️ تم مسح حضور ${removedCount} أطفال`);
+      setUpdateTrigger((prev) => prev + 1);
+      toast.show(`🗑️ ${removedCount}`);
     }
+  };
+
+  const avatarColors = ["bg-[#FACC15]", "bg-[#38BDF8]", "bg-[#A3E635]", "bg-[#FB923C]", "bg-[#F472B6]"];
+  const getAvatarBg = (str = "") => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return avatarColors[Math.abs(hash) % avatarColors.length];
   };
 
   const summerCards = [
     {
       id: "search",
-      label: "البحث",
-      icon: <Search className="w-10 h-10" />,
-      color: "from-lime-400/20 to-emerald-500/10",
-      accent: "text-lime-400",
-      glow: "bg-lime-400/20"
+      label: t("summerCardSearch"),
+      subLabel: "SEARCH",
+      icon: <Search className="w-8 h-8 stroke-[2.5]" />,
+      tagBg: "bg-[#38BDF8]",
+      iconBg: "bg-[#38BDF8]",
     },
     {
       id: "attendance",
-      label: "سجل الحضور",
-      icon: <ClipboardList className="w-10 h-10" />,
-      color: "from-sky-400/20 to-emerald-500/10",
-      accent: "text-sky-400",
-      glow: "bg-sky-400/20"
+      label: t("summerCardAttendance"),
+      subLabel: "ATTENDANCE",
+      icon: <ClipboardList className="w-8 h-8 stroke-[2.5]" />,
+      tagBg: "bg-[#FACC15]",
+      iconBg: "bg-[#FACC15]",
     },
     {
       id: "check",
-      label: "الشيكات",
-      icon: <Award className="w-10 h-10" />,
-      color: "from-amber-400/20 to-emerald-500/10",
-      accent: "text-amber-300",
-      glow: "bg-amber-400/20"
+      label: t("summerCardChecks"),
+      subLabel: "REWARD CHECKS",
+      icon: <Award className="w-8 h-8 stroke-[2.5]" />,
+      tagBg: "bg-[#FB923C]",
+      iconBg: "bg-[#FB923C]",
     },
     {
       id: "games",
-      label: "الألعاب",
-      icon: <Gamepad2 className="w-10 h-10" />,
-      color: "from-indigo-400/20 to-emerald-500/10",
-      accent: "text-indigo-300",
-      glow: "bg-indigo-400/20"
-    }
+      label: t("summerCardGames"),
+      subLabel: "GAME ARENA",
+      icon: <Gamepad2 className="w-8 h-8 stroke-[2.5]" />,
+      tagBg: "bg-[#A3E635]",
+      iconBg: "bg-[#A3E635]",
+    },
   ];
 
   return (
-    <div ref={sectionRef} className="w-full h-full relative overflow-y-auto overflow-x-hidden bg-[#063d2f] custom-scrollbar">
+    <div
+      ref={sectionRef}
+      className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
       <Toast msg={toast.msg} />
 
-      <AnimatePresence>
-        {studentToRemove && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#0A1931] border border-[#10B981]/30 rounded-3xl p-8 w-full max-w-sm shadow-[0_30px_70px_rgba(0,0,0,0.5)] flex flex-col gap-6"
-              dir="rtl"
-            >
-              <div className="flex flex-col items-center text-center gap-2">
-                <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mb-2">
-                  <CheckCircle2 size={32} />
-                </div>
-                <h3 className="text-2xl font-black text-white">مسح الحضور؟</h3>
-                <p className="text-[#B3CFE5]/60 text-sm font-bold">
-                  هل أنت متأكد إنك عايز تمسح حضور <span className="text-[#10B981]">{studentToRemove.name}</span> النهارده ؟
-                </p>
-              </div>
-              <div className="flex gap-4 w-full mt-2">
-                <button
-                  onClick={() => setStudentToRemove(null)}
-                  className="flex-1 py-3.5 rounded-2xl bg-white/5 text-[#B3CFE5] font-black hover:bg-white/10 transition-colors"
-                >
-                  لا
-                </button>
-                <button
-                  onClick={confirmRemoveAttendance}
-                  className="flex-1 py-3.5 rounded-2xl bg-red-500 text-white font-black hover:bg-red-600 shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:shadow-[0_0_30px_rgba(239,68,68,0.5)] transition-all"
-                >
-                  امسح
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Background Layer (Synchronized through GSAP in HomePage) */}
-      <div
-        className="summer-bg-layer fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `linear-gradient(to bottom, rgba(12, 92, 70, 0.72), rgba(4, 52, 40, 0.82)), url(${bgImage})`,
-          transform: "scale(1.2)"
-        }}
-      ></div>
-
-      {/* Field Markings Overlay */}
-      <div className="fixed inset-0 pointer-events-none opacity-5 z-0">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-full bg-white/20"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80vw] h-[80vw] border-2 border-white/10 rounded-full"></div>
-      </div>
-
-      <div
-        className="summer-stadium-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 relative z-10 flex flex-col items-center w-full min-h-full py-6 sm:py-12"
-      >
-        <header className="w-full flex justify-between items-center mb-6 sm:mb-12 gap-3" dir="rtl">
+      {/* ── Neo-Brutalist Navbar ── */}
+      <header className="sticky top-0 z-50 bg-[#A3E635] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          {/* Back Button */}
           <button
             onClick={() => {
               if (internalView !== "menu") {
@@ -226,39 +198,86 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
                 if (onGoHome) onGoHome();
               }
             }}
-            className="group flex items-center gap-2 sm:gap-4 px-3.5 sm:px-6 py-2.5 sm:py-3 bg-emerald-900/60 backdrop-blur-3xl border border-white/5 rounded-xl sm:rounded-2xl text-emerald-100 font-extrabold text-xs hover:bg-emerald-500 hover:text-white transition-all shadow-2xl shrink-0 min-h-[44px]"
+            className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-[0px_0px_0px_#000000] hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] font-black text-xs sm:text-sm uppercase flex items-center gap-1.5 transition-all cursor-pointer rounded-none"
           >
-            <ChevronLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-            <span>{internalView === "menu" ? "رجوع للرئيسية" : "يلا نرجع للملعب"}</span>
+            <BackIcon className="w-4 h-4 sm:w-5 sm:h-5 stroke-[3]" />
+            <span>{internalView === "menu" ? t("summerBackHome") : t("summerBackClub")}</span>
           </button>
 
-          <div className="flex items-center gap-2 sm:gap-6">
-            <div className="px-3 sm:px-5 py-2 sm:py-2.5 bg-lime-500/10 text-lime-400 text-[9px] sm:text-[10px] font-black tracking-wider sm:tracking-[0.4em] uppercase rounded-xl border border-lime-500/20 backdrop-blur-md truncate max-w-[130px] sm:max-w-none">
-              {internalView === "menu" ? "ملعبنا الصيفي الجميل" : internalView.toUpperCase()}
-            </div>
+          {/* Title */}
+          <div className="flex items-center gap-2">
+            <span className="bg-black text-[#A3E635] px-2.5 py-0.5 border-2 border-black font-black text-xs uppercase tracking-widest hidden sm:inline-block">
+              {t("summerTag")}
+            </span>
+            <h1 className="font-black text-xl sm:text-2xl tracking-tight text-black uppercase">
+              {t("summerTitle")}
+            </h1>
           </div>
-        </header>
 
+          {/* Current Section Tag */}
+          <div className="bg-white text-black border-2 border-black px-3 py-1 font-black text-xs sm:text-sm uppercase shadow-[2px_2px_0px_#000000]">
+            <span>
+              {internalView === "menu"
+                ? t("summerMenuLabel")
+                : internalView === "search"
+                ? t("summerSearchLabel")
+                : internalView === "attendance"
+                ? t("summerAttendanceLabel")
+                : internalView === "games"
+                ? t("summerGamesLabel")
+                : internalView === "profile"
+                ? t("summerProfileLabel")
+                : t("summerCouponsLabel")}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      {/* ── Main Content Area ── */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-8 flex flex-col gap-8">
         <AnimatePresence mode="wait">
+          {/* ── 1. MENU VIEW ── */}
           {internalView === "menu" && (
-            <motion.div
+            <Motion.div
               key="menu"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full flex flex-col items-center"
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="flex flex-col gap-8"
             >
-              <div className="text-center w-full mb-8 sm:mb-16 relative">
-                <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-white mb-2 sm:mb-4 tracking-tighter leading-none flex items-center justify-center gap-3 sm:gap-6 flex-wrap">
-                  النادي <span className="text-lime-400 italic">الصيفي</span>
-                </h1>
-                <p className="text-emerald-300/40 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.4em] sm:tracking-[0.8em] mt-1 sm:mt-2">نادي صيف 2026</p>
-              </div>
+              {/* Summer Hero Banner */}
+              <section className="bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div className="space-y-3">
+                  <div className="inline-flex items-center gap-2 bg-[#FEF08A] text-black border-2 border-black px-3 py-1 text-xs font-black uppercase shadow-[2px_2px_0px_#000000]">
+                    <Sparkles className="w-3.5 h-3.5 stroke-[3]" />
+                    <span>{t("summerWelcome")}</span>
+                  </div>
+                  <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-black tracking-tight leading-none">
+                    {t("summerHeroTitle")}{" "}
+                    <span className="bg-[#A3E635] text-black border-[3px] border-black px-3 py-0.5 inline-block shadow-[4px_4px_0px_#000000] -rotate-1">
+                      {t("summerHeroAccent")}
+                    </span>
+                  </h2>
+                  <p className="text-sm sm:text-base font-bold text-black/70 max-w-lg">
+                    {t("summerHeroText")}
+                  </p>
+                </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full max-w-6xl" dir="rtl">
+                <div className="bg-[#A3E635] border-[3px] border-black shadow-[4px_4px_0px_#000000] p-4 text-center shrink-0 self-stretch md:self-auto flex flex-col items-center justify-center">
+                  <span className="text-2xl sm:text-3xl font-black text-black">
+                    ⚽ 4
+                  </span>
+                  <span className="text-xs font-black uppercase text-black/80 tracking-wider">
+                    {t("summerSections")}
+                  </span>
+                </div>
+              </section>
+
+              {/* Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {summerCards.map((card, idx) => (
-                  <motion.button
-                    key={idx}
+                  <Motion.button
+                    key={card.id}
                     onClick={() => {
                       if (card.id === "check" && onGoCheck) {
                         onGoCheck();
@@ -266,153 +285,223 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
                         setInternalView(card.id);
                       }
                     }}
-                    initial={{ opacity: 0, y: 40 }}
+                    initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + idx * 0.1, duration: 0.8 }}
-                    whileHover={{ y: -8 }}
-                    whileTap={{ scale: 0.97 }}
-                    className={`relative tech-panel !p-6 sm:!p-8 flex flex-col items-center text-center gap-4 sm:gap-6 overflow-hidden group border-white/10 transition-all duration-500 bg-gradient-to-br ${card.color} rounded-2xl sm:rounded-3xl cursor-pointer`}
+                    transition={{ delay: idx * 0.05 }}
+                    className={`bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] hover:shadow-[0px_0px_0px_#000000] hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none active:translate-x-[5px] active:translate-y-[5px] p-6 ${lang === 'ar' ? 'text-right' : 'text-left'} flex flex-col justify-between gap-6 transition-all duration-150 group cursor-pointer w-full select-none rounded-none`}
                   >
-                    <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-slate-950/80 border border-white/5 flex items-center justify-center ${card.accent} group-hover:scale-110 transition-transform duration-700 shadow-2xl relative z-10`}>
-                      {card.icon}
-                    </div>
-
-                    <div className="space-y-1.5 sm:space-y-2 relative z-10">
-                      <h3 className="text-xl sm:text-2xl font-black text-white tracking-tighter group-hover:text-emerald-400 transition-colors">
-                        {card.label}
-                      </h3>
-                      <p className={`text-[9px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] ${card.accent} opacity-60`}>
+                    {/* Top Tag */}
+                    <div className="w-full flex items-center justify-between">
+                      <span
+                        className={`inline-block ${card.tagBg} text-black border-2 border-black px-2.5 py-0.5 text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_#000000]`}
+                      >
                         {card.subLabel}
-                      </p>
+                      </span>
+                      <span className="font-mono text-xs font-black text-black/40">
+                        0{idx + 1}
+                      </span>
                     </div>
 
-                    <div className="mt-2 sm:mt-4 flex items-center gap-2 text-white/40 group-hover:text-white/60 transition-colors">
-                      <span className="text-[9px] font-black uppercase tracking-widest">افتح الصفحة</span>
-                      <ArrowRight size={12} />
+                    {/* Middle: Icon & Title */}
+                    <div className="flex flex-col items-start gap-4">
+                      <div
+                        className={`w-14 h-14 ${card.iconBg} border-[3px] border-black shadow-[3px_3px_0px_#000000] flex items-center justify-center text-black shrink-0`}
+                      >
+                        {card.icon}
+                      </div>
+
+                      <div>
+                        <h3 className="text-xl sm:text-2xl font-black text-black tracking-tight group-hover:underline underline-offset-4 decoration-2">
+                          {card.label}
+                        </h3>
+                        <p className="text-xs font-bold text-black/60 uppercase tracking-widest mt-0.5">
+                          {card.subLabel}
+                        </p>
+                      </div>
                     </div>
-                  </motion.button>
+
+                    {/* Bottom Action Row */}
+                    <div className="pt-3 border-t-2 border-black flex items-center justify-between w-full">
+                      <span className="text-xs font-black uppercase text-black/60 tracking-wider">
+                        {t("open")}
+                      </span>
+                      <div className="bg-[#FACC15] group-hover:bg-[#A3E635] text-black border-2 border-black px-3 py-1 text-xs font-black uppercase shadow-[2px_2px_0px_#000000] flex items-center gap-1 transition-colors">
+                        <span>{t("enter")}</span>
+                        <ChevronIcon className="w-4 h-4 stroke-[3]" />
+                      </div>
+                    </div>
+                  </Motion.button>
                 ))}
               </div>
-            </motion.div>
+            </Motion.div>
           )}
 
+          {/* ── 2. SEARCH & ATTENDANCE VIEWS ── */}
           {(internalView === "search" || internalView === "attendance") && (
-            <motion.div
+            <Motion.div
               key={internalView}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="w-full max-w-4xl flex flex-col gap-5 sm:gap-8"
-              dir="rtl"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              className="w-full max-w-5xl mx-auto flex flex-col gap-6"
             >
-              <div className="relative w-full group">
-                <div className="absolute inset-0 bg-lime-400/5 blur-3xl group-focus-within:bg-lime-400/10 transition-colors pointer-events-none"></div>
-                <Search className="absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 text-lime-400/40 w-5 h-5 sm:w-6 sm:h-6" />
+              {/* Search Bar */}
+              <div className="relative flex items-center bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] focus-within:shadow-[8px_8px_0px_#000000] transition-all">
+                <div className="bg-[#A3E635] text-black border-x-[3px] border-black p-3.5 sm:p-4.5 flex items-center justify-center shrink-0">
+                  <Search className="w-6 h-6 stroke-[3]" />
+                </div>
                 <input
-                  autoFocus
                   type="text"
+                  autoFocus
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="ابحث عن اسم الطفل أو الكود هنا..."
-                  className="w-full h-14 sm:h-16 bg-emerald-950/40 backdrop-blur-3xl border border-white/10 rounded-2xl sm:rounded-[2rem] pr-12 sm:pr-16 pl-6 sm:pl-8 text-white font-bold text-sm sm:text-base placeholder:text-emerald-100/20 focus:outline-none focus:border-lime-400/40 transition-all shadow-2xl"
+                  placeholder={t("summerSearchPlaceholder")}
+                  className="w-full bg-transparent px-4 sm:px-6 py-3.5 sm:py-4 text-black font-black text-lg sm:text-xl placeholder:text-black/40 outline-none"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="mx-3 bg-[#F472B6] text-black border-2 border-black p-1.5 shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer shrink-0"
+                  >
+                    <X className="w-5 h-5 stroke-[3]" />
+                  </button>
+                )}
               </div>
 
+              {/* Attendance Batch Actions */}
               {internalView === "attendance" && filteredStudents.length > 0 && (() => {
-                const allPresent = filteredStudents.every(s => registeredToday(summerAttendanceDB.get(s.qrId)));
+                const allPresent = filteredStudents.every((s) =>
+                  registeredToday(summerAttendanceDB.get(s.qrId))
+                );
                 return (
-                  <div className="flex justify-end w-full px-1 sm:px-2 mt-[-0.5rem] sm:mt-[-1rem]">
+                  <div className="flex justify-between items-center bg-[#FEF08A] border-2 border-black p-3 shadow-[3px_3px_0px_#000000]">
+                    <span className="font-black text-sm uppercase">
+                      {t("summerTotalShown")}: {filteredStudents.length} {t("summerServant")}
+                    </span>
                     <button
                       onClick={allPresent ? handleRemoveAll : handleMarkAllPresent}
-                      className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 font-black text-xs sm:text-sm rounded-xl transition-colors shadow-lg min-h-[44px] ${allPresent
-                          ? "bg-red-500 text-white hover:bg-red-600"
-                          : "bg-lime-500 text-emerald-950 hover:bg-lime-400"
-                        }`}
+                      className={`flex items-center gap-2 px-5 py-2 border-2 border-black font-black text-sm uppercase shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 transition-all cursor-pointer ${
+                        allPresent
+                          ? "bg-[#EF4444] text-white"
+                          : "bg-[#A3E635] text-black"
+                      }`}
                     >
-                      <CheckCircle2 size={18} strokeWidth={3} />
-                      {allPresent ? "مسح الكل" : "تسجيل الكل"}
+                      <CheckCircle2 className="w-5 h-5 stroke-[3]" />
+                      <span>{allPresent ? t("summerRemoveAll") : t("summerMarkAllPresent")}</span>
                     </button>
                   </div>
                 );
               })()}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 max-h-[60vh] overflow-y-auto pr-1 sm:pr-2 custom-scrollbar">
-                {filteredStudents.map((s, idx) => {
-                  const isPresent = registeredToday(summerAttendanceDB.get(s.qrId));
+              {/* Student Cards List */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredStudents.map((student) => {
+                  const isPresent = registeredToday(summerAttendanceDB.get(student.qrId));
+                  const avatarBg = getAvatarBg(student.name || student.qrId);
+
                   return (
-                    <motion.div
-                      key={s.qrId}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      onClick={internalView === "search" ? () => {
-                        setSelectedStudent(s);
-                        setInternalView("profile");
-                      } : undefined}
-                      className={`p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl border backdrop-blur-xl flex items-center justify-between transition-all ${internalView === "search" ? "cursor-pointer hover:bg-white/10" : ""
-                        } ${isPresent ? "bg-lime-500/10 border-lime-500/30" : "bg-white/5 border-white/5"
-                        }`}
+                    <div
+                      key={student.qrId}
+                      onClick={
+                        internalView === "search"
+                          ? () => {
+                              setSelectedStudent(student);
+                              setPrevView(internalView);
+                              setInternalView("profile");
+                            }
+                          : undefined
+                      }
+                      className={`border-[3px] border-black shadow-[4px_4px_0px_#000000] p-4 flex items-center justify-between gap-3 transition-all ${
+                        internalView === "search"
+                          ? "cursor-pointer hover:shadow-none hover:translate-x-1 hover:translate-y-1"
+                          : ""
+                      } ${isPresent ? "bg-[#FEF08A]" : "bg-white"}`}
                     >
-                      <div className="flex items-center gap-3 sm:gap-4 min-w-0 pr-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedStudent(s);
-                            setPrevView(internalView);
-                            setInternalView("profile");
-                          }}
-                          className="rounded-full ring-2 ring-transparent hover:ring-lime-400/60 transition-all cursor-pointer shrink-0 min-w-[40px] min-h-[40px]"
-                          title="عرض الملف الشخصي"
+                      <div className="flex items-center gap-3 min-w-0 pr-1">
+                        {/* Brutalist Avatar */}
+                        <div
+                          className={`w-12 h-12 sm:w-14 sm:h-14 shrink-0 border-2 border-black shadow-[2px_2px_0px_#000000] ${avatarBg} text-black font-black text-xl flex items-center justify-center overflow-hidden`}
                         >
-                          <Avatar name={s.name} image={s.image} size="md" />
-                        </button>
-                        <div className="flex flex-col min-w-0">
-                          <span className="font-black tracking-tight text-white text-sm sm:text-base truncate">{s.name}</span>
-                          <span className="text-[10px] uppercase font-bold opacity-40 text-emerald-100">{s.qrId}</span>
+                          {student.image ? (
+                            <img
+                              src={student.image}
+                              alt={student.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span>{(student.name || "M")?.[0]?.toUpperCase()}</span>
+                          )}
+                        </div>
+
+                        <div className={`flex flex-col min-w-0 ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                          <span className="font-black text-base sm:text-lg text-black truncate">
+                            {student.name}
+                          </span>
+                          <span className="text-xs font-mono font-bold text-black/60">
+                            #{student.qrId}
+                          </span>
                         </div>
                       </div>
 
+                      {/* Attendance Toggle Button */}
                       {internalView === "attendance" && (
                         <button
-                          onClick={() => handleToggleAttendance(s)}
-                          className={`p-2.5 sm:p-2 rounded-xl transition-all shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center ${isPresent ? 'bg-lime-500 text-emerald-950 shadow-lg hover:bg-red-500 hover:text-white' : 'bg-white/5 text-emerald-100/40 hover:bg-white/10'}`}
-                          title={isPresent ? "مسح الحضور" : "تسجيل الحضور"}
+                          onClick={() => handleToggleAttendance(student)}
+                          className={`px-3 py-2 border-2 border-black font-black text-xs uppercase shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer ${
+                            isPresent
+                              ? "bg-[#A3E635] text-black hover:bg-[#EF4444] hover:text-white"
+                              : "bg-white text-black hover:bg-[#A3E635]"
+                          }`}
+                          title={isPresent ? t("summerRemoveAll") : t("summerRegister")}
                         >
-                          {isPresent ? <CheckCircle2 size={18} strokeWidth={3} /> : <Target size={18} />}
+                          {isPresent ? (
+                            <>
+                              <CheckCircle2 className="w-4 h-4 stroke-[3]" />
+                              <span>{t("summerPresent")}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Target className="w-4 h-4 stroke-[2.5]" />
+                              <span>{t("summerRegister")}</span>
+                            </>
+                          )}
                         </button>
                       )}
+
+                      {/* Search View: Open Profile arrow */}
                       {internalView === "search" && (
-                        <div className="text-white/40 shrink-0">
-                          <ArrowRight size={18} className="rotate-180" />
+                        <div className="bg-[#FACC15] text-black border-2 border-black p-2 shadow-[2px_2px_0px_#000000] shrink-0">
+                          <ChevronIcon className="w-4 h-4 stroke-[3]" />
                         </div>
                       )}
-                    </motion.div>
+                    </div>
                   );
                 })}
               </div>
-            </motion.div>
+            </Motion.div>
           )}
 
+          {/* ── 3. GAMES VIEW ── */}
           {internalView === "games" && (
-            <motion.div
+            <Motion.div
               key="games"
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              className="w-full h-full"
-              dir="rtl"
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="w-full"
             >
               <SummerGameArena />
-            </motion.div>
+            </Motion.div>
           )}
 
+          {/* ── 4. PROFILE VIEW ── */}
           {internalView === "profile" && selectedStudent && (
-            <motion.div
+            <Motion.div
               key="profile"
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              className="w-full h-full"
-              dir="rtl"
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="w-full"
             >
               <SummerProfile
                 person={selectedStudent}
@@ -420,35 +509,90 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
                 onGoCoupons={() => setInternalView("coupons")}
                 onGoCheck={() => onGoCheck && onGoCheck(selectedStudent.qrId)}
               />
-            </motion.div>
+            </Motion.div>
           )}
 
+          {/* ── 5. COUPONS VIEW ── */}
           {internalView === "coupons" && selectedStudent && (
-            <motion.div
+            <Motion.div
               key="coupons"
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              className="w-full h-full"
-              dir="rtl"
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="w-full"
             >
               <SummerCoupons
                 currentUser={currentUser}
                 person={selectedStudent}
                 onBack={() => setInternalView("profile")}
               />
-            </motion.div>
+            </Motion.div>
           )}
         </AnimatePresence>
+      </main>
 
-        <div className="mt-12 flex flex-col items-center gap-4 opacity-20">
-          <div className="w-32 h-px bg-gradient-to-r from-transparent via-lime-500/50 to-transparent"></div>
-          <p className="text-[9px] font-black uppercase tracking-[0.5em] text-emerald-100">صيف 2026</p>
-        </div>
-      </div>
+      {/* ── Attendance Removal Confirmation Modal (Neo-Brutalist) ── */}
+      <AnimatePresence>
+        {studentToRemove && (
+          <div
+            className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 p-4"
+            dir={lang === "ar" ? "rtl" : "ltr"}
+          >
+            <Motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm bg-white border-[3px] border-black shadow-[8px_8px_0px_#000000] p-6 text-center flex flex-col items-center gap-5"
+            >
+              <div className="w-16 h-16 bg-[#EF4444] border-[3px] border-black shadow-[4px_4px_0px_#000000] flex items-center justify-center text-white">
+                <AlertTriangle className="w-8 h-8 stroke-[3]" />
+              </div>
+
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black text-black uppercase">
+                  {t("summerRemoveModal")}
+                </h3>
+                <p className="text-sm font-bold text-black/70">
+                  {t("summerRemoveConfirm")}{" "}
+                  <span className="text-black font-black underline">
+                    {studentToRemove.name}
+                  </span>{" "}
+                  {t("summerRemoveToday")}
+                </p>
+              </div>
+
+              <div className="flex gap-3 w-full mt-2">
+                <button
+                  onClick={confirmRemoveAttendance}
+                  className="flex-1 bg-[#EF4444] text-white border-2 border-black py-2.5 px-4 font-black uppercase text-sm shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
+                >
+                  {t("summerRemoveBtn")}
+                </button>
+                <button
+                  onClick={() => setStudentToRemove(null)}
+                  className="flex-1 bg-white text-black border-2 border-black py-2.5 px-4 font-black uppercase text-sm shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
+                >
+                  {t("cancel")}
+                </button>
+              </div>
+            </Motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+
+export function SummerPage({ onBack, currentUser, onGoCheck }) {
+  return (
+    <SummerSection
+      onGoHome={onBack}
+      currentUser={currentUser}
+      onGoCheck={onGoCheck}
+    />
+  );
+}
+
 
 
 

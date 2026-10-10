@@ -1,25 +1,23 @@
 import { useState } from "react";
 import { studentsDB, attendanceDB, visitsDB } from "../data/storage";
-import { Page, Avatar, Navbar } from "../components/UI";
-import { motion } from "framer-motion";
+import { Avatar } from "../components/UI";
+import { ArrowRight, Pencil, Trash2, CheckCircle2, Award, Ticket, CalendarDays, ChevronDown, ChevronUp } from "lucide-react";
 
 /** Converts YYYY-MM-DD to d/m/y, or passes dd/mm/yyyy through */
 const fmtDate = (v) => {
   if (!v) return v;
-  // Already in dd/mm/yyyy format
   if (v.includes("/")) return v;
-  // Convert from YYYY-MM-DD
   const parts = v.split("-");
   if (parts.length !== 3) return v;
   return `${parseInt(parts[2])}/${parseInt(parts[1])}/${parts[0]}`;
 };
 
 const FIELDS = [
-  { icon: "🆔", label: "الكود", key: "qrId" },
+  { icon: "🆔", label: "كود الطفل", key: "qrId" },
   { icon: "🏠", label: "العنوان", key: "address" },
-  { icon: "🎂", label: "عيد ميلاده", key: "birthdate", fmt: fmtDate },
-  { icon: "📚", label: "في سنة كام؟", key: "year" },
-  { icon: "📱", label: "التليفون", key: "phone" },
+  { icon: "🎂", label: "تاريخ الميلاد", key: "birthdate", fmt: fmtDate },
+  { icon: "📚", label: "الفصل / المرحلة", key: "year" },
+  { icon: "📱", label: "رقم التليفون", key: "phone" },
 ];
 
 export function StudentPage({
@@ -31,7 +29,7 @@ export function StudentPage({
   onGoCheck,
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails, setShowDetails] = useState(true);
 
   const handleDelete = () => {
     studentsDB.remove(person.qrId);
@@ -39,165 +37,207 @@ export function StudentPage({
     visitsDB.removeAll(person.qrId);
     onBack();
   };
+
+  const attendanceCount = attendanceDB.get(person?.qrId)?.length || 0;
+
   return (
-    <Page>
-      <Navbar
-        title={person.name}
-        onBack={onBack}
-        right={
-          <div className="flex gap-2 sm:gap-3">
+    <div
+      className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col"
+      dir="rtl"
+    >
+      {/* ── Neo-Brutalist Navbar ── */}
+      <header className="sticky top-0 z-50 bg-[#FACC15] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <button
+            onClick={onBack}
+            className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+            <span>رجوع</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <span className="bg-black text-[#FACC15] px-2.5 py-0.5 border-2 border-black font-black text-xs uppercase tracking-widest hidden sm:inline-block">
+              PROFILE
+            </span>
+            <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase truncate max-w-[200px] sm:max-w-none">
+              {person.name}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
               onClick={onGoAttendance}
-              className="px-3 sm:px-4 py-2 bg-[#1A3D63] text-[#F6FAFD] text-xs font-black rounded-[2rem] shadow-xl hover:bg-[#4A7FA7] transition-all hover:scale-105"
+              className="bg-white text-black border-2 border-black px-2.5 sm:px-3 py-1.5 shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none font-black text-xs uppercase flex items-center gap-1 transition-all cursor-pointer"
+              title="سجل الحضور"
             >
-              📋 {attendanceDB.get(person.qrId).length}
+              <CalendarDays className="w-4 h-4 stroke-[2.5]" />
+              <span>{attendanceCount}</span>
             </button>
+
             <button
               onClick={onGoCoupons}
-              className="px-3 sm:px-4 py-2 bg-[#1A3D63] text-[#F6FAFD] text-xs font-black rounded-[2rem] shadow-xl hover:bg-[#4A7FA7] transition-all hover:scale-105"
+              className="bg-[#38BDF8] text-black border-2 border-black px-2.5 sm:px-3 py-1.5 shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none font-black text-xs uppercase flex items-center gap-1 transition-all cursor-pointer"
+              title="الكوبونات"
             >
-              🎟️
+              <Ticket className="w-4 h-4 stroke-[2.5]" />
+              <span className="hidden sm:inline">كوبونات</span>
             </button>
+
             {onGoCheck && (
               <button
                 onClick={onGoCheck}
-                className="px-3 sm:px-4 py-2 bg-emerald-800 text-amber-300 text-xs font-black rounded-[2rem] shadow-xl hover:bg-emerald-700 transition-all hover:scale-105 flex items-center gap-1"
+                className="bg-[#A3E635] text-black border-2 border-black px-2.5 sm:px-3 py-1.5 shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none font-black text-xs uppercase flex items-center gap-1 transition-all cursor-pointer"
                 title="شيك المكافأة"
               >
-                <span>🏆</span>
+                <Award className="w-4 h-4 stroke-[2.5]" />
                 <span className="hidden sm:inline">شيك</span>
               </button>
             )}
           </div>
-        }
-      />
+        </div>
+      </header>
 
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-full max-w-2xl px-5 py-8 animate-slideUp">
-          <div className="bg-white/5 backdrop-blur-3xl rounded-[3rem] border border-white/10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)] relative overflow-hidden">
-            {/* Subtle Inner Glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50 pointer-events-none mix-blend-overlay"></div>
+      {/* ── Main Content ── */}
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 sm:px-6 py-8 flex flex-col gap-6">
+        <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_#000000] p-6 sm:p-10 flex flex-col gap-8 relative">
+          
+          {/* Top Row: Edit Button & Avatar */}
+          <div className="flex flex-col items-center gap-4 pb-6 border-b-[3px] border-black relative">
+            <button
+              onClick={onGoEdit}
+              className="absolute top-0 right-0 bg-[#FACC15] text-black border-2 border-black px-3 py-1.5 font-black text-xs uppercase shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <Pencil className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>تعديل</span>
+            </button>
 
-            <div className="p-8 sm:p-12 gap-8 flex flex-col relative z-10">
-              {/* Top row */}
-              <div className="flex flex-col items-center gap-4 pb-8 border-b border-white/10 relative">
-                <button
-                  onClick={onGoEdit}
-                  className="px-6 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/20 text-[#F6FAFD] rounded-2xl font-black text-xs uppercase tracking-widest transition-all absolute top-0 right-0 cursor-pointer shadow-[0_8px_16px_-4px_rgba(0,0,0,0.2)] hover:-translate-y-1"
-                >
-                  Edit ✏️
-                </button>
-                <div className="relative group perspective-1000">
-                  <div className="absolute inset-0 bg-white/20 blur-xl rounded-full scale-110 group-hover:scale-125 transition-transform duration-700 opacity-50"></div>
-                  <div className="relative transform-style-3d group-hover:rotate-y-12 transition-transform duration-700">
-                    <Avatar
-                      name={person.name}
-                      accent={person.accent}
-                      image={person.image}
-                      size="xl"
-                    />
-                  </div>
-                </div>
-                <h2 className="text-4xl sm:text-5xl font-black mt-4 text-[#F6FAFD] tracking-tighter drop-shadow-md text-center">
-                  {person.name}
-                </h2>
-              </div>
-
-              {/* Middle Section (Toggle Details) */}
-              <div className="flex justify-center -mt-2 perspective-1000">
-                <button
-                  onClick={() => setShowDetails(!showDetails)}
-                  className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-[#F6FAFD] h-16 rounded-[2rem] text-lg flex items-center justify-center gap-4 group transition-all duration-300 font-black shadow-[0_10px_20px_-10px_rgba(0,0,0,0.2)] hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.3)] hover:-translate-y-0.5"
-                >
-                  <span>{showDetails ? "Hide Details" : "Show Details"}</span>
-                  <span
-                    className={`transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${showDetails ? "rotate-180" : ""}`}
-                  >
-                    ⬇️
-                  </span>
-                </button>
-              </div>
-
-              {/* Info fields */}
-              <div
-                className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${showDetails ? "max-h-[1200px] opacity-100" : "max-h-0 opacity-0"}`}
-              >
-                <div className="bg-black/20 backdrop-blur-md shadow-inner rounded-[2.5rem] p-6 sm:p-8 space-y-2 border border-black/10 mt-2">
-                  {FIELDS.map(({ icon, label, key, fmt }) =>
-                    person[key] ? (
-                      <div
-                        key={key}
-                        className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 border-b border-white/5 last:border-0 hover:bg-white/5 px-4 rounded-xl transition-colors duration-300 group"
-                      >
-                        <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#B3CFE5]/60 mb-1 sm:mb-0 flex items-center gap-2">
-                          <span className="text-sm opacity-80 group-hover:scale-110 transition-transform">
-                            {icon}
-                          </span>{" "}
-                          {label}
-                        </span>
-                        <span className="font-black text-[#F6FAFD] text-lg lg:text-xl drop-shadow-sm">
-                          {fmt ? fmt(person[key]) : person[key]}
-                        </span>
-                      </div>
-                    ) : null,
-                  )}
-                  
-                  {/* Dynamic Custom Fields */}
-                  {person.customFields?.map((field) => (
-                    <div
-                      key={field.id}
-                      className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 border-b border-white/5 last:border-0 hover:bg-white/5 px-4 rounded-xl transition-colors duration-300 group"
-                    >
-                      <span className="text-[10px] sm:text-xs uppercase font-bold tracking-widest text-[#B3CFE5]/60 mb-1 sm:mb-0 flex items-center gap-2">
-                        <span className="text-sm opacity-80 group-hover:scale-110 transition-transform text-sky-400">
-                          ✨
-                        </span>{" "}
-                        {field.label}
-                      </span>
-                      <span className="font-black text-sky-100 text-lg lg:text-xl drop-shadow-sm">
-                        {field.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Bottom Row - Delete */}
-              <div className="pt-8 border-t border-white/10">
-                {!confirmDelete ? (
-                  <button
-                    onClick={() => setConfirmDelete(true)}
-                    className="w-full py-4 rounded-2xl bg-white/5 border border-error/30 text-error/90 font-black hover:bg-error/10 hover:border-error/50 transition-all text-sm cursor-pointer shadow-sm hover:shadow-error/20"
-                  >
-                    🗑️ حذف بيانات الطفل
-                  </button>
-                ) : (
-                  <div className="flex flex-col gap-4 p-6 bg-error/10 backdrop-blur-md rounded-3xl border border-error/30 animate-fadeIn shadow-[0_10px_30px_-10px_rgba(255,0,0,0.2)]">
-                    <p className="text-lg text-[#F6FAFD] text-center font-black drop-shadow-md">
-                      هل أنت متأكد من حذف{" "}
-                      <span className="text-error-content">{person.name}</span>؟
-                    </p>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={handleDelete}
-                        className="flex-1 py-4 bg-error text-white rounded-2xl font-black hover:bg-error/90 active:scale-95 transition-all shadow-lg shadow-error/30 cursor-pointer"
-                      >
-                        نعم، حذف نهائياً
-                      </button>
-                      <button
-                        onClick={() => setConfirmDelete(false)}
-                        className="flex-1 py-4 bg-white/10 text-[#F6FAFD] border border-white/20 rounded-2xl font-black hover:bg-white/20 transition-all cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
+            <div className="relative mt-2">
+              <div className="border-[3px] border-black p-1 bg-[#FDF8F0] shadow-[4px_4px_0px_#000000]">
+                <Avatar
+                  name={person.name}
+                  accent={person.accent}
+                  image={person.image}
+                  size="xl"
+                />
               </div>
             </div>
+
+            <div className="text-center">
+              <h2 className="text-3xl sm:text-4xl font-black text-black tracking-tight uppercase">
+                {person.name}
+              </h2>
+              {person.year && (
+                <span className="inline-block mt-2 bg-[#38BDF8] border-2 border-black px-3 py-0.5 font-black text-xs uppercase shadow-[2px_2px_0px_#000000]">
+                  {person.year}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Details Toggle Button */}
+          <button
+            onClick={() => setShowDetails(!showDetails)}
+            className="w-full bg-[#FDF8F0] hover:bg-[#FACC15] border-[3px] border-black py-3 px-4 font-black text-sm uppercase shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>{showDetails ? "إخفاء التفاصيل" : "عرض التفاصيل"}</span>
+            {showDetails ? (
+              <ChevronUp className="w-5 h-5 stroke-[2.5]" />
+            ) : (
+              <ChevronDown className="w-5 h-5 stroke-[2.5]" />
+            )}
+          </button>
+
+          {/* Details List */}
+          {showDetails && (
+            <div className="flex flex-col gap-3">
+              {FIELDS.map(({ icon, label, key, fmt }) =>
+                person[key] ? (
+                  <div
+                    key={key}
+                    className="bg-[#FDF8F0] border-2 border-black p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 shadow-[3px_3px_0px_#000000]"
+                  >
+                    <span className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-2">
+                      <span className="text-base">{icon}</span>
+                      <span>{label}</span>
+                    </span>
+                    <span className="font-black text-base sm:text-lg text-black">
+                      {fmt ? fmt(person[key]) : person[key]}
+                    </span>
+                  </div>
+                ) : null
+              )}
+
+              {person.customFields?.map((field) => (
+                <div
+                  key={field.id}
+                  className="bg-[#FDF8F0] border-2 border-black p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1 shadow-[3px_3px_0px_#000000]"
+                >
+                  <span className="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-2">
+                    <span className="text-base">✨</span>
+                    <span>{field.label}</span>
+                  </span>
+                  <span className="font-black text-base sm:text-lg text-black">
+                    {field.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Quick Action Navigation Grid */}
+          <div className="grid grid-cols-2 gap-3 pt-4 border-t-[3px] border-black">
+            <button
+              onClick={onGoAttendance}
+              className="bg-[#A3E635] text-black border-2 border-black py-3 px-4 font-black text-xs sm:text-sm uppercase shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <CalendarDays className="w-4 h-4 stroke-[2.5]" />
+              <span>سجل الحضور ({attendanceCount})</span>
+            </button>
+
+            <button
+              onClick={onGoCoupons}
+              className="bg-[#38BDF8] text-black border-2 border-black py-3 px-4 font-black text-xs sm:text-sm uppercase shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Ticket className="w-4 h-4 stroke-[2.5]" />
+              <span>إدارة الكوبونات</span>
+            </button>
+          </div>
+
+          {/* Delete Action Section */}
+          <div className="pt-4 border-t-[3px] border-black">
+            {!confirmDelete ? (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="w-full bg-white hover:bg-[#F472B6] text-black border-2 border-black py-3 px-4 font-black text-sm uppercase shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4 stroke-[2.5]" />
+                <span>حذف بيانات الطفل</span>
+              </button>
+            ) : (
+              <div className="bg-[#F472B6] border-[3px] border-black p-5 shadow-[6px_6px_0px_#000000] flex flex-col gap-4">
+                <p className="font-black text-base sm:text-lg text-black text-center">
+                  هل أنت متأكد من رغبتك في حذف بيانات ({person.name}) نهائياً؟
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleDelete}
+                    className="flex-1 bg-black text-white border-2 border-black py-2.5 font-black text-sm uppercase shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none transition-all cursor-pointer"
+                  >
+                    نعم، احذف
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="flex-1 bg-white text-black border-2 border-black py-2.5 font-black text-sm uppercase shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none transition-all cursor-pointer"
+                  >
+                    إلغاء
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </div>
-    </Page>
+      </main>
+    </div>
   );
 }

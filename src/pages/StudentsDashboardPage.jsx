@@ -1,7 +1,5 @@
 import { useState, useMemo } from "react";
-import { Page, Navbar } from "../components/UI";
 import { studentsDB } from "../data/storage";
-import { motion as Motion, AnimatePresence } from "framer-motion";
 import {
   Users,
   GraduationCap,
@@ -15,6 +13,7 @@ import {
   ArrowUpDown,
   Layers,
   MessageCircle,
+  ArrowRight,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 
@@ -31,8 +30,8 @@ const GRADE_ORDER = [
 export function StudentsDashboardPage({ onBack, onGoStudent }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGrade, setSelectedGrade] = useState("all");
-  const [sortBy, setSortBy] = useState("name"); // 'name' | 'grade' | 'id'
-  const [sortOrder, setSortOrder] = useState("asc"); // 'asc' | 'desc'
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState("asc");
   const [copiedPhone, setCopiedPhone] = useState(null);
 
   // Load all students
@@ -49,9 +48,10 @@ export function StudentsDashboardPage({ onBack, onGoStudent }) {
   // Summary statistics
   const stats = useMemo(() => {
     const total = allStudents.length;
-    const withPhone = allStudents.filter((s) => s.phone && s.phone.trim().length > 0).length;
+    const withPhone = allStudents.filter(
+      (s) => s.phone && s.phone.trim().length > 0,
+    ).length;
 
-    // Group counts by grade/stage
     const gradeCounts = {};
     allStudents.forEach((s) => {
       const g = s.year || "غير محدد";
@@ -72,7 +72,6 @@ export function StudentsDashboardPage({ onBack, onGoStudent }) {
   const gradeOptions = useMemo(() => {
     const gradesSet = new Set(allStudents.map((s) => s.year).filter(Boolean));
     const list = Array.from(gradesSet);
-    // Sort according to GRADE_ORDER first, then alphabetically
     return list.sort((a, b) => {
       const idxA = GRADE_ORDER.indexOf(a);
       const idxB = GRADE_ORDER.indexOf(b);
@@ -93,12 +92,10 @@ export function StudentsDashboardPage({ onBack, onGoStudent }) {
     const q = normalizeArabic(searchQuery);
 
     let list = allStudents.filter((s) => {
-      // Grade filter
       if (selectedGrade !== "all" && s.year !== selectedGrade) {
         return false;
       }
 
-      // Search filter
       if (!q) return true;
 
       const nameNorm = normalizeArabic(s.name);
@@ -154,7 +151,6 @@ export function StudentsDashboardPage({ onBack, onGoStudent }) {
     }));
 
     const ws = XLSX.utils.json_to_sheet(dataToExport);
-    // RTL sheet support
     ws["!dir"] = "rtl";
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "بيانات الأطفال");
@@ -171,117 +167,128 @@ export function StudentsDashboardPage({ onBack, onGoStudent }) {
     }
   };
 
+  const avatarColors = ["bg-[#FACC15]", "bg-[#38BDF8]", "bg-[#A3E635]", "bg-[#FB923C]", "bg-[#F472B6]"];
+  const getAvatarBg = (str = "") => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return avatarColors[Math.abs(hash) % avatarColors.length];
+  };
+
   return (
-    <Page>
-      <Navbar
-        title="Dashboard"
-        onBack={onBack}
-        right={
+    <div
+      className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col"
+      dir="rtl"
+    >
+      {/* ── Neo-Brutalist Navbar ── */}
+      <header className="sticky top-0 z-50 bg-[#FACC15] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          <button
+            onClick={onBack}
+            className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+            <span>رجوع</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <span className="bg-black text-[#FACC15] px-2.5 py-0.5 border-2 border-black font-black text-xs uppercase tracking-widest hidden sm:inline-block">
+              STUDENTS DIRECTORY
+            </span>
+            <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase">
+              لوحة التحكم الشاملة
+            </h1>
+          </div>
+
           <button
             onClick={handleExportExcel}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-sky-500/20 to-blue-600/20 hover:from-sky-500/30 hover:to-blue-600/30 text-sky-300 border border-sky-400/30 rounded-xl text-xs font-bold transition-all shadow-[0_0_15px_rgba(14,165,233,0.15)] active:scale-95"
+            className="bg-[#A3E635] text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-xs sm:text-sm uppercase flex items-center gap-1.5 transition-all cursor-pointer"
             title="تصدير إكسيل"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-4 h-4 stroke-[2.5]" />
             <span className="hidden sm:inline">تصدير إكسيل</span>
           </button>
-        }
-      />
+        </div>
+      </header>
 
-      <div className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6" dir="rtl">
-        {/* Top Summary Cards */}
+      {/* ── Main Content ── */}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
+        
+        {/* Top Summary Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Total Children Card */}
-          <Motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="relative overflow-hidden bg-slate-900/60 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-5 shadow-xl group hover:border-sky-400/30 transition-all"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-sky-500/10 rounded-full blur-2xl group-hover:bg-sky-500/20 transition-all pointer-events-none" />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold text-slate-400 mb-1">إجمالي الأطفال المسجلين</p>
-                <h3 className="text-3xl font-black text-white tracking-tight">{stats.total}</h3>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-400/20 flex items-center justify-center text-sky-400 shadow-inner">
-                <Users className="w-6 h-6" />
-              </div>
+          <div className="bg-[#FACC15] border-[3px] border-black p-5 shadow-[6px_6px_0px_#000000] flex items-center justify-between">
+            <div>
+              <p className="text-xs font-black uppercase text-black">
+                إجمالي الأطفال المسجلين
+              </p>
+              <h3 className="text-4xl font-black text-black tracking-tight mt-1">
+                {stats.total}
+              </h3>
             </div>
-          </Motion.div>
+            <div className="w-12 h-12 bg-white border-2 border-black flex items-center justify-center text-black shadow-[2px_2px_0px_#000000]">
+              <Users className="w-6 h-6 stroke-[2.5]" />
+            </div>
+          </div>
 
-          {/* Total Grades / Classes */}
-          <Motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.05 }}
-            className="relative overflow-hidden bg-slate-900/60 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-5 shadow-xl group hover:border-sky-400/30 transition-all"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all pointer-events-none" />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold text-slate-400 mb-1">عدد المراحل / الفصول</p>
-                <h3 className="text-3xl font-black text-white tracking-tight">{stats.uniqueGradesCount}</h3>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-400/20 flex items-center justify-center text-blue-400 shadow-inner">
-                <GraduationCap className="w-6 h-6" />
-              </div>
+          <div className="bg-[#38BDF8] border-[3px] border-black p-5 shadow-[6px_6px_0px_#000000] flex items-center justify-between">
+            <div>
+              <p className="text-xs font-black uppercase text-black">
+                عدد المراحل والفصول
+              </p>
+              <h3 className="text-4xl font-black text-black tracking-tight mt-1">
+                {stats.uniqueGradesCount}
+              </h3>
             </div>
-          </Motion.div>
+            <div className="w-12 h-12 bg-white border-2 border-black flex items-center justify-center text-black shadow-[2px_2px_0px_#000000]">
+              <GraduationCap className="w-6 h-6 stroke-[2.5]" />
+            </div>
+          </div>
 
-          {/* With Phone Number */}
-          <Motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="relative overflow-hidden bg-slate-900/60 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-5 shadow-xl group hover:border-sky-400/30 transition-all"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl group-hover:bg-cyan-500/20 transition-all pointer-events-none" />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-bold text-slate-400 mb-1">أرقام التليفونات المسجلة</p>
-                <h3 className="text-3xl font-black text-white tracking-tight">
-                  {stats.withPhone}{" "}
-                  <span className="text-xs text-slate-400 font-normal">
-                    ({stats.total > 0 ? Math.round((stats.withPhone / stats.total) * 100) : 0}%)
-                  </span>
-                </h3>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-400/20 flex items-center justify-center text-cyan-400 shadow-inner">
-                <Phone className="w-6 h-6" />
-              </div>
+          <div className="bg-[#A3E635] border-[3px] border-black p-5 shadow-[6px_6px_0px_#000000] flex items-center justify-between">
+            <div>
+              <p className="text-xs font-black uppercase text-black">
+                أرقام التليفونات المسجلة
+              </p>
+              <h3 className="text-4xl font-black text-black tracking-tight mt-1">
+                {stats.withPhone}{" "}
+                <span className="text-xs font-bold text-gray-800">
+                  ({stats.total > 0 ? Math.round((stats.withPhone / stats.total) * 100) : 0}%)
+                </span>
+              </h3>
             </div>
-          </Motion.div>
+            <div className="w-12 h-12 bg-white border-2 border-black flex items-center justify-center text-black shadow-[2px_2px_0px_#000000]">
+              <Phone className="w-6 h-6 stroke-[2.5]" />
+            </div>
+          </div>
         </div>
 
-        {/* Controls Section: Search + Class/Grade Filter Tabs */}
-        <div className="bg-slate-900/40 backdrop-blur-xl border border-white/[0.06] rounded-2xl p-4 sm:p-5 flex flex-col gap-4">
-          {/* Search Bar */}
+        {/* Filters & Search Control Box */}
+        <div className="bg-white border-[3px] border-black p-5 shadow-[6px_6px_0px_#000000] flex flex-col gap-4">
           <div className="relative w-full">
-            <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400">
-              <Search className="w-5 h-5" />
+            <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-black">
+              <Search className="w-5 h-5 stroke-[2.5]" />
             </div>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="بحث سريع باسم الطفل، الفصل، أو رقم التليفون..."
-              className="w-full h-12 bg-slate-950/70 border border-white/10 rounded-xl pr-12 pl-4 text-white text-sm font-semibold outline-none focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/10 transition-all placeholder:text-slate-500"
+              placeholder="ابحث بالاسم، الفصل، الكود (ID)، أو رقم التليفون..."
+              className="w-full h-12 bg-[#FDF8F0] border-2 border-black pr-12 pl-4 text-black text-sm font-bold focus:outline-none focus:bg-[#FACC15] transition-colors placeholder:text-gray-500"
             />
           </div>
 
-          {/* Grade Filters (Horizontal Scrollable Tabs) */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {/* Stage / Grade filter chips */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
             <button
               onClick={() => setSelectedGrade("all")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 border-2 border-black font-black text-xs uppercase whitespace-nowrap transition-all cursor-pointer ${
                 selectedGrade === "all"
-                  ? "bg-sky-500 text-white shadow-[0_0_15px_rgba(14,165,233,0.3)] border border-sky-400/40"
-                  : "bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800 border border-white/5"
+                  ? "bg-[#FACC15] shadow-[3px_3px_0px_#000000]"
+                  : "bg-white hover:bg-gray-100 shadow-[2px_2px_0px_#000000]"
               }`}
             >
-              <Layers className="w-3.5 h-3.5" />
-              <span>الكل ({allStudents.length})</span>
+              الكل ({allStudents.length})
             </button>
 
             {gradeOptions.map((grade) => {
@@ -291,15 +298,14 @@ export function StudentsDashboardPage({ onBack, onGoStudent }) {
                 <button
                   key={grade}
                   onClick={() => setSelectedGrade(grade)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                  className={`px-3.5 py-1.5 border-2 border-black font-black text-xs uppercase whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
                     isSelected
-                      ? "bg-sky-500 text-white shadow-[0_0_15px_rgba(14,165,233,0.3)] border border-sky-400/40"
-                      : "bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800 border border-white/5"
+                      ? "bg-[#38BDF8] shadow-[3px_3px_0px_#000000]"
+                      : "bg-white hover:bg-gray-100 shadow-[2px_2px_0px_#000000]"
                   }`}
                 >
-                  <GraduationCap className="w-3.5 h-3.5" />
                   <span>{grade}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-md ${isSelected ? "bg-white/20 text-white" : "bg-white/5 text-slate-400"}`}>
+                  <span className="bg-black text-white px-1.5 py-0.2 rounded-none text-[10px]">
                     {count}
                   </span>
                 </button>
@@ -309,170 +315,182 @@ export function StudentsDashboardPage({ onBack, onGoStudent }) {
         </div>
 
         {/* Results Info & Sort Bar */}
-        <div className="flex items-center justify-between px-2 text-xs font-semibold text-slate-400">
-          <div className="flex items-center gap-2">
-            <span>عدد النتائج:</span>
-            <span className="text-sky-400 font-bold bg-sky-500/10 border border-sky-500/20 px-2 py-0.5 rounded-md">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2 font-black text-xs uppercase">
+            <span>النتائج المعروضة:</span>
+            <span className="bg-black text-[#FACC15] px-2 py-0.5 border border-black">
               {filteredStudents.length}
             </span>
           </div>
 
-          {/* Sort Buttons */}
           <div className="flex items-center gap-2">
-            <span className="text-[11px] hidden sm:inline text-slate-500">ترتيب حسب:</span>
+            <span className="text-xs font-black uppercase text-gray-700 hidden sm:inline">
+              ترتيب حسب:
+            </span>
             <button
               onClick={() => toggleSort("name")}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold border flex items-center gap-1 transition-all ${
+              className={`px-2.5 py-1 border-2 border-black text-xs font-black uppercase flex items-center gap-1 transition-all cursor-pointer ${
                 sortBy === "name"
-                  ? "bg-sky-500/20 border-sky-400/40 text-sky-300"
-                  : "bg-slate-900/60 border-white/5 text-slate-400 hover:text-white"
+                  ? "bg-[#FACC15] shadow-[2px_2px_0px_#000000]"
+                  : "bg-white hover:bg-gray-100"
               }`}
             >
               <span>الاسم</span>
-              <ArrowUpDown className="w-3 h-3" />
+              <ArrowUpDown className="w-3 h-3 stroke-[2.5]" />
             </button>
+
             <button
               onClick={() => toggleSort("grade")}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold border flex items-center gap-1 transition-all ${
+              className={`px-2.5 py-1 border-2 border-black text-xs font-black uppercase flex items-center gap-1 transition-all cursor-pointer ${
                 sortBy === "grade"
-                  ? "bg-sky-500/20 border-sky-400/40 text-sky-300"
-                  : "bg-slate-900/60 border-white/5 text-slate-400 hover:text-white"
+                  ? "bg-[#38BDF8] shadow-[2px_2px_0px_#000000]"
+                  : "bg-white hover:bg-gray-100"
               }`}
             >
               <span>الفصل</span>
-              <ArrowUpDown className="w-3 h-3" />
+              <ArrowUpDown className="w-3 h-3 stroke-[2.5]" />
+            </button>
+
+            <button
+              onClick={() => toggleSort("id")}
+              className={`px-2.5 py-1 border-2 border-black text-xs font-black uppercase flex items-center gap-1 transition-all cursor-pointer ${
+                sortBy === "id"
+                  ? "bg-[#A3E635] shadow-[2px_2px_0px_#000000]"
+                  : "bg-white hover:bg-gray-100"
+              }`}
+            >
+              <span>الكود</span>
+              <ArrowUpDown className="w-3 h-3 stroke-[2.5]" />
             </button>
           </div>
         </div>
 
-        {/* Dashboard Data Display (Responsive Table & Card Matrix) */}
-        <div className="w-full pb-16">
-          {filteredStudents.length === 0 ? (
-            <div className="bg-slate-900/30 border border-white/5 rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-3">
-              <Users className="w-10 h-10 text-slate-600 mb-1" />
-              <p className="text-slate-400 font-bold text-sm">مفيش أي طفل مطابق للبحث الحالي</p>
-              <p className="text-slate-600 text-xs">جرب تغير الفصل أو تبحث باسم تاني</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-              <AnimatePresence>
-                {filteredStudents.map((student, idx) => (
-                  <Motion.div
-                    key={student.qrId}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.2, delay: Math.min(idx * 0.02, 0.3) }}
-                    className="relative bg-slate-900/70 backdrop-blur-xl border border-white/[0.08] hover:border-sky-400/30 rounded-2xl p-4 shadow-lg hover:shadow-[0_0_20px_rgba(14,165,233,0.1)] transition-all flex flex-col justify-between gap-3 group"
-                  >
-                    {/* Top Row: Name, ID, Avatar */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        {/* Avatar */}
-                        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-sky-500/20 to-blue-600/20 border border-sky-400/30 flex items-center justify-center text-white font-black text-base shrink-0 overflow-hidden shadow-inner">
-                          {student.photo ? (
-                            <img
-                              src={student.photo}
-                              alt={student.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span>{student.name ? student.name.charAt(0) : "؟"}</span>
-                          )}
-                        </div>
-
-                        {/* Name + Code */}
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-bold text-white tracking-tight truncate group-hover:text-sky-300 transition-colors">
-                            {student.name}
-                          </h4>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[10px] font-mono font-bold text-slate-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/5">
-                              ID: {student.qrId}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Go to student profile button */}
-                      <button
-                        onClick={() => onGoStudent(student.qrId)}
-                        className="p-2 rounded-xl bg-white/5 hover:bg-sky-500 hover:text-white text-slate-400 border border-white/5 transition-all focus:outline-none"
-                        title="فتح البروفايل الكامل"
+        {/* Student Cards Grid */}
+        {filteredStudents.length === 0 ? (
+          <div className="bg-white border-[3px] border-black p-12 text-center flex flex-col items-center justify-center gap-2 shadow-[6px_6px_0px_#000000]">
+            <Users className="w-12 h-12 stroke-[2] text-gray-400 mb-2" />
+            <p className="font-black text-lg text-black">
+              لا توجد نتائج مطابقة لبحثك
+            </p>
+            <p className="text-xs font-bold text-gray-600">
+              تأكد من كتابة الاسم أو الكود بشكل صحيح
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-16">
+            {filteredStudents.map((student) => {
+              const avatarBg = getAvatarBg(student.name || student.qrId);
+              return (
+                <div
+                  key={student.qrId}
+                  className="bg-white border-[3px] border-black p-4 shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none transition-all flex flex-col justify-between gap-4 group"
+                >
+                  {/* Top Row: Avatar, Name, ID, Open Profile */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div
+                        className={`w-12 h-12 border-2 border-black flex items-center justify-center font-black text-lg text-black shrink-0 overflow-hidden shadow-[2px_2px_0px_#000000] ${avatarBg}`}
                       >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    {/* Middle Row: Class / Grade Pill */}
-                    <div className="flex items-center gap-2 pt-1 border-t border-white/[0.04]">
-                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-bold">
-                        <GraduationCap className="w-3.5 h-3.5 shrink-0" />
-                        <span>{student.year || "غير محدد"}</span>
-                      </div>
-                    </div>
-
-                    {/* Bottom Row: Phone Number with Actions */}
-                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/[0.04]">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-300 min-w-0">
-                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        {student.phone ? (
-                          <span className="font-mono font-bold tracking-wider truncate" dir="ltr">
-                            {student.phone}
-                          </span>
+                        {student.image ? (
+                          <img
+                            src={student.image}
+                            alt={student.name}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
-                          <span className="text-slate-500 text-[11px] italic">مفيش رقم مسجل</span>
+                          <span>{student.name ? student.name.charAt(0) : "؟"}</span>
                         )}
                       </div>
 
-                      {/* Action Buttons for Phone */}
-                      {student.phone && (
-                        <div className="flex items-center gap-1">
-                          {/* Copy Phone */}
-                          <button
-                            type="button"
-                            onClick={(e) => handleCopyPhone(student.phone, e)}
-                            className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all text-xs"
-                            title="نسخ رقم التليفون"
-                          >
-                            {copiedPhone === student.phone ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-400" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5" />
-                            )}
-                          </button>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-base font-black text-black truncate">
+                          {student.name}
+                        </h4>
+                        <span className="inline-block mt-0.5 bg-black text-white font-mono text-[10px] font-bold px-1.5 py-0.2">
+                          ID: {student.qrId}
+                        </span>
+                      </div>
+                    </div>
 
-                          {/* Direct Call */}
-                          <a
-                            href={`tel:${student.phone}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500 hover:text-white text-emerald-400 border border-emerald-500/20 transition-all text-xs flex items-center justify-center"
-                            title="اتصال بالهاتف"
-                          >
-                            <PhoneCall className="w-3.5 h-3.5" />
-                          </a>
+                    <button
+                      onClick={() => onGoStudent(student.qrId)}
+                      className="w-9 h-9 bg-[#FACC15] hover:bg-black hover:text-white text-black border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_#000000] transition-colors cursor-pointer"
+                      title="فتح البروفايل"
+                    >
+                      <ExternalLink className="w-4 h-4 stroke-[2.5]" />
+                    </button>
+                  </div>
 
-                          {/* WhatsApp Chat */}
-                          <a
-                            href={`https://wa.me/2${student.phone.replace(/^0+/, "")}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="p-1.5 rounded-lg bg-emerald-600/10 hover:bg-emerald-600 hover:text-white text-emerald-300 border border-emerald-600/20 transition-all text-xs flex items-center justify-center"
-                            title="واتساب"
-                          >
-                            <MessageCircle className="w-3.5 h-3.5" />
-                          </a>
-                        </div>
+                  {/* Stage / Grade Tag */}
+                  <div className="pt-2 border-t-2 border-black flex items-center justify-between">
+                    <span className="bg-[#38BDF8] border border-black px-2 py-0.5 font-black text-xs uppercase flex items-center gap-1">
+                      <GraduationCap className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>{student.year || "غير محدد"}</span>
+                    </span>
+
+                    {student.address && (
+                      <span className="text-[11px] font-bold text-gray-600 truncate max-w-[150px]">
+                        📍 {student.address}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Phone Actions */}
+                  <div className="pt-2 border-t-2 border-black flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-black min-w-0">
+                      <Phone className="w-3.5 h-3.5 stroke-[2.5] text-black shrink-0" />
+                      {student.phone ? (
+                        <span className="font-mono font-black tracking-wider truncate" dir="ltr">
+                          {student.phone}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-[11px]">بدون هاتف</span>
                       )}
                     </div>
-                  </Motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          )}
-        </div>
-      </div>
-    </Page>
+
+                    {student.phone && (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={(e) => handleCopyPhone(student.phone, e)}
+                          className="w-7 h-7 bg-white hover:bg-gray-100 border border-black flex items-center justify-center text-black transition-colors"
+                          title="نسخ الرقم"
+                        >
+                          {copiedPhone === student.phone ? (
+                            <Check className="w-3.5 h-3.5 stroke-[3] text-green-700" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5 stroke-[2.5]" />
+                          )}
+                        </button>
+
+                        <a
+                          href={`tel:${student.phone}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-7 h-7 bg-[#A3E635] hover:bg-black hover:text-white text-black border border-black flex items-center justify-center transition-colors"
+                          title="اتصال هاتفي"
+                        >
+                          <PhoneCall className="w-3.5 h-3.5 stroke-[2.5]" />
+                        </a>
+
+                        <a
+                          href={`https://wa.me/2${student.phone.replace(/^0+/, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-7 h-7 bg-[#A3E635] hover:bg-black hover:text-white text-black border border-black flex items-center justify-center transition-colors"
+                          title="محادثة واتساب"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5 stroke-[2.5]" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
+    </div>
   );
 }

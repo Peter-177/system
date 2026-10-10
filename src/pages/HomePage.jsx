@@ -1,6 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Page, ModernNavbar } from "../components/UI";
-import { motion } from "framer-motion";
+import React, { useState } from "react";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   ClipboardList,
@@ -9,51 +8,120 @@ import {
   BookOpen,
   Settings,
   Gamepad2,
+  Waves,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  AlertTriangle,
 } from "lucide-react";
+import { settingsDB } from "../data/storage";
+import { useT } from "../hooks/useT";
+import { useAppContext } from "../context/AppContext";
 
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { SummerSection } from "./SummerPage";
+const CARD_THEMES = {
+  summer: {
+    bgTag: "bg-[#A3E635]",
+    iconBg: "bg-[#A3E635]",
+    accent: "text-black",
+  },
+  search: {
+    bgTag: "bg-[#38BDF8]",
+    iconBg: "bg-[#38BDF8]",
+    accent: "text-black",
+  },
+  attendance: {
+    bgTag: "bg-[#FACC15]",
+    iconBg: "bg-[#FACC15]",
+    accent: "text-black",
+  },
+  visits: {
+    bgTag: "bg-[#FB923C]",
+    iconBg: "bg-[#FB923C]",
+    accent: "text-black",
+  },
+  birthday: {
+    bgTag: "bg-[#F472B6]",
+    iconBg: "bg-[#F472B6]",
+    accent: "text-black",
+  },
+  classes: {
+    bgTag: "bg-[#38BDF8]",
+    iconBg: "bg-[#38BDF8]",
+    accent: "text-black",
+  },
+  admin: {
+    bgTag: "bg-[#FACC15]",
+    iconBg: "bg-[#FACC15]",
+    accent: "text-black",
+  },
+  game: {
+    bgTag: "bg-[#A3E635]",
+    iconBg: "bg-[#A3E635]",
+    accent: "text-black",
+  },
+};
 
-gsap.registerPlugin(ScrollTrigger);
-ScrollTrigger.config({ ignoreMobileResize: true });
+const BrutalistCard = ({ card, index, t, lang }) => {
+  const theme = CARD_THEMES[card.id] || CARD_THEMES.search;
+  const ChevronIcon = lang === "ar" ? ChevronLeft : ChevronRight;
 
-const TechHeroCard = ({ card, index }) => {
   return (
-    <motion.button
+    <Motion.button
       onClick={card.onClick}
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        delay: index * 0.1,
-        duration: 0.8,
-        ease: [0.16, 1, 0.3, 1],
+        delay: index * 0.05,
+        duration: 0.3,
       }}
-      whileHover={{ y: -10, transition: { duration: 0.4 } }}
-      whileTap={{ scale: 0.97 }}
-      className="tech-card group flex flex-col items-start text-right gap-8 relative overflow-hidden cursor-pointer"
+      className={`bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] hover:shadow-[0px_0px_0px_#000000] hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none active:translate-x-[5px] active:translate-y-[5px] p-6 ${lang === 'ar' ? 'text-right' : 'text-left'} flex flex-col justify-between gap-6 transition-all duration-150 group cursor-pointer w-full select-none rounded-none`}
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/5 blur-3xl rounded-full -mr-16 -mt-16 group-hover:bg-sky-500/10 transition-colors"></div>
-
-      <div className="w-16 h-16 rounded-2xl bg-slate-950 border border-white/5 flex items-center justify-center text-sky-400 group-hover:text-sky-300 group-hover:scale-110 group-hover:border-sky-500/30 transition-all duration-500 shadow-2xl">
-        {React.cloneElement(card.icon, {
-          className: "w-8 h-8",
-          strokeWidth: 1.5,
-        })}
-      </div>
-
-      <div className="space-y-2 relative z-10">
-        <h3 className="text-2xl font-black text-sky-50 tracking-tighter group-hover:text-sky-400 transition-colors">
-          {card.label}
-        </h3>
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] group-hover:text-sky-500/60 transition-colors">
+      {/* Top Row: Category Tag */}
+      <div className="w-full flex items-center justify-between">
+        <span
+          className={`inline-block ${theme.bgTag} text-black border-2 border-black px-2.5 py-0.5 text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_#000000]`}
+        >
           {card.subLabel}
-        </p>
+        </span>
+        <span className="font-mono text-xs font-black text-black/40">
+          0{index + 1}
+        </span>
       </div>
 
-      {/* Hover Line */}
-      <div className="absolute bottom-0 right-0 w-0 h-1 bg-sky-500 group-hover:w-full transition-all duration-700"></div>
-    </motion.button>
+      {/* Middle: Icon & Title */}
+      <div className="flex items-center gap-4">
+        {/* Icon Square */}
+        <div
+          className={`w-14 h-14 sm:w-16 sm:h-16 ${theme.iconBg} border-[3px] border-black shadow-[3px_3px_0px_#000000] flex items-center justify-center text-black shrink-0`}
+        >
+          {React.cloneElement(card.icon, {
+            className: "w-7 h-7 sm:w-8 sm:h-8 stroke-[2.5]",
+          })}
+        </div>
+
+        {/* Labels */}
+        <div className="flex-1 min-w-0">
+          <h3 className="text-xl sm:text-2xl font-black text-black tracking-tight group-hover:underline underline-offset-4 decoration-2">
+            {card.label}
+          </h3>
+          <p className="text-xs font-bold text-black/60 uppercase tracking-widest mt-0.5">
+            {card.subLabel}
+          </p>
+        </div>
+      </div>
+
+      {/* Bottom Action Row */}
+      <div className="pt-3 border-t-2 border-black flex items-center justify-between w-full">
+        <span className="text-xs font-black uppercase text-black/60 tracking-wider">
+          {t("open")}
+        </span>
+        <div className="bg-[#FACC15] group-hover:bg-[#A3E635] text-black border-2 border-black px-3 py-1 text-xs font-black uppercase shadow-[2px_2px_0px_#000000] flex items-center gap-1 transition-colors">
+          <span>{t("enter")}</span>
+          <ChevronIcon className="w-4 h-4 stroke-[3]" />
+        </div>
+      </div>
+    </Motion.button>
   );
 };
 
@@ -61,7 +129,6 @@ export function HomePage({
   currentUser,
   onGoSearch,
   onGoSummer,
-  onGoCheck,
   onGoAttendance,
   onGoVisits,
   onGoBirthday,
@@ -69,293 +136,232 @@ export function HomePage({
   onGoAdmin,
   onGoGame,
   onLogout,
-  onGoSearch_Summer,
-  onGoAttendance_Summer,
-  onGoGame_Summer,
-  onGoCheck_Summer,
 }) {
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const settings = settingsDB.get();
+  const t = useT();
+  const { lang } = useAppContext();
 
   const cards = [
     {
-      label: "بحث ",
-      subLabel: "Search",
+      id: "summer",
+      label: t("cardSummerLabel"),
+      subLabel: t("cardSummerSub"),
+      icon: <Waves />,
+      onClick: onGoSummer,
+      show: true,
+    },
+    {
+      id: "search",
+      label: t("cardSearchLabel"),
+      subLabel: t("cardSearchSub"),
       icon: <Search />,
       onClick: onGoSearch,
       show: true,
     },
-
     {
-      label: "تسجيل الحضور",
-      subLabel: "Attendance",
+      id: "attendance",
+      label: t("cardAttendanceLabel"),
+      subLabel: t("cardAttendanceSub"),
       icon: <ClipboardList />,
       onClick: onGoAttendance,
       show: currentUser?.role === "admin",
     },
     {
-      label: " زيارات",
-      subLabel: "Visits",
+      id: "visits",
+      label: t("cardVisitsLabel"),
+      subLabel: t("cardVisitsSub"),
       icon: <Home />,
       onClick: onGoVisits,
       show: true,
     },
     {
-      label: "أعياد الميلاد",
-      subLabel: "Celebrations",
+      id: "birthday",
+      label: t("cardBirthdayLabel"),
+      subLabel: t("cardBirthdaySub"),
       icon: <Gift />,
       onClick: onGoBirthday,
       show: true,
     },
     {
-      label: "الفصول",
-      subLabel: "Classes & Stages",
+      id: "classes",
+      label: t("cardClassesLabel"),
+      subLabel: t("cardClassesSub"),
       icon: <BookOpen />,
       onClick: onGoClasses,
       show: currentUser?.role !== "admin",
     },
     {
-      label: "لوحة التحكم",
-      subLabel: "Admin Dashboard",
+      id: "admin",
+      label: t("cardAdminLabel"),
+      subLabel: t("cardAdminSub"),
       icon: <Settings />,
       onClick: onGoAdmin,
       show: currentUser?.role === "admin",
     },
-
     {
-      label: "صفحة الألعاب",
-      subLabel: "Game Arena",
+      id: "game",
+      label: t("cardGameLabel"),
+      subLabel: t("cardGameSub"),
       icon: <Gamepad2 />,
       onClick: onGoGame,
       show: true,
     },
   ].filter((c) => c.show);
 
-
-  const [isInsideSummer, setIsInsideSummer] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const portal = document.getElementById("summer-portal");
-      if (!portal) return;
-      const rect = portal.getBoundingClientRect();
-      // When summer portal is active / at or near top
-      if (rect.top <= 120) {
-        setIsInsideSummer(true);
-      } else {
-        setIsInsideSummer(false);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Memoize the scroll handler to prevent PortalDive component re-renders/GSAP resets
-  const handleGoHome = React.useCallback(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
-
   return (
-    <Page noScrollLock={true} noFlex={true} noMinHeight={true}>
-      <div className="relative z-10 w-full">
-        <ModernNavbar
-          currentUser={currentUser}
-          onLogout={onLogout}
-          onGoHome={handleGoHome}
-          onGoClasses={onGoClasses}
-          onGoSearch={onGoSearch}
-          onGoAdmin={onGoAdmin}
-          onGoSummer={onGoSummer}
-          activePage="home"
-          hidden={isInsideSummer}
-        />
-
-        <main className="px-8 sm:px-16 lg:px-24 pt-48 pb-40 max-w-7xl mx-auto w-full flex flex-col justify-center min-h-[80vh]">
-          <header
-            className="mb-32 flex flex-col items-start relative"
-            dir="rtl"
-          >
-            {/* Background Accent */}
-            <div className="absolute -right-20 -top-20 w-96 h-96 bg-sky-500/5 blur-[120px] rounded-full"></div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-              className="space-y-8 relative z-10"
-            >
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-sky-50 tracking-[-0.05em] leading-tight text-balance">
-                مدارس أحد <br />
-                <span className="gradient-blue italic text-7xl sm:text-8xl lg:text-[10rem]">المحبة</span>
-              </h1>
-
-              <div className="pt-10 flex flex-col items-start gap-4">
-
-              </div>
-            </motion.div>
-          </header>
-
-          <div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"
-            dir="rtl"
-          >
-            {cards.map((card, idx) => (
-              <TechHeroCard key={idx} card={card} index={idx} />
-            ))}
-          </div>
-
-          <div className="mt-40 flex flex-col items-center gap-12">
-          </div>
-        </main>
-
-        <PortalDive
-          onGoHome={handleGoHome}
-          onGoSearch={onGoSearch_Summer}
-          onGoAttendance={onGoAttendance_Summer}
-          onGoGame={onGoGame_Summer}
-          onGoCheck={onGoCheck_Summer || onGoCheck}
-          currentUser={currentUser}
-        />
-      </div>
-    </Page>
-  );
-}
-
-function PortalDive({ onGoHome, onGoSearch, onGoAttendance, onGoGame, onGoCheck, currentUser }) {
-  const portalSectionRef = useRef(null);
-  const portalContentRef = useRef(null);
-  const portalTextRef = useRef(null);
-
-  useEffect(() => {
-    let ctx;
-    const timer = setTimeout(() => {
-      ctx = gsap.context(() => {
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: portalSectionRef.current,
-            start: "top top",
-            end: "+=2200",
-            scrub: 1.5,
-            pin: true,
-            invalidateOnRefresh: true,
-            pinSpacing: true,
-          },
-        });
-
-        tl.addLabel("start", 0)
-          .addLabel("mid", 0.4)
-          .addLabel("interactive", 0.9);
-
-        // 1. Text fades out and floats up
-        tl.to(
-          portalTextRef.current,
-          {
-            opacity: 0,
-            y: -150,
-            duration: 0.1,
-          },
-          "start",
-        );
-
-        // 2. The "Window" expands & Background scales down
-        tl.fromTo(
-          portalContentRef.current,
-          {
-            clipPath: "inset(35% 35% 35% 35% round 5rem)",
-            opacity: 0.5,
-          },
-          {
-            clipPath: "inset(0% 0% 0% 0% round 0rem)",
-            opacity: 1,
-            duration: 1,
-            ease: "power2.inOut",
-          },
-          "start",
-        );
-
-        tl.fromTo(
-          ".summer-bg-layer",
-          { scale: 1.25 },
-          { scale: 1, duration: 1, ease: "power2.inOut" },
-          "start",
-        );
-
-        // 3. New Unified Summer Content Reveal (Sync with scroll)
-        tl.fromTo(
-          ".summer-stadium-content",
-          { opacity: 0, y: 120 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.7,
-            ease: "power2.out",
-          },
-          "mid",
-        );
-
-        // 4. Hide Global Dashboard UI (Navbar)
-        tl.to(
-          ".modern-navbar-container",
-          {
-            autoAlpha: 0,
-            y: -150,
-            duration: 0.3,
-            ease: "power2.in",
-          },
-          "start",
-        );
-
-        tl.set(portalContentRef.current, { pointerEvents: "auto" }, "interactive");
-
-        ScrollTrigger.refresh();
-      }, /* no scope */);
-    }, 150);
-
-    return () => {
-      clearTimeout(timer);
-      if (ctx) ctx.revert();
-    };
-  }, [onGoHome]);
-
-  return (
-    <section
-      id="summer-portal"
-      ref={portalSectionRef}
-      className="w-full h-screen relative flex items-center justify-center overflow-hidden bg-[#022c22]"
+    <div
+      className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col"
+      dir={lang === "ar" ? "rtl" : "ltr"}
     >
-      {/* 1. The Masked Page Content (Revealed gradually) */}
-      <div
-        ref={portalContentRef}
-        className="absolute inset-0 z-10 pointer-events-none overflow-hidden bg-[#022c22]"
-        style={{
-          clipPath: "inset(35% 35% 35% 35% round 5rem)",
-          willChange: "clip-path, opacity",
-        }}
-      >
-        <SummerSection
-          onGoHome={onGoHome}
-          onGoSearch={onGoSearch}
-          onGoAttendance={onGoAttendance}
-          onGoGame={onGoGame}
-          onGoCheck={onGoCheck}
-          currentUser={currentUser}
-        />
-      </div>
+      {/* ── Neo-Brutalist Navbar ── */}
+      <header className="sticky top-0 z-50 bg-[#FACC15] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          {/* App Brand / Logo */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 bg-white border-2 sm:border-[3px] border-black flex items-center justify-center shadow-[2px_2px_0px_#000000] overflow-hidden">
+              {settings.icon?.startsWith("data:image") ? (
+                <img
+                  alt="App logo"
+                  src={settings.icon}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-xl sm:text-2xl font-black">
+                  {settings.icon || "⛪"}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col">
+              <span className="font-black text-lg sm:text-xl text-black tracking-tight uppercase leading-none">
+                {t("appName")}
+              </span>
+              <span className="text-[10px] font-black uppercase text-black/60 tracking-wider">
+                {t("appTagline")}
+              </span>
+            </div>
+          </div>
 
-      {/* 2. Hero Text (Floating outside/above the window) */}
-      <div
-        ref={portalTextRef}
-        className="absolute z-20 text-center px-6 pointer-events-none flex flex-col items-center"
-      >
-        <h2 className="text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-2xl">
-          <span className="text-sky-300 italic">النادي الصيفي</span>
-        </h2>
-        <div className="mt-8 flex flex-col items-center gap-4">
-          <div className="w-px h-12 bg-gradient-to-b from-sky-400 to-transparent"></div>
+          {/* User badge & Logout button */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* User Role Tag */}
+            <div className="bg-white text-black border-2 border-black px-3 py-1 font-black text-xs uppercase shadow-[2px_2px_0px_#000000] hidden sm:flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#A3E635] border border-black inline-block"></span>
+              <span>{currentUser?.role ?? t("homeServant")}</span>
+              {currentUser?.name && (
+                <span className="text-black/60">({currentUser.name})</span>
+              )}
+            </div>
+
+            {/* Logout Button */}
+            <button
+              onClick={() => setShowLogoutConfirm(true)}
+              className="bg-[#EF4444] text-white border-2 border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-[0px_0px_0px_#000000] hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] font-black text-xs sm:text-sm uppercase flex items-center gap-1.5 transition-all cursor-pointer rounded-none"
+              aria-label={t("logout")}
+            >
+              <LogOut className="w-4 h-4 stroke-[2.5]" />
+              <span>{t("logout")}</span>
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* 3. Subtle Ambient Vignette (Removed) */}
-    </section>
+      {/* ── Main Content Container ── */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-12 flex flex-col gap-8 sm:gap-12">
+        {/* ── Hero Banner ── */}
+        <section className="bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+          <div className="space-y-3 z-10">
+            <div className="inline-flex items-center gap-2 bg-[#FEF08A] text-black border-2 border-black px-3 py-1 text-xs font-black uppercase shadow-[2px_2px_0px_#000000]">
+              <Sparkles className="w-3.5 h-3.5 stroke-[3]" />
+              <span>{t("homeWelcome")} {currentUser?.name || t("homeServant")}</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-black tracking-tight leading-none">
+              {t("homeTitle")}{" "}
+              <span className="bg-[#38BDF8] text-black border-[3px] border-black px-3 py-0.5 inline-block shadow-[4px_4px_0px_#000000] -rotate-1">
+                {t("homeSubTitle")}
+              </span>
+            </h1>
+            <p className="text-sm sm:text-base font-bold text-black/70 max-w-lg">
+              {t("homeSubtext")}
+            </p>
+          </div>
+
+          {/* Saturated Accent Tag Box */}
+          <div className="bg-[#FACC15] border-[3px] border-black shadow-[4px_4px_0px_#000000] p-4 text-center shrink-0 self-stretch md:self-auto flex flex-col items-center justify-center">
+            <span className="text-2xl sm:text-3xl font-black text-black">
+              {cards.length}
+            </span>
+            <span className="text-xs font-black uppercase text-black/80 tracking-wider">
+              {t("homeActiveSections")}
+            </span>
+          </div>
+        </section>
+
+        {/* ── Cards Grid ── */}
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          {cards.map((card, idx) => (
+            <BrutalistCard key={card.id} card={card} index={idx} t={t} lang={lang} />
+          ))}
+        </section>
+      </main>
+
+      {/* ── Footer ── */}
+      <footer className="border-t-[3px] border-black bg-white px-4 py-4 text-center">
+        <p className="font-black text-xs sm:text-sm uppercase text-black/70 tracking-wider">
+          {t("homeFooter")}
+        </p>
+      </footer>
+
+      {/* ── Logout Confirmation Modal (Neo-Brutalist) ── */}
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <div
+            className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 p-4"
+            dir={lang === "ar" ? "rtl" : "ltr"}
+          >
+            <Motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm bg-white border-[3px] border-black shadow-[8px_8px_0px_#000000] p-6 sm:p-8 text-center flex flex-col items-center gap-5"
+            >
+              <div className="w-16 h-16 bg-[#FACC15] border-[3px] border-black shadow-[4px_4px_0px_#000000] flex items-center justify-center text-black">
+                <AlertTriangle className="w-8 h-8 stroke-[3]" />
+              </div>
+
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black text-black uppercase tracking-tight">
+                  {t("logoutTitle")}
+                </h3>
+                <p className="text-sm font-bold text-black/70">
+                  {t("logoutConfirmText")}
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 w-full mt-2">
+                <button
+                  onClick={() => {
+                    setShowLogoutConfirm(false);
+                    onLogout();
+                  }}
+                  className="flex-1 bg-[#EF4444] text-white border-2 border-black py-3 px-4 font-black uppercase text-sm shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
+                >
+                  {t("logoutConfirmBtn")}
+                </button>
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 bg-white text-black border-2 border-black py-3 px-4 font-black uppercase text-sm shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
+                >
+                  {t("cancel")}
+                </button>
+              </div>
+            </Motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
+
+
+

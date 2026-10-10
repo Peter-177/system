@@ -1,15 +1,9 @@
 import { useState } from "react";
 import { attendanceDB } from "../data/storage";
-import {
-  Page,
-  Navbar,
-  StudentMiniCard,
-  Toast,
-  DeleteBtn,
-} from "../components/UI";
+import { Toast } from "../components/UI";
 import { useToast } from "../hooks/useToast";
-import { motion, AnimatePresence } from "framer-motion";
-import { CalendarDays, Clock, ClipboardList } from "lucide-react";
+import { motion as Motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, CalendarDays, Clock, Trash2, CheckCircle2 } from "lucide-react";
 
 export function PersonalAttendancePage({ person, onBack }) {
   const [log, setLog] = useState(() => attendanceDB.get(person?.qrId));
@@ -17,157 +11,150 @@ export function PersonalAttendancePage({ person, onBack }) {
 
   const handleRemove = (eid) => {
     attendanceDB.remove(person.qrId, eid);
-    // Filter local state directly — don't re-read from storage
-    // (avoids stale-reference or recordId mismatch issues)
-    setLog(prev => prev.filter(e => (e.recordId || e.id) !== eid));
-    toast.show("🗑️ اتمسح خلاص");
+    setLog((prev) => prev.filter((e) => (e.recordId || e.id) !== eid));
+    toast.show("🗑️ تم حذف السجل بنجاح");
   };
 
   if (!person) return null;
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.1 } },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, x: -20 },
-    show: {
-      opacity: 1,
-      x: 0,
-      transition: { type: "spring", stiffness: 300, damping: 24 },
-    },
+  const avatarColors = ["bg-[#FACC15]", "bg-[#38BDF8]", "bg-[#A3E635]", "bg-[#FB923C]", "bg-[#F472B6]"];
+  const getAvatarBg = (str = "") => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return avatarColors[Math.abs(hash) % avatarColors.length];
   };
 
   return (
-    <Page>
+    <div className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col" dir="rtl">
       <Toast msg={toast.msg} />
-      <Navbar onBack={onBack} title="سجل حضور الطفل" />
 
-      <div
-        className="flex-1 w-full max-w-4xl mx-auto px-6 py-8 flex flex-col gap-8"
-        dir="rtl"
-      >
-        {/* Profile Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="relative bg-gradient-to-br from-[#0F2545] to-[#0A1931] backdrop-blur-3xl border border-[#1A3D63]/40 rounded-[2.5rem] shadow-[0_30px_70px_rgba(0,0,0,0.5)] p-8 overflow-hidden group"
-        >
-          {/* Spatial background elements */}
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#10B981]/10 rounded-full blur-[80px] pointer-events-none transition-all duration-1000 group-hover:bg-[#10B981]/20"></div>
-          <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-[#4A7FA7]/10 rounded-full blur-[80px] pointer-events-none transition-all duration-1000 group-hover:bg-[#4A7FA7]/20"></div>
+      {/* ── Neo-Brutalist Navbar ── */}
+      <header className="sticky top-0 z-50 bg-[#FACC15] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <button
+            onClick={onBack}
+            className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+            <span>رجوع</span>
+          </button>
 
-          <div className="flex flex-col sm:flex-row items-center gap-8 relative z-10">
-            <div className="flex-1">
-              <StudentMiniCard person={person} hidePoints />
-            </div>
-
-            {/* Relocated Stats Card */}
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="flex flex-col items-center justify-center bg-[#0A1931]/60 backdrop-blur-md px-10 py-5 rounded-[2rem] border border-[#10B981]/30 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]"
-            >
-              <div className="text-5xl font-black text-[#10B981] drop-shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all duration-500">
-                {log.length}
-              </div>
-              <div className="text-[10px] font-black text-[#B3CFE5]/40 uppercase tracking-[0.3em] mt-2 bg-[#10B981]/10 px-4 py-1.5 rounded-full border border-[#10B981]/20">
-                مرات الحضور
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        {/* Log Section */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2 px-2">
-            <ClipboardList className="w-5 h-5 text-[#B3CFE5]/40" />
-            <h3 className="text-[10px] font-black tracking-[0.3em] text-[#B3CFE5]/40 uppercase px-3 py-1 bg-[#1A3D63]/20 rounded-full border border-[#1A3D63]/10">
-              تفاصيل السجل
-            </h3>
-            <div className="h-px bg-[#1A3D63]/20 flex-1 ml-4"></div>
+          <div className="flex items-center gap-2">
+            <span className="bg-black text-[#FACC15] px-2.5 py-0.5 border-2 border-black font-black text-xs uppercase tracking-widest hidden sm:inline-block">
+              PROFILE LOG
+            </span>
+            <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase">
+              سجل حضور الطفل
+            </h1>
           </div>
 
-          <AnimatePresence mode="popLayout">
-            {log.length > 0 ? (
-              <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="show"
-                className="grid grid-cols-1 md:grid-cols-2 gap-4"
-              >
-                {log.map((entry, i) => (
-                  <motion.div
-                    variants={itemVariants}
-                    exit={{
-                      opacity: 0,
-                      scale: 0.9,
-                      transition: { duration: 0.2 },
-                    }}
-                    layout
-                    key={entry.recordId || entry.timestamp || i}
-                    className={`group relative flex justify-between items-center p-5 rounded-[2.5rem] border transition-all duration-300 ${
-                      i === 0
-                        ? "bg-gradient-to-l from-[#10B981]/10 to-[#0F2545] border-[#10B981]/30 shadow-2xl"
-                        : "bg-[#0F2545] border-[#1A3D63]/50 hover:border-[#4A7FA7]/40 shadow-xl"
-                    }`}
-                  >
-                    {/* Subtle glow for newest entry */}
-                    {i === 0 && (
-                      <div className="absolute inset-0 bg-success/5 animate-pulse rounded-[1.5rem] pointer-events-none"></div>
-                    )}
-
-                    <div className="flex items-center gap-4 relative z-10">
-                      <div
-                        className={`w-14 h-14 rounded-[1.25rem] flex items-center justify-center shadow-inner transition-all duration-300 ${i === 0 ? "bg-[#10B981]/20 text-[#10B981] group-hover:rotate-6" : "bg-[#1A3D63] text-[#B3CFE5]"}`}
-                      >
-                        <CalendarDays className="w-7 h-7" />
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <span
-                          className={`font-black text-xl lg:text-2xl tracking-tighter transition-colors duration-300 ${i === 0 ? "text-[#F6FAFD]" : "text-[#F6FAFD]/90 group-hover:text-white"}`}
-                        >
-                          {entry.date}
-                        </span>
-                        {i === 0 && (
-                          <span className="text-[10px] font-black text-[#10B981] uppercase tracking-[0.2em] bg-[#10B981]/10 px-3 py-1 rounded-full inline-block border border-[#10B981]/20">
-                            أحدث حضور
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-6 relative z-10">
-                      <div className="flex items-center gap-2 font-black text-xs text-[#B3CFE5] bg-[#1A3D63]/50 px-4 py-2.5 rounded-[1.25rem] border border-[#1A3D63]/40 shadow-inner group-hover:bg-[#1A3D63]/70 transition-all">
-                        <Clock className="w-4 h-4 text-[#10B981]/60" />
-                        {entry.time}
-                      </div>
-
-                      <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <DeleteBtn onClick={() => handleRemove(entry.recordId || entry.id)} />
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center justify-center py-20 bg-base-100/40 backdrop-blur-sm rounded-[2rem] border border-dashed border-base-300 gap-4"
-              >
-                <div className="w-20 h-20 rounded-full bg-base-200/50 flex items-center justify-center">
-                  <ClipboardList className="w-10 h-10 text-base-content/20" />
-                </div>
-                <span className="text-lg font-medium tracking-wide text-base-content/40">
-                  مفيش سجل حضور لسه
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className="w-10" />
         </div>
-      </div>
-    </Page>
+      </header>
+
+      {/* ── Main Content ── */}
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
+        
+        {/* Profile Card & Stats */}
+        <div className="bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className={`w-16 h-16 sm:w-20 sm:h-20 border-[3px] border-black shadow-[3px_3px_0px_#000000] ${getAvatarBg(person.name)} flex items-center justify-center overflow-hidden shrink-0`}>
+              {person.image ? (
+                <img src={person.image} alt={person.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-black text-3xl text-black">
+                  {(person.name || "م")?.[0]?.toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col min-w-0 text-right">
+              <h2 className="text-2xl sm:text-3xl font-black text-black tracking-tight truncate">
+                {person.name}
+              </h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="bg-black text-white font-mono font-black text-xs px-2 py-0.5 border border-black">
+                  #{person.qrId}
+                </span>
+                {person.year && (
+                  <span className="bg-[#FEF08A] text-black font-black text-xs px-2 py-0.5 border border-black">
+                    {person.year}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Box */}
+          <div className="bg-[#A3E635] border-[3px] border-black shadow-[4px_4px_0px_#000000] px-8 py-4 text-center shrink-0">
+            <span className="text-4xl sm:text-5xl font-black text-black tabular-nums block leading-tight">
+              {log.length}
+            </span>
+            <span className="text-xs font-black uppercase tracking-widest text-black/70">
+              مرات الحضور
+            </span>
+          </div>
+        </div>
+
+        {/* Attendance Log List */}
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between items-center px-1">
+            <h3 className="text-lg font-black text-black uppercase">
+              تفاصيل أيام الحضور
+            </h3>
+            <span className="bg-black text-white px-3 py-1 font-black text-xs uppercase border border-black">
+              {log.length} جلسة
+            </span>
+          </div>
+
+          {log.length === 0 ? (
+            <div className="py-16 text-center bg-white border-[3px] border-black border-dashed p-8 shadow-[4px_4px_0px_#000000]">
+              <p className="font-black text-black text-lg uppercase">
+                لم يتم تسجيل أي حضور لهذا الطفل بعد
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <AnimatePresence>
+                {[...log].reverse().map((entry) => (
+                  <Motion.div
+                    key={entry.recordId || entry.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="bg-white border-[3px] border-black shadow-[4px_4px_0px_#000000] p-4 flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 bg-[#FEF08A] border-2 border-black flex items-center justify-center shrink-0">
+                        <CalendarDays className="w-5 h-5 stroke-[2.5] text-black" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-black text-base text-black font-mono">
+                          {entry.timestamp?.slice(0, 10)}
+                        </span>
+                        <span className="text-xs font-bold text-black/50 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {entry.time || entry.timestamp?.slice(11, 16) || "حضور"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleRemove(entry.recordId || entry.id)}
+                      className="w-9 h-9 bg-[#EF4444] text-white border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 flex items-center justify-center transition-all cursor-pointer shrink-0"
+                      title="حذف هذا اليوم"
+                    >
+                      <Trash2 className="w-4 h-4 stroke-[2.5]" />
+                    </button>
+                  </Motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }

@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { studentsDB, changeStudentId } from "../data/storage";
-import {
-  Page,
-  ImageCropperModal,
-} from "../components/UI";
+import { ImageCropperModal } from "../components/UI";
 import { useToast } from "../hooks/useToast";
 import { 
   Plus, 
@@ -20,12 +17,11 @@ import {
   X,
   Fingerprint,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 
 const FIELDS = [
   { key: "name", label: "الاسم", type: "text", full: true, required: true, icon: User },
-  { key: "phone", label: "رقم التليفون", type: "text", icon: Phone },
-  { key: "address", label: "العنوان", type: "text", full: true, icon: MapPin },
+  { key: "phone", label: "رقم التليفون", type: "text", placeholder: "01xxxxxxxxx", icon: Phone },
+  { key: "address", label: "العنوان", type: "text", placeholder: "المنطقة - الشارع", full: true, icon: MapPin },
   {
     key: "year",
     label: "الفصل / المرحلة",
@@ -105,11 +101,11 @@ export function EditPage({ person, onBack, onSaved }) {
 
   const handleSave = async () => {
     if (!form.name.trim()) {
-      setErrors({ name: "مطلوب" });
+      setErrors({ name: "من فضلك اكتب الاسم" });
       return;
     }
     if (!form.qrId.trim()) {
-      setErrors({ qrId: "مطلوب" });
+      setErrors({ qrId: "الكود مطلوب" });
       return;
     }
 
@@ -117,7 +113,7 @@ export function EditPage({ person, onBack, onSaved }) {
     if (newId !== person.qrId) {
       const ok = await changeStudentId(person.qrId, newId);
       if (!ok) {
-        setErrors({ qrId: "الكود ده متسجل لطفل تاني" });
+        setErrors({ qrId: "هذا الكود مسجل لطفل آخر بالفعل" });
         return;
       }
     }
@@ -129,316 +125,279 @@ export function EditPage({ person, onBack, onSaved }) {
 
     const { qrId, birthdate_d, birthdate_m, birthdate_y, ...restForm } = form; 
     
-    // Filter out empty custom fields
     const validCustomFields = customFields.filter(f => f.label.trim() || f.value.trim());
 
     const updated = { 
-        ...restForm, 
-        birthdate: bd, 
-        name: restForm.name.trim(),
-        customFields: validCustomFields
+      ...restForm, 
+      birthdate: bd, 
+      name: restForm.name.trim(),
+      customFields: validCustomFields
     };
 
     studentsDB.update(newId, updated);
-    toast.show("✅ تم التعديل!");
+    toast.show("✅ تم حفظ التعديلات بنجاح!");
 
-    setTimeout(() => onSaved({ ...person, ...updated, qrId: newId }), 700);
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0 },
+    setTimeout(() => onSaved({ ...person, ...updated, qrId: newId }), 600);
   };
 
   return (
-    <Page>
-      <div className="navbar bg-slate-950/60 backdrop-blur-xl border-b border-white/5 px-6 min-h-20 sticky top-0 z-50">
-        <div className="navbar-start">
-          <button
-            onClick={onBack}
-            className="w-12 h-12 rounded-2xl bg-slate-900 border border-white/5 flex items-center justify-center transition-all hover:border-sky-500/30 hover:bg-slate-800"
-          >
-            <ArrowRight className="w-5 h-5 text-slate-400" />
-          </button>
-        </div>
-        <div className="navbar-center flex flex-col items-center text-center">
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-1">Edit Profile</span>
-          <div className="font-black text-white text-lg tracking-tight">تعديل بيانات {person.name.split(" ")[0]}</div>
-        </div>
-        <div className="navbar-end"></div>
-      </div>
-
-      <div className="flex-1 w-full max-w-lg mx-auto px-6 py-10" dir="rtl">
-        <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.05 } } }} className="flex flex-col gap-8">
-            
-          {/* Image Uploader */}
-          <motion.div variants={itemVariants} className="flex flex-col items-center justify-center gap-4">
-            <label className="relative cursor-pointer group transition-all duration-500 hover:scale-105">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageSelect}
-              />
-              <div className="w-40 h-40 rounded-[3rem] border-2 border-dashed border-white/10 flex flex-col items-center justify-center bg-slate-900 shadow-2xl overflow-hidden group-hover:bg-slate-800 group-hover:border-sky-500/30 transition-all relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-sky-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                {form.image ? (
-                  <img
-                    src={form.image}
-                    alt="Preview"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                ) : (
-                  <>
-                    <Camera className="w-12 h-12 text-slate-700 mb-2 group-hover:text-sky-400 transition-all duration-300" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] group-hover:text-sky-300">
-                      تغيير الصورة
-                    </span>
-                  </>
-                )}
-
-                {form.image && (
-                  <div className="absolute inset-0 bg-slate-950/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm">
-                    <div className="bg-white/10 p-4 rounded-full border border-white/20">
-                        <Camera className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </label>
-
-            <AnimatePresence>
-              {form.image && (
-                <motion.button
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  onClick={() => upd("image", null)}
-                  className="flex items-center gap-2 text-red-400/60 text-[10px] font-black uppercase tracking-[0.2em] hover:text-red-400 transition-all bg-slate-900 px-4 py-2 rounded-xl mt-2 border border-white/5"
-                >
-                  <X size={12} />
-                  مسح الصورة
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </motion.div>
-
-          <AnimatePresence>
-            {cropImageSrc && (
-              <ImageCropperModal
-                imageSrc={cropImageSrc}
-                onCropDone={handleCropDone}
-                onCancel={() => setCropImageSrc(null)}
-              />
-            )}
-          </AnimatePresence>
-
-          <motion.div variants={itemVariants} className="bg-slate-900/40 backdrop-blur-2xl border-2 border-white/5 rounded-[3rem] p-8 md:p-10 space-y-10 shadow-2xl relative">
-            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-sky-500/20 to-transparent"></div>
-            
-            {/* ID Field */}
-            <div className="col-span-2">
-                <div className="flex justify-between items-center mb-4">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-3">
-                        <Fingerprint className="w-4 h-4 text-sky-400" />
-                        الكود (ID)
-                    </label>
-                    <span className="text-[8px] bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded-md font-black uppercase">Required</span>
-                </div>
-                {errors.qrId && (
-                    <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="text-[9px] text-red-400 font-bold mb-2 flex items-center gap-1">
-                        <AlertCircle size={10} /> {errors.qrId}
-                    </motion.div>
-                )}
-                <div className="relative group">
-                    <input
-                        className={`tech-input h-16 w-full bg-slate-950/50 pr-12 focus:border-sky-500/40 focus:bg-slate-950 transition-all font-mono tracking-widest ${errors.qrId ? "border-red-500/40 text-red-400" : ""}`}
-                        type="text"
-                        value={form.qrId}
-                        onChange={(e) => upd("qrId", e.target.value)}
-                    />
-                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-700 group-focus-within:text-sky-500/40 transition-colors">
-                        <Fingerprint size={18} />
-                    </div>
-                </div>
-            </div>
-
-            {/* Custom Birthday Field */}
-            <div className="col-span-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4 flex items-center gap-3">
-                <CalendarDays className="w-4 h-4 text-sky-400" />
-                تاريخ الميلاد
-              </label>
-              <div className="grid grid-cols-3 gap-3 w-full" dir="rtl">
-                <select
-                  className="tech-input h-16 w-full text-center bg-slate-950/50"
-                  value={form.birthdate_d}
-                  onChange={(e) => upd("birthdate_d", e.target.value)}
-                >
-                  <option value="" disabled>يوم</option>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                    <option key={d} value={String(d).padStart(2, "0")}>{d}</option>
-                  ))}
-                </select>
-
-                <select
-                  className="tech-input h-16 w-full text-center bg-slate-950/50"
-                  value={form.birthdate_m}
-                  onChange={(e) => upd("birthdate_m", e.target.value)}
-                >
-                  <option value="" disabled>شهر</option>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                    <option key={m} value={String(m).padStart(2, "0")}>{m}</option>
-                  ))}
-                </select>
-
-                <select
-                  className="tech-input h-16 w-full text-center bg-slate-950/50"
-                  value={form.birthdate_y}
-                  onChange={(e) => upd("birthdate_y", e.target.value)}
-                >
-                  <option value="" disabled>سنة</option>
-                  {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {FIELDS.map(
-              ({ key, label, type, options, placeholder, full, required, icon: Icon }) => (
-                <div key={key} className={full ? "col-span-2" : ""}>
-                   <div className="flex justify-between items-center mb-4">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] flex items-center gap-3">
-                        <Icon className="w-4 h-4 text-sky-400" />
-                        {label}
-                    </label>
-                    {required && (
-                      <span className="text-[8px] bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded-md font-black uppercase">
-                        Required
-                      </span>
-                    )}
-                  </div>
-
-                  {errors[key] && (
-                    <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="text-[9px] text-red-400 font-bold mb-2 flex items-center gap-1">
-                        <AlertCircle size={10} /> {errors[key]}
-                    </motion.div>
-                  )}
-
-                  <div className="relative group">
-                    {type === "select" ? (
-                        <select
-                        className={`tech-input h-16 w-full bg-slate-950/50 pr-12 focus:border-sky-500/40 focus:bg-slate-950 transition-all ${errors[key] ? "border-red-500/40" : ""}`}
-                        value={form[key]}
-                        onChange={(e) => upd(key, e.target.value)}
-                        >
-                        <option value="" disabled>اختر {label}...</option>
-                        {options.map((opt) => (
-                            <option key={opt} value={opt}>{opt}</option>
-                        ))}
-                        </select>
-                    ) : (
-                        <input
-                        className={`tech-input h-16 w-full bg-slate-950/50 pr-12 focus:border-sky-500/40 focus:bg-slate-950 transition-all ${errors[key] ? "border-red-500/40 text-red-400" : ""}`}
-                        type={type}
-                        placeholder={placeholder}
-                        value={form[key]}
-                        onChange={(e) => upd(key, e.target.value)}
-                        />
-                    )}
-                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-700 group-focus-within:text-sky-500/40 transition-colors">
-                        <Icon size={18} />
-                    </div>
-                  </div>
-                </div>
-              ),
-            )}
-
-            {/* Dynamic Custom Fields (Appears directly after standard fields) */}
-            <AnimatePresence>
-                {customFields.map((field) => (
-                    <motion.div
-                        key={field.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="col-span-2 space-y-4"
-                    >
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                <Sparkles className="w-5 h-5 text-sky-500/50" />
-                                <input
-                                    className="bg-transparent border-none p-0 text-xs font-black text-sky-400 uppercase tracking-[0.3em] focus:ring-0 w-72 placeholder:text-slate-700"
-                                    placeholder="تسمية الحقل الجديد... (مثلاً: اسم الأم)"
-                                    value={field.label}
-                                    onChange={(e) => handleCustomFieldChange(field.id, "label", e.target.value)}
-                                />
-                            </div>
-                            <button
-                                onClick={() => handleRemoveCustomField(field.id)}
-                                className="text-[10px] font-black text-red-500/40 hover:text-red-400 uppercase tracking-widest flex items-center gap-1 transition-colors"
-                            >
-                                <X size={10} /> حذف
-                            </button>
-                        </div>
-
-                        <div className="relative group">
-                            <input
-                                className="tech-input h-16 w-full bg-slate-950/50 pr-12 focus:border-sky-500/40 focus:bg-slate-950 transition-all text-white"
-                                placeholder={`اكتب ${field.label || 'بيانات إضافية'}...`}
-                                value={field.value}
-                                onChange={(e) => handleCustomFieldChange(field.id, "value", e.target.value)}
-                            />
-                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-700 group-focus-within:text-sky-500/40 transition-colors">
-                                <Plus size={18} />
-                            </div>
-                        </div>
-                    </motion.div>
-                ))}
-            </AnimatePresence>
-
-            {/* Add Button Placeholder */}
-            <div className="col-span-2 pt-4">
-                <button
-                    onClick={handleAddCustomField}
-                    className="w-full h-16 rounded-2xl border-2 border-dashed border-white/5 hover:border-sky-500/20 hover:bg-sky-500/5 flex items-center justify-center gap-3 transition-all group"
-                >
-                    <div className="w-8 h-8 rounded-lg bg-slate-950 flex items-center justify-center text-slate-600 group-hover:text-sky-400 transition-colors">
-                        <Plus size={16} />
-                    </div>
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] group-hover:text-sky-300">إضافة حقل مخصص جديد</span>
-                </button>
-            </div>
-          </motion.div>
-
-          {/* Action Buttons */}
-          <motion.div variants={itemVariants} className="mt-4 pb-16">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleSave}
-                className="relative w-full h-20 rounded-3xl overflow-hidden group shadow-[0_20px_40px_rgba(14,165,233,0.15)] border border-white/5"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-sky-600 to-indigo-600 transition-all group-hover:scale-110"></div>
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.2)_0%,transparent_100%)] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative z-10 flex items-center justify-center gap-4 text-white">
-                  <Sparkles className="w-6 h-6 animate-pulse" />
-                  <span className="font-black text-lg tracking-tight">حفظ تعديلات الطفل</span>
-                </div>
-              </motion.button>
-          </motion.div>
-
-        </motion.div>
-      </div>
-      {toast.isVisible && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100]">
-           <motion.div initial={{opacity:0, y:-20}} animate={{opacity:1, y:0}} className="bg-sky-500 text-slate-950 px-6 py-3 rounded-full font-black text-sm shadow-xl flex items-center gap-2 border border-sky-400">
-               <Check className="w-4 h-4"/>
-               {toast.msg}
-           </motion.div>
+    <div
+      className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col"
+      dir="rtl"
+    >
+      {/* Toast */}
+      {toast.msg && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] bg-black text-white border-[3px] border-black px-6 py-3 shadow-[4px_4px_0px_#A3E635] font-black text-sm uppercase">
+          {toast.msg}
         </div>
       )}
-    </Page>
+
+      {/* ── Neo-Brutalist Navbar ── */}
+      <header className="sticky top-0 z-50 bg-[#FACC15] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+          <button
+            onClick={onBack}
+            className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+            <span>رجوع</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <span className="bg-black text-[#FACC15] px-2.5 py-0.5 border-2 border-black font-black text-xs uppercase tracking-widest hidden sm:inline-block">
+              EDIT
+            </span>
+            <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase truncate max-w-[200px] sm:max-w-none">
+              تعديل بيانات {person.name.split(" ")[0]}
+            </h1>
+          </div>
+
+          <div className="w-10" />
+        </div>
+      </header>
+
+      {/* ── Main Content ── */}
+      <main className="flex-1 w-full max-w-2xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+        
+        {/* Image Uploader */}
+        <div className="flex flex-col items-center justify-center gap-3">
+          <label className="cursor-pointer group">
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageSelect}
+            />
+            <div className="w-36 h-36 bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] active:shadow-none transition-all flex flex-col items-center justify-center overflow-hidden relative">
+              {form.image ? (
+                <img
+                  src={form.image}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <>
+                  <Camera className="w-10 h-10 stroke-[2] text-black mb-1" />
+                  <span className="text-[10px] font-black uppercase text-black">
+                    تغيير الصورة
+                  </span>
+                </>
+              )}
+            </div>
+          </label>
+
+          {form.image && (
+            <button
+              type="button"
+              onClick={() => upd("image", null)}
+              className="bg-[#F472B6] border-2 border-black px-3 py-1 font-black text-xs uppercase shadow-[2px_2px_0px_#000000] flex items-center gap-1"
+            >
+              <X size={14} strokeWidth={3} />
+              <span>حذف الصورة</span>
+            </button>
+          )}
+        </div>
+
+        {/* Cropper Modal */}
+        {cropImageSrc && (
+          <ImageCropperModal
+            imageSrc={cropImageSrc}
+            onCropDone={handleCropDone}
+            onCancel={() => setCropImageSrc(null)}
+          />
+        )}
+
+        {/* Form Container */}
+        <div className="bg-white border-[3px] border-black p-6 sm:p-8 shadow-[8px_8px_0px_#000000] flex flex-col gap-6">
+          
+          {/* ID Field */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-black uppercase tracking-wider text-black flex items-center gap-2">
+                <Fingerprint className="w-4 h-4 stroke-[2.5]" />
+                <span>كود الطفل (ID)</span>
+              </label>
+              <span className="bg-[#FACC15] border border-black px-1.5 py-0.2 font-black text-[10px] uppercase">
+                مطلوب
+              </span>
+            </div>
+
+            {errors.qrId && (
+              <div className="bg-[#F472B6] border border-black p-1.5 text-[11px] font-black flex items-center gap-1">
+                <AlertCircle size={12} strokeWidth={3} />
+                <span>{errors.qrId}</span>
+              </div>
+            )}
+
+            <input
+              type="text"
+              value={form.qrId}
+              onChange={(e) => upd("qrId", e.target.value)}
+              className="h-12 bg-[#FDF8F0] border-2 border-black px-3 font-mono font-black text-base focus:outline-none focus:bg-[#FACC15] transition-colors"
+            />
+          </div>
+
+          {/* Birthday Row */}
+          <div>
+            <label className="text-xs font-black uppercase tracking-wider text-black flex items-center gap-2 mb-2">
+              <CalendarDays className="w-4 h-4 stroke-[2.5]" />
+              <span>تاريخ الميلاد</span>
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <select
+                className="h-12 bg-[#FDF8F0] border-2 border-black font-bold text-center text-sm focus:outline-none focus:bg-[#FACC15]"
+                value={form.birthdate_d}
+                onChange={(e) => upd("birthdate_d", e.target.value)}
+              >
+                <option value="" disabled>اليوم</option>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                  <option key={d} value={String(d).padStart(2, "0")}>{d}</option>
+                ))}
+              </select>
+
+              <select
+                className="h-12 bg-[#FDF8F0] border-2 border-black font-bold text-center text-sm focus:outline-none focus:bg-[#FACC15]"
+                value={form.birthdate_m}
+                onChange={(e) => upd("birthdate_m", e.target.value)}
+              >
+                <option value="" disabled>الشهر</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                  <option key={m} value={String(m).padStart(2, "0")}>{m}</option>
+                ))}
+              </select>
+
+              <select
+                className="h-12 bg-[#FDF8F0] border-2 border-black font-bold text-center text-sm focus:outline-none focus:bg-[#FACC15]"
+                value={form.birthdate_y}
+                onChange={(e) => upd("birthdate_y", e.target.value)}
+              >
+                <option value="" disabled>السنة</option>
+                {Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Regular Fields */}
+          {FIELDS.map(({ key, label, type, options, placeholder, required, icon: Icon }) => (
+            <div key={key} className="flex flex-col gap-1.5">
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-black uppercase tracking-wider text-black flex items-center gap-2">
+                  <Icon className="w-4 h-4 stroke-[2.5]" />
+                  <span>{label}</span>
+                </label>
+                {required && (
+                  <span className="bg-[#FACC15] border border-black px-1.5 py-0.2 font-black text-[10px] uppercase">
+                    مطلوب
+                  </span>
+                )}
+              </div>
+
+              {errors[key] && (
+                <div className="bg-[#F472B6] border border-black p-1.5 text-[11px] font-black flex items-center gap-1">
+                  <AlertCircle size={12} strokeWidth={3} />
+                  <span>{errors[key]}</span>
+                </div>
+              )}
+
+              {type === "select" ? (
+                <select
+                  className="h-12 bg-[#FDF8F0] border-2 border-black px-3 font-bold text-sm focus:outline-none focus:bg-[#FACC15] transition-colors"
+                  value={form[key]}
+                  onChange={(e) => upd(key, e.target.value)}
+                >
+                  <option value="" disabled>اختر {label}...</option>
+                  {options.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type={type}
+                  placeholder={placeholder}
+                  value={form[key]}
+                  onChange={(e) => upd(key, e.target.value)}
+                  className="h-12 bg-[#FDF8F0] border-2 border-black px-3 font-bold text-sm focus:outline-none focus:bg-[#FACC15] transition-colors placeholder:text-gray-500"
+                />
+              )}
+            </div>
+          ))}
+
+          {/* Dynamic Custom Fields */}
+          {customFields.map((field) => (
+            <div key={field.id} className="bg-[#FDF8F0] border-2 border-black p-4 shadow-[3px_3px_0px_#000000] flex flex-col gap-3">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 stroke-[2.5] text-black" />
+                  <input
+                    className="bg-transparent border-b-2 border-black px-1 py-0.5 text-xs font-black text-black uppercase focus:outline-none focus:bg-[#FACC15]"
+                    placeholder="اسم الحقل المخصص..."
+                    value={field.label}
+                    onChange={(e) => handleCustomFieldChange(field.id, "label", e.target.value)}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveCustomField(field.id)}
+                  className="text-black hover:bg-[#F472B6] border border-black px-2 py-0.5 text-xs font-black"
+                >
+                  حذف
+                </button>
+              </div>
+
+              <input
+                className="h-10 bg-white border-2 border-black px-3 font-bold text-sm focus:outline-none focus:bg-[#FACC15]"
+                placeholder={`اكتب ${field.label || 'بيانات إضافية'}...`}
+                value={field.value}
+                onChange={(e) => handleCustomFieldChange(field.id, "value", e.target.value)}
+              />
+            </div>
+          ))}
+
+          {/* Add Custom Field Button */}
+          <button
+            type="button"
+            onClick={handleAddCustomField}
+            className="w-full bg-[#FDF8F0] hover:bg-gray-100 border-2 border-dashed border-black py-3 px-4 font-black text-xs uppercase shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Plus size={16} strokeWidth={3} />
+            <span>إضافة حقل مخصص جديد</span>
+          </button>
+
+          {/* Save Action */}
+          <div className="pt-4 border-t-2 border-black">
+            <button
+              type="button"
+              onClick={handleSave}
+              className="w-full bg-[#A3E635] text-black border-[3px] border-black py-4 px-6 font-black text-lg uppercase shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-3 cursor-pointer"
+            >
+              <Sparkles className="w-5 h-5 stroke-[2.5]" />
+              <span>حفظ تعديلات الطفل</span>
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { visitsDB, studentsDB } from "../data/storage";
 import { todayISO } from "../utils/helpers";
-import { Page, Navbar, Empty, Avatar } from "../components/UI";
+import { ArrowRight, Calendar, Search, MapPin } from "lucide-react";
 
 export function VisitsHistoryPage({ onBack }) {
   const [from, setFrom] = useState(todayISO());
@@ -20,117 +20,148 @@ export function VisitsHistoryPage({ onBack }) {
       });
       if (sessions.length > 0) found.push({ qrId, ...student, sessions });
     });
-    found.sort((a, b) => a.name.localeCompare(b.name, "ar"));
+    found.sort((a, b) => (a.name || "").localeCompare(b.name || "", "ar"));
     setResults(found);
   };
 
-  return (
-    <Page>
-      <Navbar onBack={onBack} title="📅 تاريخ الزيارات" />
+  const avatarColors = ["bg-[#FACC15]", "bg-[#38BDF8]", "bg-[#A3E635]", "bg-[#FB923C]", "bg-[#F472B6]"];
+  const getAvatarBg = (str = "") => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return avatarColors[Math.abs(hash) % avatarColors.length];
+  };
 
-      <div className="flex-1 max-w-lg mx-auto w-full px-5 py-6 flex flex-col gap-5 animate-slideUp">
-        {/* Date picker card */}
-        <div className="bg-[#0F2545] border border-[#1A3D63]/40 rounded-[3rem] shadow-2xl overflow-hidden p-8 gap-8 flex flex-col">
-          <div className="grid grid-cols-2 gap-6">
+  return (
+    <div className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col" dir="rtl">
+      {/* ── Neo-Brutalist Navbar ── */}
+      <header className="sticky top-0 z-50 bg-[#FB923C] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">
+        <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+          <button
+            onClick={onBack}
+            className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+            <span>رجوع</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <span className="bg-black text-[#FB923C] px-2.5 py-0.5 border-2 border-black font-black text-xs uppercase tracking-widest hidden sm:inline-block">
+              VISIT LOGS
+            </span>
+            <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase">
+              سجل الزيارات والافتقاد
+            </h1>
+          </div>
+
+          <div className="w-10" />
+        </div>
+      </header>
+
+      {/* ── Main Content ── */}
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
+        {/* Date Filter Card */}
+        <div className="bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 flex flex-col gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               { label: "من تاريخ", val: from, set: setFrom },
               { label: "إلى تاريخ", val: to, set: setTo },
             ].map(({ label, val, set }) => (
-              <div key={label} className="flex flex-col gap-3">
-                <span className="text-[10px] font-black text-[#B3CFE5]/70 uppercase tracking-[0.3em] px-2 text-right">
+              <div key={label} className="flex flex-col gap-2">
+                <span className="text-xs font-black text-black uppercase tracking-wider">
                   {label}
                 </span>
                 <input
                   type="date"
                   value={val}
                   onChange={(e) => set(e.target.value)}
-                  className="bg-[#1A3D63]/30 border border-[#1A3D63]/40 rounded-2xl px-5 h-14 text-sm font-black text-[#F6FAFD] outline-none focus:border-[#4A7FA7] transition-all text-center"
+                  className="bg-[#FDF8F0] border-[3px] border-black p-3 text-base font-black text-black outline-none focus:bg-[#FEF08A] transition-colors"
                 />
               </div>
             ))}
           </div>
+
           <button
             onClick={search}
-            className="w-full h-16 bg-[#1A3D63] hover:bg-[#4A7FA7] text-[#F6FAFD] rounded-[2rem] text-xl font-black shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-4"
+            className="w-full bg-[#FACC15] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none py-4 font-black text-lg uppercase transition-all flex items-center justify-center gap-3 cursor-pointer"
           >
-            🔍 بحث
+            <Search className="w-5 h-5 stroke-[3]" />
+            <span>عرض نتائج الزيارات</span>
           </button>
         </div>
 
         {/* Results */}
         {results !== null && (
-          <div className="flex flex-col gap-3 animate-fadeIn">
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-[#B3CFE5]/60 font-bold">
-                من <span className="text-[#F6FAFD]/90">{from}</span> لـ{" "}
-                <span className="text-[#F6FAFD]/90">{to}</span>
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-between items-center px-1">
+              <span className="text-xs font-black uppercase text-black/70">
+                الزيارات من {from} إلى {to}
               </span>
-              <div className="px-3 py-1 rounded-lg text-xs font-black bg-[#1A3D63]/50 text-[#4A7FA7] border border-[#1A3D63]/40">
-                {results.length}
-              </div>
+              <span className="bg-black text-white px-3 py-1 font-black text-xs uppercase border border-black">
+                {results.length} مخدوم
+              </span>
             </div>
 
             {results.length === 0 ? (
-              <Empty icon="📭" message="مافيش اطفال اتزارت في الوقت ده" />
+              <div className="py-16 text-center bg-white border-[3px] border-black border-dashed p-8 shadow-[6px_6px_0px_#000000]">
+                <p className="font-black text-black text-lg uppercase">
+                  لم يتم تسجيل أي زيارات في هذا النطاق الزمني
+                </p>
+              </div>
             ) : (
-              results.map((s, i) => (
-                <div
-                  key={s.qrId}
-                  className="bg-[#0F2545] border border-[#1A3D63]/40 rounded-3xl p-6 shadow-2xl animate-fadeIn flex flex-col gap-4 group"
-                  style={{
-                    animationDelay: `${i * 40}ms`,
-                  }}
-                >
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar
-                        name={s.name}
-                        accent={s.accent}
-                        image={s.image}
-                        size="md"
-                      />
-                      <div className="flex-1">
-                        <div className="font-black text-lg text-[#F6FAFD] leading-none mb-1">
-                          {s.name}
+              <div className="grid grid-cols-1 gap-4">
+                {results.map((s) => (
+                  <div
+                    key={s.qrId}
+                    className="bg-white border-[3px] border-black shadow-[4px_4px_0px_#000000] p-5 flex flex-col gap-4"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-12 h-12 border-[3px] border-black shadow-[2px_2px_0px_#000000] ${getAvatarBg(s.name)} flex items-center justify-center overflow-hidden shrink-0`}>
+                          {s.image ? (
+                            <img src={s.image} alt={s.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="font-black text-xl text-black">
+                              {(s.name || "م")?.[0]?.toUpperCase()}
+                            </span>
+                          )}
                         </div>
-                        <div className="text-[10px] font-black tracking-widest text-[#B3CFE5]/60 uppercase opacity-50">
-                          {s.qrId}
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-black text-lg text-black truncate">
+                            {s.name}
+                          </span>
+                          <span className="font-mono text-xs font-black text-black/60">
+                            #{s.qrId}
+                          </span>
                         </div>
                       </div>
-                      <div
-                        className="px-4 py-1.5 rounded-xl text-xs font-black shadow-[0_0_15px_rgba(0,0,0,0.3)] border border-white/5"
-                        style={{
-                          background: s.accent + "25",
-                          color: s.accent,
-                        }}
-                      >
-                        <span className="text-[10px] opacity-60 ml-0.5">
-                          عدد المرات:
-                        </span>{" "}
-                        {s.sessions.length}
-                      </div>
+
+                      <span className="bg-[#A3E635] text-black border-2 border-black px-3 py-1 font-black text-xs uppercase shadow-[2px_2px_0px_#000000]">
+                        {s.sessions.length} زيارة
+                      </span>
                     </div>
-                    <div className="flex flex-wrap gap-2 pt-4 border-t border-[#1A3D63]/20">
+
+                    {/* Sessions list */}
+                    <div className="flex flex-wrap gap-2 pt-3 border-t-2 border-black">
                       {s.sessions.map((sess) => (
                         <div
                           key={sess.id}
-                          className="px-3 py-2 bg-[#1A3D63]/50 text-[#F6FAFD] rounded-xl text-[11px] font-black border border-[#1A3D63]/40 flex items-center gap-2 shadow-sm"
+                          className="bg-[#FEF08A] border-2 border-black px-3 py-1.5 text-xs font-black text-black flex items-center gap-1.5 shadow-[2px_2px_0px_#000000]"
                         >
-                          <span className="text-[#4A7FA7]">📍</span>
+                          <MapPin className="w-3.5 h-3.5 stroke-[2.5]" />
                           <span>{sess.timestamp.slice(0, 10)}</span>
-                          <span className="text-[#B3CFE5]/60 ml-1">
-                            {sess.time}
-                          </span>
+                          <span className="opacity-60 text-[10px]">{sess.time}</span>
                         </div>
                       ))}
                     </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
         )}
-      </div>
-    </Page>
+      </main>
+    </div>
   );
 }

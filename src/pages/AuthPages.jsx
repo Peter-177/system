@@ -9,48 +9,40 @@ import {
   KeyRound,
   AlertCircle,
   CheckCircle2,
+  ShieldCheck,
 } from "lucide-react";
 
-// ── Shared Design Shell & Background ────────────────────────────────
-function AuthContainer({ children, shake = false, dir = "ltr" }) {
+// ── Shared Neo-Brutalist Design Shell ───────────────────────────────
+function AuthContainer({ children, shake = false, dir = "ltr", category = "AUTH" }) {
   return (
     <div
-      className="min-h-screen w-full relative flex items-center justify-center p-4 sm:p-6 md:p-10 overflow-hidden bg-[#030712] font-body selection:bg-sky-500/30 selection:text-sky-200"
+      className="min-h-screen w-full relative flex items-center justify-center p-4 sm:p-6 md:p-10 bg-[#FDF8F0] font-sans selection:bg-[#FACC15] selection:text-black"
       dir={dir}
     >
-      {/* Background Ambience Layers */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Subtle grid pattern */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.7) 1px, transparent 0)`,
-            backgroundSize: "32px 32px",
-          }}
-        />
-
-        {/* Ambient Glowing Orbs */}
-        <div className="absolute -top-[20%] -left-[10%] w-[650px] h-[650px] bg-gradient-to-br from-sky-600/15 via-blue-600/10 to-transparent rounded-full blur-[130px] animate-pulse duration-[8000ms]" />
-        <div
-          className="absolute -bottom-[20%] -right-[10%] w-[650px] h-[650px] bg-gradient-to-tl from-cyan-500/15 via-blue-700/10 to-transparent rounded-full blur-[140px] animate-pulse duration-[10000ms]"
-          style={{ animationDelay: "2s" }}
-        />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-sky-500/5 rounded-full blur-[100px]" />
-      </div>
+      {/* Decorative Grid Lines / Brutalist Accents */}
+      <div
+        className="absolute inset-0 opacity-[0.07] pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(#000000 2px, transparent 2px)",
+          backgroundSize: "24px 24px",
+        }}
+      />
 
       {/* Main Form Box */}
       <div
-        className={`relative w-full max-w-[440px] z-10 ${
-          shake ? "animate-shake" : "animate-in fade-in zoom-in-95 duration-500"
+        className={`relative w-full max-w-[460px] z-10 ${
+          shake ? "animate-shake" : "animate-in fade-in duration-300"
         }`}
       >
-        {/* Ambient Border Glow Ring */}
-        <div className="absolute -inset-0.5 bg-gradient-to-b from-sky-500/30 via-sky-500/5 to-transparent rounded-[2.5rem] blur-xl opacity-60 pointer-events-none transition-all duration-700 group-hover:opacity-100" />
+        {/* Top Category Badge */}
+        <div className="flex justify-start mb-[-3px] relative z-20">
+          <span className="bg-black text-[#FACC15] border-[3px] border-black px-4 py-1 font-black text-xs uppercase tracking-widest">
+            {category}
+          </span>
+        </div>
 
-        <div className="relative bg-[#0b132b]/80 backdrop-blur-2xl border border-white/[0.08] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-[2rem] p-7 sm:p-10 overflow-hidden">
-          {/* Top highlight bar */}
-          <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-sky-400/60 to-transparent" />
-
+        {/* Card Body */}
+        <div className="relative bg-white border-[3px] border-black shadow-[8px_8px_0px_#000000] p-6 sm:p-10">
           {children}
         </div>
       </div>
@@ -58,7 +50,7 @@ function AuthContainer({ children, shake = false, dir = "ltr" }) {
   );
 }
 
-// ── Custom Modern Input ──────────────────────────────────────────────
+// ── Neo-Brutalist Form Input ────────────────────────────────────────
 function FormInput({
   id,
   label,
@@ -76,7 +68,6 @@ function FormInput({
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [capsLockActive, setCapsLockActive] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
 
   const isPassword = type === "password";
   const actualType = isPassword ? (showPassword ? "text" : "password") : type;
@@ -88,11 +79,11 @@ function FormInput({
   };
 
   return (
-    <div className="w-full space-y-1.5 text-left">
+    <div className="w-full space-y-2 text-left">
       <div className="flex items-center justify-between px-0.5">
         <label
           htmlFor={id}
-          className="text-xs font-semibold text-slate-300 tracking-wide flex items-center gap-1.5 cursor-pointer"
+          className="text-xs font-black uppercase text-black tracking-wider flex items-center gap-1.5 cursor-pointer"
         >
           {label}
         </label>
@@ -100,26 +91,16 @@ function FormInput({
       </div>
 
       <div
-        className={`relative flex items-center rounded-xl border transition-all duration-200 ${
+        className={`relative flex items-stretch border-[3px] border-black transition-all ${
           error
-            ? "border-rose-500/60 bg-rose-500/[0.03] shadow-[0_0_15px_rgba(244,63,94,0.15)]"
-            : isFocused
-            ? "border-sky-400/70 bg-[#0f172a]/90 shadow-[0_0_20px_rgba(14,165,233,0.18)]"
-            : "border-white/[0.08] bg-[#090d1f]/60 hover:border-white/[0.16] hover:bg-[#090d1f]/90"
+            ? "bg-[#FEE2E2] shadow-[4px_4px_0px_#EF4444]"
+            : "bg-white shadow-[4px_4px_0px_#000000] focus-within:shadow-[6px_6px_0px_#000000]"
         }`}
       >
         {/* Leading Icon */}
         {Icon && (
-          <div
-            className={`pl-3.5 pr-1 flex items-center justify-center transition-colors duration-200 pointer-events-none ${
-              error
-                ? "text-rose-400"
-                : isFocused
-                ? "text-sky-400"
-                : "text-slate-400"
-            }`}
-          >
-            <Icon className="w-4 h-4" />
+          <div className="w-12 bg-[#38BDF8] border-r-[3px] border-black flex items-center justify-center text-black shrink-0 pointer-events-none">
+            <Icon className="w-5 h-5 stroke-[2.5]" />
           </div>
         )}
 
@@ -130,18 +111,11 @@ function FormInput({
           onChange={onChange}
           onKeyDown={onKeyDown}
           onKeyUp={handleKeyUp}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => {
-            setIsFocused(false);
-            setCapsLockActive(false);
-          }}
           placeholder={placeholder}
           autoComplete={autoComplete}
           disabled={disabled}
           autoFocus={autoFocus}
-          className={`w-full h-12 bg-transparent text-white placeholder:text-slate-400 text-sm font-medium px-3.5 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-            isPassword && !showPassword ? "tracking-[0.15em]" : "tracking-normal"
-          }`}
+          className="w-full h-12 bg-transparent text-black font-black placeholder:text-black/30 placeholder:font-bold text-base px-3.5 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
         />
@@ -151,15 +125,15 @@ function FormInput({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="p-2.5 mr-1 text-slate-400 hover:text-sky-300 transition-colors rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-400/50"
+            className="px-3.5 bg-[#FEF08A] hover:bg-[#FACC15] border-l-[3px] border-black text-black transition-colors flex items-center justify-center cursor-pointer"
             title={showPassword ? "Hide password" : "Show password"}
             aria-label={showPassword ? "Hide password" : "Show password"}
             tabIndex={-1}
           >
             {showPassword ? (
-              <EyeOff className="w-4 h-4" />
+              <EyeOff className="w-5 h-5 stroke-[2.5]" />
             ) : (
-              <Eye className="w-4 h-4" />
+              <Eye className="w-5 h-5 stroke-[2.5]" />
             )}
           </button>
         )}
@@ -167,19 +141,19 @@ function FormInput({
 
       {/* Caps Lock Indicator */}
       {capsLockActive && (
-        <div className="flex items-center gap-1.5 text-amber-400 text-[11px] px-1 animate-in fade-in duration-200 font-medium">
+        <div className="inline-flex items-center gap-1.5 bg-[#FEF08A] border-2 border-black px-2 py-0.5 text-black text-[11px] font-black uppercase">
           <span>⚠️ Caps Lock is ON</span>
         </div>
       )}
 
-      {/* Error Message with Icon */}
+      {/* Error Message */}
       {error && (
         <div
           id={`${id}-error`}
           role="alert"
-          className="flex items-center gap-1.5 text-rose-400 text-[11px] font-semibold px-1 pt-0.5 animate-in slide-in-from-top-1 fade-in duration-200"
+          className="flex items-center gap-1.5 bg-[#EF4444] text-white border-2 border-black text-xs font-black px-2.5 py-1"
         >
-          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+          <AlertCircle className="w-4 h-4 shrink-0 stroke-[3]" />
           <span>{error}</span>
         </div>
       )}
@@ -187,32 +161,27 @@ function FormInput({
   );
 }
 
-// ── Primary Action Button ────────────────────────────────────────────
+// ── Neo-Brutalist Primary Action Button ─────────────────────────────
 function PrimaryButton({
   children,
   onClick,
   loading = false,
-  loadingText = "Please wait...",
+  loadingText = "PLEASE WAIT...",
   disabled = false,
   icon: Icon = ArrowRight,
+  bg = "bg-[#FACC15]",
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled || loading}
-      className="relative w-full h-12 mt-2 rounded-xl font-bold text-sm text-white tracking-wide overflow-hidden transition-all duration-300 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2 group shadow-[0_0_20px_rgba(14,165,233,0.3)] hover:shadow-[0_0_30px_rgba(14,165,233,0.5)] border border-sky-400/30"
-      style={{
-        background: "linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #004e92 100%)",
-      }}
+      className={`relative w-full h-14 mt-4 ${bg} text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px] font-black text-base uppercase tracking-wider transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_#000000]`}
     >
-      {/* Light sheen animation */}
-      <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
-
       {loading ? (
         <div className="flex items-center gap-2.5">
           <svg
-            className="animate-spin h-4 w-4 text-white"
+            className="animate-spin h-5 w-5 text-black"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -231,33 +200,32 @@ function PrimaryButton({
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          <span className="text-white/90">{loadingText}</span>
+          <span>{loadingText}</span>
         </div>
       ) : (
         <>
           <span>{children}</span>
-          {Icon && (
-            <Icon className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-          )}
+          {Icon && <Icon className="w-5 h-5 stroke-[3]" />}
         </>
       )}
     </button>
   );
 }
 
-// ── Header Brand / Title Section ──────────────────────────────────────
+// ── Header Brand / Title Section ────────────────────────────────────
 function AuthHeader({ title, subtitle }) {
   return (
-    <div className="text-center mb-7">
-      <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+    <div className="text-center mb-8">
+      <h1 className="text-3xl sm:text-4xl font-black text-black uppercase tracking-tight">
         {title}
       </h1>
 
       {subtitle && (
-        <p className="mt-2 text-xs sm:text-sm text-slate-400 font-normal leading-relaxed max-w-xs mx-auto">
+        <p className="mt-2 text-xs sm:text-sm text-black/70 font-bold leading-relaxed max-w-xs mx-auto">
           {subtitle}
         </p>
       )}
+      <div className="w-16 h-1 bg-black mx-auto mt-4" />
     </div>
   );
 }
@@ -322,7 +290,7 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
   };
 
   return (
-    <AuthContainer shake={shake} dir="ltr">
+    <AuthContainer shake={shake} dir="ltr" category="SIGN IN">
       <AuthHeader
         title="Welcome Back"
         subtitle="Sign in to manage classes, attendance, and student profiles"
@@ -331,9 +299,9 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
       {globalError && (
         <div
           role="alert"
-          className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold flex items-center gap-2.5 animate-in fade-in"
+          className="mb-6 p-3.5 bg-[#EF4444] text-white border-[3px] border-black shadow-[4px_4px_0px_#000000] text-xs font-black flex items-center gap-2.5"
         >
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+          <AlertCircle className="w-5 h-5 shrink-0 stroke-[3]" />
           <span>{globalError}</span>
         </div>
       )}
@@ -367,7 +335,7 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
               <button
                 type="button"
                 onClick={onForgot}
-                className="text-xs font-semibold text-sky-400 hover:text-sky-300 transition-colors hover:underline focus:outline-none"
+                className="text-xs font-black text-black hover:underline uppercase transition-all focus:outline-none"
               >
                 Forgot password?
               </button>
@@ -382,9 +350,9 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="w-4 h-4 rounded border-white/20 bg-slate-900/60 text-sky-500 focus:ring-1 focus:ring-sky-400 focus:ring-offset-0 cursor-pointer accent-sky-500"
+              className="w-5 h-5 border-2 border-black rounded-none bg-white text-black focus:ring-0 cursor-pointer accent-black"
             />
-            <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors">
+            <span className="text-xs font-black text-black uppercase">
               Remember my session
             </span>
           </label>
@@ -394,6 +362,7 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
           onClick={handleSubmit}
           loading={loading}
           loadingText="Authenticating..."
+          bg="bg-[#FACC15]"
         >
           Sign In
         </PrimaryButton>
@@ -401,13 +370,13 @@ export function LoginPage({ onLogin, onForgot, onGoSetup, onGoRegister }) {
 
       {/* Footer link to Register or Setup */}
       {(onGoRegister || onGoSetup) && (
-        <div className="mt-6 text-center">
-          <p className="text-xs text-slate-400">
+        <div className="mt-8 pt-4 border-t-2 border-black text-center">
+          <p className="text-xs font-bold text-black">
             Don&apos;t have an account?{" "}
             <button
               type="button"
               onClick={onGoRegister || onGoSetup}
-              className="text-sky-400 hover:text-sky-300 font-bold hover:underline transition-colors focus:outline-none"
+              className="font-black text-black underline hover:bg-[#A3E635] px-1 transition-colors uppercase cursor-pointer"
             >
               Create new account
             </button>
@@ -478,7 +447,7 @@ export function RegisterPage({ onDone, onGoLogin }) {
   };
 
   return (
-    <AuthContainer shake={shake} dir="ltr">
+    <AuthContainer shake={shake} dir="ltr" category="REGISTER">
       <AuthHeader
         title="Join Sunday School"
         subtitle="Create your servant account to access class attendance"
@@ -487,9 +456,9 @@ export function RegisterPage({ onDone, onGoLogin }) {
       {globalError && (
         <div
           role="alert"
-          className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold flex items-center gap-2.5 animate-in fade-in"
+          className="mb-6 p-3.5 bg-[#EF4444] text-white border-[3px] border-black shadow-[4px_4px_0px_#000000] text-xs font-black flex items-center gap-2.5"
         >
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+          <AlertCircle className="w-5 h-5 shrink-0 stroke-[3]" />
           <span>{globalError}</span>
         </div>
       )}
@@ -533,18 +502,19 @@ export function RegisterPage({ onDone, onGoLogin }) {
           onClick={handleSubmit}
           loading={loading}
           loadingText="Creating account..."
+          bg="bg-[#A3E635]"
         >
           Create Account
         </PrimaryButton>
       </form>
 
-      <div className="mt-6 text-center">
-        <p className="text-xs text-slate-400">
+      <div className="mt-8 pt-4 border-t-2 border-black text-center">
+        <p className="text-xs font-bold text-black">
           Already have an account?{" "}
           <button
             type="button"
             onClick={onGoLogin}
-            className="text-sky-400 hover:text-sky-300 font-bold hover:underline transition-colors focus:outline-none"
+            className="font-black text-black underline hover:bg-[#FACC15] px-1 transition-colors uppercase cursor-pointer"
           >
             Sign in here
           </button>
@@ -621,7 +591,7 @@ export function SetupPage({ onDone, onGoLogin }) {
   };
 
   return (
-    <AuthContainer shake={shake} dir="ltr">
+    <AuthContainer shake={shake} dir="ltr" category="ADMIN SETUP">
       <AuthHeader
         title="Admin Setup"
         subtitle="Configure the master administrative credentials for this instance"
@@ -630,9 +600,9 @@ export function SetupPage({ onDone, onGoLogin }) {
       {globalError && (
         <div
           role="alert"
-          className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold flex items-center gap-2.5"
+          className="mb-6 p-3.5 bg-[#EF4444] text-white border-[3px] border-black shadow-[4px_4px_0px_#000000] text-xs font-black flex items-center gap-2.5"
         >
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+          <AlertCircle className="w-5 h-5 shrink-0 stroke-[3]" />
           <span>{globalError}</span>
         </div>
       )}
@@ -687,19 +657,21 @@ export function SetupPage({ onDone, onGoLogin }) {
           onClick={handleSubmit}
           loading={loading}
           loadingText="Initializing system..."
+          bg="bg-[#FB923C]"
+          icon={ShieldCheck}
         >
           Initialize Admin Account
         </PrimaryButton>
       </form>
 
       {onGoLogin && (
-        <div className="mt-6 text-center">
-          <p className="text-xs text-slate-400">
+        <div className="mt-8 pt-4 border-t-2 border-black text-center">
+          <p className="text-xs font-bold text-black">
             Account already initialized?{" "}
             <button
               type="button"
               onClick={onGoLogin}
-              className="text-sky-400 hover:text-sky-300 font-bold hover:underline transition-colors focus:outline-none"
+              className="font-black text-black underline hover:bg-[#FACC15] px-1 transition-colors uppercase cursor-pointer"
             >
               Sign in
             </button>
@@ -770,15 +742,16 @@ export function ResetPage({ onVerify, onReset, onBack }) {
   };
 
   return (
-    <AuthContainer shake={shake} dir="ltr">
+    <AuthContainer shake={shake} dir="ltr" category="PASSWORD RESET">
       {/* Back button */}
       <button
         type="button"
         onClick={onBack}
-        className="absolute top-6 left-6 p-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] text-slate-300 hover:text-white border border-white/[0.08] transition-all flex items-center justify-center focus:outline-none"
+        className="mb-4 inline-flex items-center gap-2 bg-white text-black border-2 border-black px-3 py-1.5 shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 font-black text-xs uppercase transition-all cursor-pointer"
         title="Back to Login"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-4 h-4 stroke-[3]" />
+        <span>Back</span>
       </button>
 
       <AuthHeader
@@ -793,24 +766,20 @@ export function ResetPage({ onVerify, onReset, onBack }) {
       {/* Stepper indicator */}
       <div className="flex items-center justify-center gap-3 mb-6">
         <div
-          className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-all ${
+          className={`flex items-center justify-center w-8 h-8 border-2 border-black text-xs font-black ${
             step === "verify"
-              ? "bg-sky-500 text-white shadow-[0_0_15px_rgba(14,165,233,0.5)]"
-              : "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+              ? "bg-[#FACC15] text-black shadow-[2px_2px_0px_#000000]"
+              : "bg-[#A3E635] text-black"
           }`}
         >
-          {step === "newpass" ? <CheckCircle2 className="w-4 h-4" /> : "1"}
+          {step === "newpass" ? <CheckCircle2 className="w-5 h-5 stroke-[3]" /> : "1"}
         </div>
+        <div className="h-1 w-10 bg-black" />
         <div
-          className={`h-0.5 w-10 transition-colors ${
-            step === "newpass" ? "bg-sky-500" : "bg-white/10"
-          }`}
-        />
-        <div
-          className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-all ${
+          className={`flex items-center justify-center w-8 h-8 border-2 border-black text-xs font-black ${
             step === "newpass"
-              ? "bg-sky-500 text-white shadow-[0_0_15px_rgba(14,165,233,0.5)]"
-              : "bg-white/5 text-slate-500 border border-white/5"
+              ? "bg-[#FACC15] text-black shadow-[2px_2px_0px_#000000]"
+              : "bg-white text-black/40"
           }`}
         >
           2
@@ -838,6 +807,7 @@ export function ResetPage({ onVerify, onReset, onBack }) {
             onClick={handleVerify}
             loading={loading}
             loadingText="Verifying key..."
+            bg="bg-[#38BDF8]"
           >
             Verify Recovery Key
           </PrimaryButton>
@@ -879,6 +849,7 @@ export function ResetPage({ onVerify, onReset, onBack }) {
             onClick={handleReset}
             loading={false}
             icon={CheckCircle2}
+            bg="bg-[#A3E635]"
           >
             Save & Update Password
           </PrimaryButton>

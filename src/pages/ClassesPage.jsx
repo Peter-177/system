@@ -1,8 +1,7 @@
 import { useState, useMemo } from "react";
 import { classesDB } from "../data/storage";
-import { Page, Navbar, Empty } from "../components/UI";
-import { Plus, RefreshCcw, Lock, Users, Trash2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Plus, RefreshCcw, Lock, Users, Trash2, ArrowRight } from "lucide-react";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 
 export function ClassesPage({
   currentUser,
@@ -13,7 +12,7 @@ export function ClassesPage({
 }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [classesMap, setClassesMap] = useState(() => classesDB.getAll());
-  const [confirmDelete, setConfirmDelete] = useState(null); // holds class id to delete
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const classList = useMemo(
     () => Object.entries(classesMap).map(([id, cls]) => ({ id, ...cls })),
@@ -31,66 +30,27 @@ export function ClassesPage({
   };
 
   return (
-    <Page>
-      <Navbar title="إدارة الفصول" onBack={onBack} />
-
-      {/* ── Confirm Delete Dialog ── */}
-      <AnimatePresence>
-        {confirmDelete && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-6"
+    <div className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col" dir="rtl">
+      {/* ── Neo-Brutalist Navbar ── */}
+      <header className="sticky top-0 z-50 bg-[#38BDF8] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+          <button
+            onClick={onBack}
+            className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl text-center space-y-6"
-              dir="rtl"
-            >
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-                <Trash2 className="w-8 h-8 text-red-600" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-xl font-black text-slate-900">متأكد؟</h3>
-                <p className="text-slate-500 text-sm font-medium">
-                  هيتمسح الفصل ومش هيرجع تاني
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setConfirmDelete(null)}
-                  className="h-12 rounded-2xl border-2 border-slate-200 font-black text-slate-600 hover:bg-slate-50 transition-all"
-                >
-                  متمسحش
-                </button>
-                <button
-                  onClick={handleDeleteConfirmed}
-                  className="h-12 rounded-2xl bg-red-600 font-black text-white hover:bg-red-700 transition-all shadow-lg shadow-red-600/20"
-                >
-                  امسح
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+            <span>رجوع</span>
+          </button>
 
-      <div
-        className="flex-1 px-8 py-10 space-y-10 max-w-5xl mx-auto w-full pb-24"
-        dir="rtl"
-      >
-        <header className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">
-              الفصول الدراسية
-            </h2>
-            <p className="text-slate-500 font-medium text-sm mt-1">
-              إدارة مجموعات المخدومين والمراحل
-            </p>
+          <div className="flex items-center gap-2">
+            <span className="bg-black text-[#38BDF8] px-2.5 py-0.5 border-2 border-black font-black text-xs uppercase tracking-widest hidden sm:inline-block">
+              STAGES
+            </span>
+            <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase">
+              إدارة الفصول
+            </h1>
           </div>
+
           {!isAdmin && (
             <button
               onClick={async () => {
@@ -99,115 +59,158 @@ export function ClassesPage({
                 setIsRefreshing(false);
               }}
               disabled={isRefreshing}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-600 border border-slate-200 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all"
+              className="bg-white text-black border-2 border-black px-3 py-1.5 font-black text-xs uppercase shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 flex items-center gap-1.5 transition-all cursor-pointer"
             >
-              {isRefreshing ? (
-                <RefreshCcw className="w-4 h-4 animate-spin" />
-              ) : (
-                <RefreshCcw className="w-4 h-4" />
-              )}
+              <RefreshCcw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
               <span>تحديث</span>
             </button>
           )}
-        </header>
+          {isAdmin && <div className="w-10" />}
+        </div>
+      </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* ── Main Content ── */}
+      <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
+        <div className="flex items-center justify-between px-1">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-black uppercase">
+              قائمة الفصول والمراحل
+            </h2>
+            <p className="text-xs font-bold text-black/60">
+              اختر الفصل للوصول لقائمة المخدومين والغياب
+            </p>
+          </div>
           {isAdmin && (
             <button
               onClick={onGoCreate}
-              className="group h-full min-h-[200px] rounded-[2.5rem] border-2 border-dashed border-slate-200 text-slate-400 flex flex-col items-center justify-center gap-4 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all duration-300"
+              className="bg-[#A3E635] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none px-4 py-2 font-black text-xs sm:text-sm uppercase flex items-center gap-1.5 transition-all cursor-pointer"
             >
-              <div className="w-14 h-14 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
-                <Plus className="w-8 h-8" />
-              </div>
-              <span className="font-black text-lg">إضافة فصل جديد</span>
+              <Plus className="w-5 h-5 stroke-[3]" />
+              <span>فصل جديد</span>
             </button>
           )}
+        </div>
 
+        {/* Classes Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {classList.length === 0 ? (
-            <div className="md:col-span-2 lg:col-span-2">
-              <Empty message="مافيش فصول لغاية دلوقتي" icon="📚" />
+            <div className="col-span-full py-16 text-center bg-white border-[3px] border-black border-dashed p-8 shadow-[6px_6px_0px_#000000]">
+              <p className="font-black text-black text-lg uppercase">
+                لا توجد فصول مضافة بعد
+              </p>
             </div>
           ) : (
             classList.map((cls, idx) => {
               const hasAccess = isAdmin || userPerms.includes(cls.id);
               return (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
+                <Motion.div
+                  initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
+                  transition={{ delay: idx * 0.04 }}
                   key={cls.id}
-                  className={`tech-panel p-8 text-right flex flex-col items-start gap-6 group transition-all duration-300 h-full relative ${
+                  className={`bg-white border-[3px] border-black p-6 flex flex-col justify-between gap-6 relative transition-all duration-150 ${
                     !hasAccess
-                      ? "opacity-50 grayscale cursor-not-allowed border-slate-100 bg-slate-50/50"
-                      : "hover:border-indigo-200 hover:shadow-indigo-600/5"
+                      ? "opacity-60 bg-[#FDF8F0] shadow-[2px_2px_0px_#000000]"
+                      : "shadow-[6px_6px_0px_#000000] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px]"
                   }`}
                 >
-                  {/* Admin delete button */}
+                  {/* Delete Button for Admin */}
                   {isAdmin && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setConfirmDelete(cls.id);
                       }}
-                      className="absolute top-4 left-4 w-9 h-9 rounded-xl bg-red-50 text-red-400 opacity-0 group-hover:opacity-100 hover:bg-red-100 hover:text-red-600 transition-all flex items-center justify-center"
+                      className="absolute top-4 left-4 w-9 h-9 bg-[#EF4444] text-white border-2 border-black flex items-center justify-center hover:bg-black transition-colors cursor-pointer"
+                      title="حذف الفصل"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 stroke-[2.5]" />
                     </button>
                   )}
 
-                  {/* Card content — clickable area */}
-                  <button
-                    className="w-full text-right flex flex-col items-start gap-6"
+                  {/* Clickable Card Body */}
+                  <div
                     onClick={() => hasAccess && onGoClass(cls.id)}
-                    disabled={!hasAccess}
+                    className={`flex flex-col gap-4 text-right ${
+                      hasAccess ? "cursor-pointer group" : "cursor-not-allowed"
+                    }`}
                   >
-                    <div className="flex justify-between items-start w-full">
-                      <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm transition-colors group-hover:bg-indigo-600 group-hover:text-white">
-                        <Users className="w-7 h-7" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 bg-[#38BDF8] border-[3px] border-black shadow-[2px_2px_0px_#000000] flex items-center justify-center text-black shrink-0">
+                        <Users className="w-7 h-7 stroke-[2.5]" />
                       </div>
-                      {!hasAccess && (
-                        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
-                          <Lock className="w-4 h-4" />
-                        </div>
-                      )}
+                      <div className="min-w-0">
+                        <h3 className="font-black text-xl text-black group-hover:underline truncate">
+                          {cls.name}
+                        </h3>
+                        {!hasAccess && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-[#EF4444] bg-[#FEE2E2] px-2 py-0.5 border border-black mt-1">
+                            <Lock className="w-3 h-3" />
+                            غير مصرح
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <h3 className="font-black text-xl text-slate-900 group-hover:text-indigo-600 transition-colors">
-                        {cls.name}
-                      </h3>
-                      <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">
-                        {cls.id.slice(0, 8)}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mt-auto pt-4">
-                      {cls.grades?.slice(0, 3).map((g) => (
+                    {/* Assigned Grades */}
+                    <div className="flex flex-wrap gap-1.5 pt-3 border-t-2 border-black">
+                      {cls.grades?.map((g) => (
                         <span
                           key={g}
-                          className="px-3 py-1 bg-slate-100 text-[10px] font-black text-slate-500 rounded-lg border border-slate-200 uppercase tracking-tight"
+                          className="px-2.5 py-1 bg-[#FEF08A] text-black font-black text-xs border border-black"
                         >
                           {g}
                         </span>
                       ))}
-                      {cls.grades?.length > 3 && (
-                        <span className="px-2 py-1 bg-slate-50 text-[10px] font-black text-slate-400 rounded-lg">
-                          +{cls.grades.length - 3}
-                        </span>
-                      )}
                     </div>
-                  </button>
-                </motion.div>
+                  </div>
+                </Motion.div>
               );
             })
           )}
         </div>
-      </div>
-    </Page>
+      </main>
+
+      {/* Delete Modal */}
+      <AnimatePresence>
+        {confirmDelete && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60" dir="rtl">
+            <Motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border-[4px] border-black shadow-[10px_10px_0px_#000000] p-6 max-w-sm w-full space-y-4 text-center"
+            >
+              <div className="w-12 h-12 bg-[#EF4444] text-white border-2 border-black flex items-center justify-center mx-auto">
+                <Trash2 className="w-6 h-6 stroke-[2.5]" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="font-black text-lg text-black uppercase">تأكيد حذف الفصل</h4>
+                <p className="text-xs font-bold text-black/70">
+                  سيتم حذف الفصل من قاعدة البيانات بشكل نهائي.
+                </p>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setConfirmDelete(null)}
+                  className="flex-1 bg-white border-2 border-black py-2.5 font-black text-xs uppercase shadow-[2px_2px_0px_#000000]"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={handleDeleteConfirmed}
+                  className="flex-1 bg-[#EF4444] text-white border-2 border-black py-2.5 font-black text-xs uppercase shadow-[2px_2px_0px_#000000]"
+                >
+                  نعم، احذف
+                </button>
+              </div>
+            </Motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
-
 
 export function CreateClassPage({ onBack, onSaved }) {
   const [name, setName] = useState("");
@@ -257,87 +260,96 @@ export function CreateClassPage({ onBack, onSaved }) {
   };
 
   return (
-    <Page>
-      <Navbar title="إضافة فصل جديد" onBack={onBack} />
-      <div className="max-w-2xl mx-auto px-8 py-12" dir="rtl">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="tech-panel p-10 space-y-10"
-        >
-          <header>
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-4">
-              <span className="w-1.5 h-6 bg-indigo-600 rounded-full"></span>
-              بيانات الفصل الجديد
-            </h2>
-            <p className="text-slate-500 text-sm mt-2">
-              حدد اسم الفصل والمراحل الدراسية التابعة له
-            </p>
-          </header>
+    <div className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col" dir="rtl">
+      {/* ── Neo-Brutalist Navbar ── */}
+      <header className="sticky top-0 z-50 bg-[#38BDF8] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+          <button
+            onClick={onBack}
+            className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+            <span>رجوع</span>
+          </button>
 
-          <div className="space-y-8">
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mr-1">
-                اسم الفصل
-              </label>
-              <input
-                type="text"
-                className="tech-input h-16 w-full text-lg"
-                placeholder="مثال: أولى وتانية ابتدائي"
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  setError("");
-                }}
-              />
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="bg-black text-[#38BDF8] px-2.5 py-0.5 border-2 border-black font-black text-xs uppercase tracking-widest hidden sm:inline-block">
+              NEW CLASS
+            </span>
+            <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase">
+              إضافة فصل جديد
+            </h1>
+          </div>
 
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mr-1">
-                المراحل الدراسية
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {GRADES.map((grade) => (
-                  <label
+          <div className="w-10" />
+        </div>
+      </header>
+
+      {/* ── Main Content ── */}
+      <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-8 flex flex-col gap-6">
+        <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_#000000] p-6 sm:p-10 space-y-6">
+          <div className="space-y-2">
+            <label className="text-xs font-black uppercase tracking-wider text-black block">
+              اسم الفصل
+            </label>
+            <input
+              type="text"
+              className="w-full h-14 bg-[#FDF8F0] border-[3px] border-black px-4 text-lg font-black text-black outline-none focus:bg-[#FEF08A] transition-colors shadow-[3px_3px_0px_#000000]"
+              placeholder="مثال: أولى وتانية ابتدائي"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setError("");
+              }}
+              autoFocus
+            />
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-xs font-black uppercase tracking-wider text-black block">
+              المراحل الدراسية التابعة له
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {GRADES.map((grade) => {
+                const isSelected = selectedGrades.includes(grade);
+                return (
+                  <div
                     key={grade}
-                    className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer ${selectedGrades.includes(grade) ? "bg-indigo-50 border-indigo-200 text-indigo-700 font-bold" : "bg-white border-slate-100 text-slate-600 hover:border-slate-300"}`}
+                    onClick={() => {
+                      handleToggle(grade);
+                      setError("");
+                    }}
+                    className={`p-3.5 border-[3px] border-black cursor-pointer transition-all flex items-center justify-between ${
+                      isSelected
+                        ? "bg-[#FEF08A] shadow-[3px_3px_0px_#000000] translate-x-[-1px] translate-y-[-1px]"
+                        : "bg-[#FDF8F0] hover:bg-white"
+                    }`}
                   >
-                    <input
-                      type="checkbox"
-                      className="checkbox checkbox-primary checkbox-sm rounded-lg"
-                      checked={selectedGrades.includes(grade)}
-                      onChange={() => {
-                        handleToggle(grade);
-                        setError("");
-                      }}
-                    />
-                    <span className="text-sm">{grade}</span>
-                  </label>
-                ))}
-              </div>
+                    <span className="font-black text-sm text-black">{grade}</span>
+                    <div className={`w-5 h-5 border-2 border-black flex items-center justify-center ${isSelected ? "bg-black text-white" : "bg-white"}`}>
+                      {isSelected && <span className="font-black text-xs">✓</span>}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-100 text-red-600 p-5 rounded-2xl text-sm font-bold flex items-center gap-3">
-              <span>⚠️</span>
-              {error}
+            <div className="bg-[#EF4444] text-white border-[3px] border-black shadow-[3px_3px_0px_#000000] p-3 text-xs font-black">
+              ⚠️ {error}
             </div>
           )}
 
           <button
-            className="tech-btn-primary w-full h-16 shadow-indigo-600/10"
+            className="w-full bg-[#A3E635] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none py-4 font-black text-lg uppercase transition-all cursor-pointer disabled:opacity-50"
             onClick={submit}
             disabled={loading}
           >
-            {loading ? (
-              <span className="loading loading-spinner"></span>
-            ) : (
-              <span>إنشاء الفصل الآن</span>
-            )}
+            {loading ? "جاري الحفظ..." : "إنشاء الفصل الآن"}
           </button>
-        </motion.div>
-      </div>
-    </Page>
+        </div>
+      </main>
+    </div>
   );
 }

@@ -18,6 +18,7 @@ import { ClassDetailPage }          from "../pages/ClassDetailPage";
 import { AdminPage }                from "../pages/AdminPage";
 import { GamePage }                 from "../pages/GamePage";
 import { CheckPage }                from "../pages/CheckPage";
+import { SummerPage }               from "../pages/SummerPage";
 
 function getInitialRouting() {
   try {
@@ -82,16 +83,6 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
         setPageState(e.state.page);
         setActivePersonState(e.state.person);
         if (e.state.activeClass) setActiveClass(e.state.activeClass);
-        
-        // Auto-scroll to summer if returning to home from a summer-originated page
-        if (e.state.page === "home" && e.state.isSummer) {
-          requestAnimationFrame(() => {
-            setTimeout(() => {
-              const portal = document.getElementById("summer-portal");
-              if (portal) portal.scrollIntoView({ behavior: "smooth" });
-            }, 100);
-          });
-        }
       } else {
         const fallback = getInitialRouting();
         setPageState(fallback.page);
@@ -123,20 +114,7 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
     onGoSearch:     () => setPage("search"),
     onGoAttendance: () => { setActivePerson(null); setPage("attendance"); },
     onGoHistory:    () => setPage("history"),
-    onGoSummer:     () => {
-      if (page !== "home") {
-        setPage("home");
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            const portal = document.getElementById("summer-portal");
-            if (portal) portal.scrollIntoView({ behavior: "smooth" });
-          }, 300);
-        });
-      } else {
-        const portal = document.getElementById("summer-portal");
-        if (portal) portal.scrollIntoView({ behavior: "smooth" });
-      }
-    },
+    onGoSummer:     () => setPage("summer"),
     onGoVisits:     () => setPage("visits"),
     onGoBirthday:   () => setPage("birthday"),
     onGoClasses:    () => setPage("classes"),
@@ -153,30 +131,22 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
     onLogout
   };
 
-  const summerProps = {
-    ...homeProps,
-    onGoSearch:     () => setPage("search", activePerson, false, true),
-    onGoAttendance: () => { setActivePerson(null); setPage("attendance", null, false, true); },
-    onGoGame:       () => setPage("game", activePerson, false, true),
-    onGoCheck:      (childId) => {
-      let p = null;
-      if (childId) {
-        const found = studentsDB.get(childId);
-        p = found ? { qrId: childId, ...found } : { qrId: childId };
-      }
-      setPage("check", p, false, true);
-    },
-  };
-
   switch (page) {
     case "home":
+      return <HomePage {...homeProps} />;
+    case "summer":
       return (
-        <HomePage 
-          {...homeProps} 
-          onGoSearch_Summer={summerProps.onGoSearch} 
-          onGoAttendance_Summer={summerProps.onGoAttendance} 
-          onGoGame_Summer={summerProps.onGoGame} 
-          onGoCheck_Summer={summerProps.onGoCheck}
+        <SummerPage
+          currentUser={currentUser}
+          onBack={() => setPage("home")}
+          onGoCheck={(childId) => {
+            let p = null;
+            if (childId) {
+              const found = studentsDB.get(childId);
+              p = found ? { qrId: childId, ...found } : { qrId: childId };
+            }
+            setPage("check", p);
+          }}
         />
       );
     case "search":
@@ -280,3 +250,4 @@ export function AppRouter({ currentUser, onRefreshAuth, onLogout, onUpdateSecret
       return <HomePage {...homeProps} />;
   }
 }
+

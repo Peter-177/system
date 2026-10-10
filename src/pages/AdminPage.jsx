@@ -1,12 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import * as XLSX from "xlsx";
 import {
-  Page,
-  Navbar,
-  Empty,
   ImageCropperModal,
-  Sidebar,
-  Avatar,
 } from "../components/UI";
 import {
   getAllUsersFB,
@@ -20,7 +14,7 @@ import {
   Palette,
   ShieldCheck,
   Download,
-  ArrowLeft,
+  ArrowRight,
   Trash2,
   Check,
   X,
@@ -33,7 +27,9 @@ import {
   Save,
   Camera,
   Home,
+  Sliders,
 } from "lucide-react";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 
 export function AdminPage({
   currentUser,
@@ -54,18 +50,6 @@ export function AdminPage({
   const [brand, setBrand] = useState(settingsDB.get());
   const [brandLoading, setBrandLoading] = useState(false);
   const [cropImage, setCropImage] = useState(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const closeMobileMenu = () => setMobileMenuOpen(false);
-
-  useEffect(() => {
-    if (!mobileMenuOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [mobileMenuOpen]);
 
   const classList = useMemo(
     () =>
@@ -103,13 +87,21 @@ export function AdminPage({
 
   if (currentUser?.role !== "admin") {
     return (
-      <Page>
-        <Navbar title="الوصول محظور" onBack={onBack} />
-        <Empty
-          message="عفواً، هذه المنطقة للمشرفين فقط"
-          icon={<ShieldCheck size={64} className="text-red-400 opacity-50" />}
-        />
-      </Page>
+      <div className="min-h-screen bg-[#FDF8F0] text-black font-sans flex flex-col items-center justify-center p-4" dir="rtl">
+        <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_#000000] p-8 max-w-md w-full text-center space-y-4">
+          <div className="w-16 h-16 bg-[#EF4444] border-[3px] border-black shadow-[4px_4px_0px_#000000] flex items-center justify-center mx-auto text-white">
+            <ShieldCheck size={36} strokeWidth={2.5} />
+          </div>
+          <h2 className="text-2xl font-black uppercase text-black">الوصول محظور</h2>
+          <p className="text-sm font-bold text-black/70">عفواً، هذه المنطقة للمشرفين فقط</p>
+          <button
+            onClick={onBack}
+            className="w-full bg-[#FACC15] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] py-3 font-black text-sm uppercase cursor-pointer"
+          >
+            الرجوع للصفحة الرئيسية
+          </button>
+        </div>
+      </div>
     );
   }
 
@@ -178,28 +170,10 @@ export function AdminPage({
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
       <head>
         <meta charset="utf-8" />
-        <!--[if gte mso 9]>
-        <xml>
-         <x:ExcelWorkbook>
-          <x:ExcelWorksheets>
-           <x:ExcelWorksheet>
-            <x:Name>البيانات</x:Name>
-            <x:WorksheetOptions>
-             <x:DisplayRightToLeft/>
-             <x:FreezePanes/>
-             <x:FrozenNoSplit/>
-             <x:SplitHorizontal>1</x:SplitHorizontal>
-             <x:TopRowBottomPane>1</x:TopRowPane>
-            </x:WorksheetOptions>
-           </x:ExcelWorksheet>
-          </x:ExcelWorksheets>
-         </x:ExcelWorkbook>
-        </xml>
-        <![endif]-->
         <style>
           table { border-collapse: collapse; font-family: 'Segoe UI', tahoma, sans-serif; }
-          th { background-color: #1F4E78; color: #FFFFFF; font-weight: bold; border: 1px solid #B4C6E7; padding: 10px; text-align: center; font-size: 14px; }
-          td { border: 1px solid #D9E1F2; padding: 8px; text-align: center; color: #333333; font-size: 13px; vertical-align: middle; }
+          th { background-color: #000000; color: #FFFFFF; font-weight: bold; border: 2px solid #000000; padding: 10px; text-align: center; font-size: 14px; }
+          td { border: 1px solid #000000; padding: 8px; text-align: center; color: #000000; font-size: 13px; vertical-align: middle; }
           .even td { background-color: #F8F9FA; }
           .odd td { background-color: #FFFFFF; }
         </style>
@@ -223,7 +197,7 @@ export function AdminPage({
               <td style="mso-number-format:'\@';">${r[0]}</td>
               <td><b>${r[1]}</b></td>
               <td>${r[2]}</td>
-              <td style="mso-number-format:'\@'; color: #1F4E78; font-weight: bold;">${r[3]}</td>
+              <td style="mso-number-format:'\@'; color: #000000; font-weight: bold;">${r[3]}</td>
               <td>${r[4]}</td>
               <td>${r[5]}</td>
               <td style="color: #666; font-style: italic;">${r[6]}</td>
@@ -235,7 +209,6 @@ export function AdminPage({
       </html>
     `;
 
-    // \ufeff enables UTF-8 BOM so Excel reads Arabic perfectly
     const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -247,325 +220,254 @@ export function AdminPage({
     URL.revokeObjectURL(url);
   };
 
-  const renderSidebar = () => (
-    <Sidebar branding={{ icon: brand.icon }}>
-      <button
-        onClick={() => {
-          setActiveSection("dashboard");
-          closeMobileMenu();
-        }}
-        className={`tech-sidebar-item ${activeSection === "dashboard" ? "active" : ""}`}
-      >
-        <LayoutDashboard className="w-5 h-5" />
-        <span>لوحة التحكم</span>
-      </button>
-      <button
-        onClick={() => {
-          setActiveSection("servants");
-          closeMobileMenu();
-        }}
-        className={`tech-sidebar-item ${activeSection === "servants" ? "active" : ""}`}
-      >
-        <Users className="w-5 h-5" />
-        <span>إدارة الخدام</span>
-      </button>
-      <button
-        onClick={() => {
-          setActiveSection("branding");
-          closeMobileMenu();
-        }}
-        className={`tech-sidebar-item ${activeSection === "branding" ? "active" : ""}`}
-      >
-        <Palette className="w-5 h-5" />
-        <span>هوية النظام</span>
-      </button>
-      <button
-        onClick={() => {
-          setActiveSection("security");
-          closeMobileMenu();
-        }}
-        className={`tech-sidebar-item ${activeSection === "security" ? "active" : ""}`}
-      >
-        <ShieldCheck className="w-5 h-5" />
-        <span>الأمان</span>
-      </button>
-
-      <div className="mt-12 pt-6 border-t border-white/5 mb-4">
-        <p className="px-6 text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4">
-          Data Management
-        </p>
-      </div>
-      <button
-        onClick={() => {
-          handleExportExcel();
-          closeMobileMenu();
-        }}
-        className="tech-sidebar-item group/export"
-      >
-        <Database className="w-5 h-5 group-hover/export:text-sky-400 transition-colors" />
-        <span>تصدير البيانات</span>
-      </button>
-      <button
-        onClick={() => {
-          closeMobileMenu();
-          onBack();
-        }}
-        className="tech-sidebar-item text-red-400/60 hover:text-red-400 hover:bg-red-500/5 mt-auto"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        <span>رجوع</span>
-      </button>
-    </Sidebar>
-  );
+  const navItems = [
+    { id: "dashboard", label: "نظرة عامة", icon: LayoutDashboard, bg: "bg-[#FACC15]" },
+    { id: "servants",  label: "إدارة الخدام", icon: Users,           bg: "bg-[#38BDF8]" },
+    { id: "branding",  label: "هوية النظام", icon: Palette,         bg: "bg-[#A3E635]" },
+    { id: "security",  label: "الأمان والمفاتيح", icon: ShieldCheck,   bg: "bg-[#FB923C]" },
+  ];
 
   return (
-    <Page sidebar={renderSidebar()}>
-      <Navbar
-        title={
-          activeSection === "dashboard"
-            ? "Executive Overview"
-            : activeSection === "servants"
-              ? "Member Directory"
-              : activeSection === "branding"
-                ? "Brand Editor"
-                : "Security Shield"
-        }
-        onBack={onBack}
-        right={
-          <button
-            type="button"
-            className="md:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#1a2332] border border-white/[0.06] text-[#c8d4e0] shadow-none transition-colors hover:bg-[#222d3d] hover:text-white active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/50"
-            aria-label="فتح القائمة"
-            aria-expanded={mobileMenuOpen}
-            aria-controls="admin-mobile-drawer"
-            onClick={() => setMobileMenuOpen(true)}
-          >
-            <span className="flex flex-col items-center justify-center gap-[5px]" aria-hidden>
-              <span className="block h-[2px] w-[18px] rounded-full bg-current" />
-              <span className="block h-[2px] w-[18px] rounded-full bg-current" />
-              <span className="block h-[2px] w-[18px] rounded-full bg-current" />
+    <div className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col" dir="rtl">
+      {/* ── Neo-Brutalist Navbar ── */}
+      <header className="sticky top-0 z-50 bg-[#FACC15] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          {/* Back Button */}
+          {onBack ? (
+            <button
+              onClick={onBack}
+              className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
+            >
+              <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+              <span>رجوع</span>
+            </button>
+          ) : (
+            <div className="w-10" />
+          )}
+
+          {/* Title */}
+          <div className="flex items-center gap-2">
+            <span className="bg-black text-[#FACC15] px-2.5 py-0.5 border-2 border-black font-black text-xs uppercase tracking-widest hidden sm:inline-block">
+              ADMIN
             </span>
-          </button>
-        }
-      />
+            <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase flex items-center gap-2">
+              لوحة التحكم
+            </h1>
+          </div>
 
-      {/* قائمة جانبية للموبايل (نفس محتوى الشريط — الشريط مخفي تحت md) */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-[200] md:hidden"
-          id="admin-mobile-drawer"
-          role="dialog"
-          aria-modal="true"
-          aria-label="قائمة الإدارة"
-        >
+          {/* Export button */}
           <button
-            type="button"
-            className="absolute inset-0 bg-slate-950/75 backdrop-blur-[2px]"
-            aria-label="إغلاق القائمة"
-            onClick={closeMobileMenu}
-          />
-          <aside className="absolute top-0 right-0 flex h-full w-[min(100%,20rem)] flex-col border-l border-white/10 bg-slate-900/98 shadow-2xl animate-reveal overflow-y-auto">
-            <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
-              <span className="text-xs font-black uppercase tracking-widest text-slate-500">
-                القائمة
-              </span>
-              <button
-                type="button"
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1a2332] border border-white/[0.06] text-[#c8d4e0] transition-colors hover:bg-[#222d3d] hover:text-white active:scale-95"
-                aria-label="إغلاق"
-                onClick={closeMobileMenu}
-              >
-                <X className="h-5 w-5" strokeWidth={2.25} />
-              </button>
-            </div>
-            <div className="min-h-0 flex-1">{renderSidebar()}</div>
-          </aside>
+            onClick={handleExportExcel}
+            className="bg-black text-[#A3E635] border-2 border-black px-3 py-1 font-black text-xs sm:text-sm uppercase shadow-[2px_2px_0px_#000000] hover:bg-[#A3E635] hover:text-black transition-colors flex items-center gap-1.5 cursor-pointer"
+            title="تصدير ملف إكسيل"
+          >
+            <Download className="w-4 h-4 stroke-[3]" />
+            <span className="hidden sm:inline">Excel</span>
+          </button>
         </div>
-      )}
+      </header>
 
-      <div
-        className="flex-1 px-8 py-10 md:px-16 w-full pb-32 overflow-y-auto"
-        dir="rtl"
-      >
+      {/* ── Navigation Tabs ── */}
+      <div className="bg-white border-b-[3px] border-black px-4 sm:px-8 py-3 overflow-x-auto scrollbar-hide">
+        <div className="max-w-7xl mx-auto flex gap-3">
+          {navItems.map((item) => {
+            const isActive = activeSection === item.id;
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveSection(item.id)}
+                className={`px-4 py-2 border-[3px] border-black font-black text-xs sm:text-sm uppercase flex items-center gap-2 transition-all cursor-pointer shrink-0 ${
+                  isActive
+                    ? `${item.bg} text-black shadow-[3px_3px_0px_#000000] translate-x-[-1px] translate-y-[-1px]`
+                    : "bg-[#FDF8F0] text-black/70 hover:bg-white hover:text-black"
+                }`}
+              >
+                <Icon className="w-4 h-4 stroke-[2.5]" />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Main Content Area ── */}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-8 py-8 flex flex-col gap-8">
+        
+        {/* 1. DASHBOARD VIEW */}
         {activeSection === "dashboard" && (
-          <div className="max-w-7xl animate-reveal">
-            <header className="mb-14 flex items-center gap-6">
-              <div className="w-1.5 h-12 bg-sky-500 rounded-full"></div>
-              <div>
-                <h2 className="text-4xl font-black text-sky-50 tracking-tighter mb-2 italic">
-                  Control Panel
-                </h2>
-              </div>
-            </header>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-              <div className="tech-card !p-8 group">
-                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 group-hover:scale-110 transition-transform">
-                    <Users size={32} />
-                  </div>
-                  <div>
-                    <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.3em] mb-1">
-                      Total Students
-                    </p>
-                    <span className="text-4xl font-black text-sky-50 tracking-tighter">
-                      {totalStudents}
-                    </span>
-                  </div>
+          <div className="flex flex-col gap-8">
+            {/* Stat Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Total Students */}
+              <div className="bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 flex items-center gap-5">
+                <div className="w-16 h-16 bg-[#38BDF8] border-[3px] border-black shadow-[3px_3px_0px_#000000] flex items-center justify-center shrink-0">
+                  <Users size={32} className="stroke-[2.5] text-black" />
+                </div>
+                <div>
+                  <span className="text-xs font-black uppercase tracking-widest text-black/60 block">
+                    إجمالي الأطفال
+                  </span>
+                  <span className="text-4xl font-black text-black tabular-nums tracking-tight">
+                    {totalStudents}
+                  </span>
                 </div>
               </div>
 
-              <div className="tech-card !p-8 group hover:border-pink-500/20 shadow-none hover:shadow-pink-500/5 transition-all">
-                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-2xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400 group-hover:scale-110 transition-transform">
-                    <Cake size={32} />
-                  </div>
-                  <div>
-                    <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.3em] mb-1">
-                      Birthdays Today
-                    </p>
-                    <span className="text-4xl font-black text-sky-50 tracking-tighter">
-                      {birthdaysToday}
-                    </span>
-                  </div>
+              {/* Birthdays Today */}
+              <div className="bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 flex items-center gap-5">
+                <div className="w-16 h-16 bg-[#F472B6] border-[3px] border-black shadow-[3px_3px_0px_#000000] flex items-center justify-center shrink-0">
+                  <Cake size={32} className="stroke-[2.5] text-black" />
+                </div>
+                <div>
+                  <span className="text-xs font-black uppercase tracking-widest text-black/60 block">
+                    أعياد ميلاد اليوم
+                  </span>
+                  <span className="text-4xl font-black text-black tabular-nums tracking-tight">
+                    {birthdaysToday}
+                  </span>
                 </div>
               </div>
 
-              <div className="tech-card !p-8 group">
-                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-2xl bg-azure-600/10 border border-azure-600/20 flex items-center justify-center text-azure-600 group-hover:scale-110 transition-transform">
-                    <BookOpen size={32} />
-                  </div>
-                  <div>
-                    <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.3em] mb-1">
-                      Active Classes
-                    </p>
-                    <span className="text-4xl font-black text-sky-50 tracking-tighter">
-                      {classList.length}
-                    </span>
-                  </div>
+              {/* Active Classes */}
+              <div className="bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 flex items-center gap-5 sm:col-span-2 lg:col-span-1">
+                <div className="w-16 h-16 bg-[#A3E635] border-[3px] border-black shadow-[3px_3px_0px_#000000] flex items-center justify-center shrink-0">
+                  <BookOpen size={32} className="stroke-[2.5] text-black" />
+                </div>
+                <div>
+                  <span className="text-xs font-black uppercase tracking-widest text-black/60 block">
+                    الفصول النشطة
+                  </span>
+                  <span className="text-4xl font-black text-black tabular-nums tracking-tight">
+                    {classList.length}
+                  </span>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="tech-panel !p-10 col-span-2">
-                <h3 className="text-2xl font-black text-sky-50 mb-10 flex items-center gap-4">
-                  <LayoutDashboard className="text-sky-500" />
-                  Quick Actions
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Quick Actions & Export Panel */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Quick Actions */}
+              <div className="lg:col-span-2 bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 sm:p-8 flex flex-col gap-6">
+                <div className="flex items-center gap-3 border-b-[3px] border-black pb-4">
+                  <div className="w-8 h-8 bg-[#FACC15] border-2 border-black flex items-center justify-center">
+                    <Sliders className="w-4 h-4 stroke-[3]" />
+                  </div>
+                  <h3 className="font-black text-xl text-black uppercase">إجراءات سريعة</h3>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <button
                     onClick={onGoClasses}
-                    className="tech-card !p-10 group flex items-start gap-6 hover:bg-slate-800/80 transition-all"
+                    className="bg-[#FEF08A] hover:bg-[#FACC15] border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none p-5 flex items-center gap-4 transition-all text-right cursor-pointer group"
                   >
-                    <div className="w-14 h-14 rounded-2xl bg-slate-950 flex items-center justify-center text-sky-400 border border-white/5 transition-colors group-hover:border-sky-400/40">
-                      <BookOpen size={28} />
+                    <div className="w-12 h-12 bg-white border-2 border-black flex items-center justify-center shrink-0">
+                      <BookOpen size={24} className="stroke-[2.5] text-black" />
                     </div>
-                    <div className="text-right">
-                      <span className="block font-black text-xl text-sky-50 mb-1">
-                        الفصول
-                      </span>
+                    <div>
+                      <span className="font-black text-lg text-black block">إدارة الفصول</span>
+                      <span className="text-xs font-bold text-black/60">تعديل المراحل والصفوف</span>
                     </div>
                   </button>
 
                   <button
                     onClick={onGoAddStudent}
-                    className="tech-card !p-10 group flex items-start gap-6 hover:bg-slate-800/80 transition-all"
+                    className="bg-[#DCFCE7] hover:bg-[#A3E635] border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none p-5 flex items-center gap-4 transition-all text-right cursor-pointer group"
                   >
-                    <div className="w-14 h-14 rounded-2xl bg-slate-950 flex items-center justify-center text-sky-400 border border-white/5 transition-colors group-hover:border-sky-400/40">
-                      <PlusCircle size={28} />
+                    <div className="w-12 h-12 bg-white border-2 border-black flex items-center justify-center shrink-0">
+                      <PlusCircle size={24} className="stroke-[2.5] text-black" />
                     </div>
-                    <div className="text-right">
-                      <span className="block font-black text-xl text-sky-50 mb-1">
-                        إضافة طفل
-                      </span>
-                     
+                    <div>
+                      <span className="font-black text-lg text-black block">إضافة مخدوم</span>
+                      <span className="text-xs font-bold text-black/60">تسجيل طفل جديد</span>
                     </div>
                   </button>
                 </div>
               </div>
 
-              <div className="tech-panel !p-10 flex flex-col items-center justify-center text-center">
-                <div className="w-24 h-24 rounded-[2.5rem] bg-slate-950 border border-white/5 flex items-center justify-center text-sky-500 shadow-2xl mb-8 relative group">
-                  <div className="absolute inset-0 bg-sky-500/10 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <Download size={40} className="relative z-10" />
+              {/* Excel Download Card */}
+              <div className="bg-[#38BDF8] border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 sm:p-8 flex flex-col items-center justify-between text-center gap-6">
+                <div className="w-16 h-16 bg-white border-[3px] border-black shadow-[3px_3px_0px_#000000] flex items-center justify-center">
+                  <Database size={32} className="stroke-[2.5] text-black" />
                 </div>
-                <h4 className="font-black text-2xl text-sky-50 mb-3 tracking-tighter">
-                  System Export
-                </h4>
+                <div>
+                  <h4 className="font-black text-2xl text-black uppercase mb-1">
+                    تصدير قاعدة البيانات
+                  </h4>
+                  <p className="text-xs font-bold text-black/70">
+                    تحميل جميع بيانات الأطفال في ملف Excel منظم
+                  </p>
+                </div>
                 <button
                   onClick={handleExportExcel}
-                  className="tech-btn-primary w-full shadow-2xl"
+                  className="w-full bg-black text-white hover:bg-white hover:text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] py-3.5 font-black text-sm uppercase transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>Download Records</span>
+                  <Download size={18} className="stroke-[3]" />
+                  <span>تحميل ملف EXCEL</span>
                 </button>
               </div>
             </div>
           </div>
         )}
 
+        {/* 2. SERVANTS DIRECTORY */}
         {activeSection === "servants" && (
-          <div className="max-w-6xl animate-reveal">
-            <header className="mb-14 flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <div className="w-1.5 h-12 bg-sky-500 rounded-full"></div>
-                <div>
-                  <h2 className="text-4xl font-black text-sky-50 tracking-tighter mb-2 italic">
-                    Servants Registry
-                  </h2>
-                  <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">
-                    Access control & permission management
-                  </p>
-                </div>
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-2xl font-black text-black uppercase">دليل الخدام والصلاحيات</h3>
+                <p className="text-xs font-bold text-black/60">التحكم في وصول الفصول وحذف المخدومين</p>
               </div>
-              <div className="tech-badge">{users.length} Active Accounts</div>
-            </header>
+              <span className="bg-black text-white px-3 py-1 font-black text-xs uppercase border border-black">
+                {users.length} خادم مسجل
+              </span>
+            </div>
 
             {loading ? (
-              <div className="tech-panel flex flex-col items-center justify-center py-40 animate-pulse">
-                <div className="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mb-6"></div>
-                <p className="text-slate-400 font-black tracking-widest uppercase text-xs">
-                  Synchronizing Database...
-                </p>
+              <div className="py-20 flex flex-col items-center justify-center bg-white border-[3px] border-black p-8 gap-3">
+                <div className="w-10 h-10 border-4 border-black border-t-[#FACC15] animate-spin" />
+                <span className="font-black text-xs uppercase tracking-widest text-black">
+                  جاري جلب الخدام...
+                </span>
               </div>
             ) : users.length === 0 ? (
-              <Empty
-                message="لا يوجد خدام مسجلين حالياً"
-                icon={<Users size={64} className="opacity-20" />}
-              />
+              <div className="py-16 text-center bg-white border-[3px] border-black border-dashed p-8">
+                <p className="font-black text-black text-lg">لا يوجد خدام مسجلين حالياً</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {users.map((u) => (
-                  <div key={u.username} className="tech-card group relative">
-                    <div className="flex items-center gap-5 mb-10">
-                      <Avatar name={u.username} size="md" />
+                  <div
+                    key={u.username}
+                    className="bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 flex flex-col justify-between gap-6"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-[#FACC15] border-[3px] border-black shadow-[2px_2px_0px_#000000] flex items-center justify-center font-black text-2xl text-black shrink-0">
+                        {u.username?.[0]?.toUpperCase()}
+                      </div>
                       <div className="min-w-0">
-                        <h4 className="font-black text-2xl text-sky-50 truncate tracking-tight">
-                          {u.username}
-                        </h4>
-                        <span className="text-sky-500/60 text-[10px] font-black uppercase tracking-[0.2em] mt-1 block">
-                          {u.permissions?.length || 0} active keys
+                        <h4 className="font-black text-xl text-black truncate">{u.username}</h4>
+                        <span className="inline-block bg-[#FEF08A] text-black font-mono font-black text-[10px] px-2 py-0.5 border border-black mt-1">
+                          {u.role === "admin" ? "مسؤول كامل (Admin)" : `${u.permissions?.length || 0} صلاحية فصل`}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 pt-3 border-t-2 border-black">
                       <button
                         onClick={() => handleEditClick(u)}
-                        className="tech-btn-secondary flex-1 !px-4 !py-3 text-xs"
+                        className="flex-1 bg-[#38BDF8] text-black border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 py-2.5 font-black text-xs uppercase transition-all cursor-pointer"
                       >
-                        Configure
+                        تعديل الصلاحيات
                       </button>
                       <button
                         onClick={() => handleDeleteUser(u.username)}
-                        className="w-12 h-12 rounded-2xl border border-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center shadow-xl active:scale-90"
+                        className="w-10 bg-[#EF4444] text-white border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 flex items-center justify-center transition-all cursor-pointer shrink-0"
+                        title="حذف الخادم"
                       >
-                        <Trash2 size={20} />
+                        <Trash2 size={18} className="stroke-[2.5]" />
                       </button>
                     </div>
-
-                    <div className="absolute top-6 left-6 w-1.5 h-1.5 rounded-full bg-slate-800 group-hover:bg-sky-400 transition-colors shadow-[0_0_10px_rgba(56,189,248,0)] group-hover:shadow-[0_0_10px_rgba(56,189,248,0.5)]"></div>
                   </div>
                 ))}
               </div>
@@ -573,308 +475,246 @@ export function AdminPage({
           </div>
         )}
 
+        {/* 3. BRANDING SETTINGS */}
         {activeSection === "branding" && (
-          <div className="max-w-3xl animate-reveal">
-            <header className="mb-14 flex items-center gap-6">
-              <div className="w-1.5 h-12 bg-sky-500 rounded-full"></div>
-              <div>
-                <h2 className="text-4xl font-black text-sky-50 tracking-tighter mb-2 italic">
-                  Global Branding
-                </h2>
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">
-                  Customize system identity & visuals
-                </p>
-              </div>
-            </header>
-
-            <div className="tech-panel space-y-12">
-              <div className="p-10 rounded-[2.5rem] bg-slate-950/50 border border-white/5 flex flex-col md:flex-row items-center gap-10">
-                {/* إطار يلتف حول الصورة (بدون مربع ثابت) لتقليل فراغات الزوايا */}
-                <div className="relative inline-flex max-w-[min(100%,12.5rem)] max-h-48 min-w-0 items-center justify-center overflow-hidden rounded-3xl border-2 border-white/10 bg-slate-950/90 shadow-2xl shrink-0 group">
-                  <div className="pointer-events-none absolute inset-0 bg-sky-500/10 blur-xl opacity-0 transition-opacity group-hover:opacity-100" />
-                  {brand.icon?.startsWith("data:image") ? (
-                    <img
-                      alt="brand"
-                      src={brand.icon}
-                      className="relative z-10 block h-auto w-auto max-h-48 max-w-[12.5rem] object-contain group-hover:scale-[1.02] transition-transform duration-500"
-                    />
-                  ) : (
-                    <span className="relative z-10 flex h-32 w-32 items-center justify-center text-6xl">
-                      {brand.icon}
-                    </span>
-                  )}
-                </div>
-                <div className="flex-1 w-full flex flex-col gap-4">
-                  <button
-                    onClick={() => setBrand({ ...brand, icon: "⛪" })}
-                    className="tech-btn-secondary w-full flex items-center justify-center gap-3"
-                  >
-                    <Home size={18} />
-                    Default Icon
-                  </button>
-                  <label className="tech-btn-secondary w-full cursor-pointer flex items-center justify-center gap-3 border-sky-400/30 text-sky-400">
-                    <Camera size={18} />
-                    <span>Upload Custom Identity</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onload = () => setCropImage(reader.result);
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <button
-                onClick={async () => {
-                  setBrandLoading(true);
-                  await settingsDB.set(brand);
-                  setBrandLoading(false);
-                  alert("تم التحديث بنجاح!");
-                }}
-                className="tech-btn-primary w-full !h-16 shadow-[0_0_40px_rgba(14,165,233,0.1)]"
-                disabled={brandLoading}
-              >
-                {brandLoading ? (
-                  <span className="loading loading-dots"></span>
-                ) : (
-                  <div className="flex items-center gap-4">
-                    <Save size={20} />
-                    <span>Propagate Changes</span>
-                  </div>
-                )}
-              </button>
+          <div className="max-w-2xl bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 sm:p-8 flex flex-col gap-6">
+            <div>
+              <h3 className="text-2xl font-black text-black uppercase">هوية النظام والأيقونة</h3>
+              <p className="text-xs font-bold text-black/60">تخصيص اللوجو الظاهر في أعلى التطبيق</p>
             </div>
+
+            <div className="border-[3px] border-black p-6 bg-[#FDF8F0] flex flex-col sm:flex-row items-center gap-6">
+              <div className="w-32 h-32 bg-white border-[3px] border-black shadow-[4px_4px_0px_#000000] flex items-center justify-center overflow-hidden shrink-0">
+                {brand.icon?.startsWith("data:image") ? (
+                  <img
+                    alt="brand"
+                    src={brand.icon}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-5xl">{brand.icon}</span>
+                )}
+              </div>
+              <div className="flex-1 w-full flex flex-col gap-3">
+                <button
+                  onClick={() => setBrand({ ...brand, icon: "⛪" })}
+                  className="bg-white border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 py-2.5 font-black text-xs uppercase flex items-center justify-center gap-2 cursor-pointer transition-all"
+                >
+                  <Home size={16} />
+                  <span>استعادة الأيقونة الافتراضية ⛪</span>
+                </button>
+                <label className="bg-[#A3E635] border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 py-2.5 font-black text-xs uppercase flex items-center justify-center gap-2 cursor-pointer transition-all text-black">
+                  <Camera size={16} />
+                  <span>رفع لوجو أو صورة جديدة</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = () => setCropImage(reader.result);
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <button
+              onClick={async () => {
+                setBrandLoading(true);
+                await settingsDB.set(brand);
+                setBrandLoading(false);
+                alert("تم حفظ الهوية بنجاح!");
+              }}
+              className="w-full bg-[#FACC15] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none py-4 font-black text-base uppercase flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+              disabled={brandLoading}
+            >
+              <Save size={20} className="stroke-[2.5]" />
+              <span>{brandLoading ? "جاري الحفظ..." : "حفظ التغييرات"}</span>
+            </button>
           </div>
         )}
 
+        {/* 4. SECURITY & ROOT KEY */}
         {activeSection === "security" && (
-          <div className="max-w-3xl animate-reveal">
-            <header className="mb-14 flex items-center gap-6">
-              <div className="w-1.5 h-12 bg-sky-400 rounded-full"></div>
-              <div>
-                <h2 className="text-4xl font-black text-sky-50 tracking-tighter mb-2 italic">
-                  Secure Node
-                </h2>
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">
-                  Encryption keys & root access control
-                </p>
-              </div>
-            </header>
+          <div className="max-w-2xl bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 sm:p-8 flex flex-col gap-6">
+            <div>
+              <h3 className="text-2xl font-black text-black uppercase">مفتاح الاسترجاع الرئيسي</h3>
+              <p className="text-xs font-bold text-black/60">تغيير كود الطوارئ لحسابات المشرفين</p>
+            </div>
 
-            <div className="tech-panel border-sky-500/20 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/5 blur-[100px] rounded-full -mr-32 -mt-32"></div>
-
-              <div className="w-20 h-20 rounded-3xl bg-slate-950 border border-white/5 text-sky-400 flex items-center justify-center mb-10 shadow-2xl relative z-10">
-                <ShieldCheck size={40} className="glow-blue" />
-              </div>
-
-              <div className="space-y-10 relative z-10">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-end mr-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">
-                      Root Access Key
-                    </label>
-                    <span className="text-[9px] font-black text-sky-500/40 uppercase tracking-widest">
-                      Highly Sensitive
-                    </span>
-                  </div>
-                  <input
-                    type="password"
-                    className="tech-input !h-16 text-center tracking-[0.6em] text-2xl font-black focus:border-sky-400 focus:ring-sky-500/10"
-                    value={newSecret}
-                    placeholder="••••••••"
-                    onChange={(e) => setNewSecret(e.target.value)}
-                  />
+            <div className="space-y-3">
+              <label className="text-xs font-black uppercase tracking-wider text-black">
+                المفتاح السري الجديد
+              </label>
+              <div className="relative flex items-center bg-[#FDF8F0] border-[3px] border-black shadow-[4px_4px_0px_#000000]">
+                <div className="bg-[#FB923C] border-l-[3px] border-black p-3.5 flex items-center justify-center">
+                  <Key size={20} className="stroke-[2.5] text-black" />
                 </div>
+                <input
+                  type="password"
+                  value={newSecret}
+                  onChange={(e) => setNewSecret(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full bg-transparent px-4 py-3 text-black font-black text-lg outline-none"
+                />
+              </div>
+              <p className="text-xs font-bold text-black/60 leading-relaxed">
+                * عند تغيير هذا المفتاح، سيُطلب من أي مشرف إدخال الكود الجديد عند استعادة كلمة المرور.
+              </p>
+            </div>
 
-                <div className="bg-slate-950/50 p-6 rounded-2xl border border-white/5 flex items-start gap-5">
-                  <div className="w-10 h-10 rounded-xl bg-sky-500/5 flex items-center justify-center text-sky-500 shrink-0">
-                    <Key size={20} />
-                  </div>
-                  <p className="text-xs font-bold text-slate-500 leading-relaxed text-right">
-                    سيؤدي تغيير هذا المفتاح إلى طلب الكود الجديد من جميع
-                    المشرفين عند محاولة تسجيل الدخول للمرة القادمة.
-                  </p>
+            <button
+              onClick={async () => {
+                if (!newSecret.trim()) return;
+                setSecretLoading(true);
+                await onUpdateSecret(newSecret.trim());
+                setNewSecret("");
+                setSecretLoading(false);
+                alert("تم تحديث مفتاح الاسترجاع بنجاح!");
+              }}
+              className="w-full bg-[#FB923C] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none py-4 font-black text-base uppercase flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+              disabled={secretLoading || !newSecret.trim()}
+            >
+              <Shield size={20} className="stroke-[2.5]" />
+              <span>{secretLoading ? "جاري التحديث..." : "تحديث المفتاح السري"}</span>
+            </button>
+          </div>
+        )}
+      </main>
+
+      {/* ── EDIT USER PERMISSIONS MODAL ── */}
+      <AnimatePresence>
+        {editingUser && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60" dir="rtl">
+            <Motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-2xl max-h-[90vh] bg-white border-[4px] border-black shadow-[10px_10px_0px_#000000] flex flex-col overflow-hidden"
+            >
+              {/* Header */}
+              <div className="p-6 border-b-[3px] border-black bg-[#FACC15] flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-black text-black uppercase">
+                    صلاحيات: {editingUser.username}
+                  </h3>
+                  <p className="text-xs font-bold text-black/70">حدد الفصول والصلاحيات الإدارية المتاحة</p>
                 </div>
-
                 <button
-                  onClick={async () => {
-                    if (!newSecret.trim()) return;
-                    setSecretLoading(true);
-                    await onUpdateSecret(newSecret.trim());
-                    setNewSecret("");
-                    setSecretLoading(false);
-                    alert("تم التحديث بنجاح!");
-                  }}
-                  className="tech-btn-primary w-full !h-16 group/btn"
-                  disabled={secretLoading || !newSecret.trim()}
+                  onClick={() => setEditingUser(null)}
+                  className="bg-white border-2 border-black p-2 shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
                 >
-                  {secretLoading ? (
-                    <span className="loading loading-spinner"></span>
-                  ) : (
-                    <div className="flex items-center gap-4">
-                      <Shield
-                        size={20}
-                        className="group-hover/btn:rotate-12 transition-transform"
-                      />
-                      <span>Update Encryption Key</span>
-                    </div>
-                  )}
+                  <X size={20} className="stroke-[3]" />
                 </button>
               </div>
-            </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Admin Powers */}
+                <div>
+                  <h4 className="text-xs font-black text-black uppercase tracking-widest mb-3">
+                    الصلاحيات الإدارية
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      {
+                        id: "perm_admin",
+                        label: "مسؤول كامل (Admin)",
+                        desc: "يمتلك كل الصلاحيات الإدارية والوصول لكل شيء",
+                      },
+                      {
+                        id: "perm_delete_student",
+                        label: "حذف السجلات",
+                        desc: "صلاحية مسح بيانات المخدومين والغياب",
+                      },
+                    ].map((p) => {
+                      const isChecked = tempPerms.includes(p.id);
+                      return (
+                        <div
+                          key={p.id}
+                          onClick={() => handleTogglePerm(p.id)}
+                          className={`p-4 border-[3px] border-black cursor-pointer transition-all flex items-start gap-3 ${
+                            isChecked
+                              ? "bg-[#DCFCE7] shadow-[3px_3px_0px_#000000]"
+                              : "bg-[#FDF8F0] hover:bg-white"
+                          }`}
+                        >
+                          <div
+                            className={`w-6 h-6 border-2 border-black flex items-center justify-center shrink-0 mt-0.5 ${
+                              isChecked ? "bg-[#A3E635]" : "bg-white"
+                            }`}
+                          >
+                            {isChecked && <Check size={16} strokeWidth={3} className="text-black" />}
+                          </div>
+                          <div>
+                            <span className="font-black text-sm text-black block">{p.label}</span>
+                            <span className="text-[11px] font-bold text-black/60">{p.desc}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Class Visibility */}
+                <div>
+                  <h4 className="text-xs font-black text-black uppercase tracking-widest mb-3">
+                    فصول الخدمة المصرح بها
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {classList.map((cls) => {
+                      const isChecked = tempPerms.includes(cls.id);
+                      return (
+                        <div
+                          key={cls.id}
+                          onClick={() => handleTogglePerm(cls.id)}
+                          className={`p-3.5 border-2 border-black cursor-pointer transition-all flex items-center justify-between ${
+                            isChecked
+                              ? "bg-[#FEF08A] shadow-[2px_2px_0px_#000000]"
+                              : "bg-[#FDF8F0] hover:bg-white"
+                          }`}
+                        >
+                          <span className="font-black text-xs text-black truncate">{cls.name}</span>
+                          <div
+                            className={`w-5 h-5 border-2 border-black flex items-center justify-center shrink-0 ${
+                              isChecked ? "bg-[#FACC15]" : "bg-white"
+                            }`}
+                          >
+                            {isChecked && <Check size={14} strokeWidth={3} className="text-black" />}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-6 border-t-[3px] border-black bg-[#FDF8F0] flex gap-3">
+                <button
+                  onClick={() => setEditingUser(null)}
+                  className="flex-1 bg-white border-[3px] border-black shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 py-3 font-black text-sm uppercase transition-all cursor-pointer"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={savePermissions}
+                  disabled={saving}
+                  className="flex-[2] bg-[#A3E635] text-black border-[3px] border-black shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 py-3 font-black text-sm uppercase transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Check size={18} strokeWidth={3} />
+                  <span>{saving ? "جاري الحفظ..." : "حفظ وتفعيل الصلاحيات"}</span>
+                </button>
+              </div>
+            </Motion.div>
           </div>
         )}
-      </div>
-
-      {editingUser && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-8 bg-slate-950/80 backdrop-blur-2xl animate-reveal">
-          <div className="w-full max-w-2xl max-h-[85vh] rounded-[3.5rem] overflow-hidden bg-slate-900 border border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] flex flex-col relative">
-            <div className="p-10 pb-6 flex items-center justify-between border-b border-white/5 relative z-10">
-              <div className="flex items-center gap-6">
-                <div className="w-1.5 h-10 bg-sky-500 rounded-full"></div>
-                <div>
-                  <h3 className="text-3xl font-black text-sky-50 tracking-tighter leading-none italic">
-                    Access Node: {editingUser.username}
-                  </h3>
-                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-3 opacity-60">
-                    Define authority scope within the secure perimeter
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setEditingUser(null)}
-                className="w-12 h-12 rounded-full hover:bg-white/5 flex items-center justify-center text-slate-500 transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-10 space-y-12 relative z-10">
-              <div>
-                <h4 className="text-[10px] font-black text-sky-500 uppercase tracking-[0.4em] mb-6 flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-sky-500"></div>
-                  Administrative Authority
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {[
-                    {
-                      id: "perm_admin",
-                      label: "مسؤول كامل",
-                      icon: <Shield className="w-5 h-5" />,
-                      desc: "يمتلك كل الصلاحيات الإدارية",
-                    },
-                    {
-                      id: "perm_delete_student",
-                      label: "حذف السجلات",
-                      icon: <Trash2 className="w-5 h-5" />,
-                      desc: "صلاحية حذف بيانات المخدومين",
-                    },
-                  ].map((p) => (
-                    <div
-                      key={p.id}
-                      onClick={() => handleTogglePerm(p.id)}
-                      className={`p-6 rounded-3xl border transition-all duration-300 group cursor-pointer ${tempPerms.includes(p.id) ? "bg-sky-500/10 border-sky-400/40 shadow-lg" : "bg-slate-950/40 border-white/5 hover:border-white/10"}`}
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`p-2 rounded-xl border ${tempPerms.includes(p.id) ? "bg-sky-500/20 border-sky-400/20 text-sky-400" : "bg-slate-900 border-white/5 text-slate-500"}`}
-                          >
-                            {p.icon}
-                          </div>
-                          <span
-                            className={`font-black text-lg tracking-tight ${tempPerms.includes(p.id) ? "text-sky-400" : "text-sky-50 group-hover:text-sky-200"}`}
-                          >
-                            {p.label}
-                          </span>
-                        </div>
-                        <div
-                          className={`w-6 h-6 rounded-xl border-2 flex items-center justify-center transition-all ${tempPerms.includes(p.id) ? "bg-sky-500 border-sky-500 text-slate-950 scale-110 shadow-lg shadow-sky-500/40" : "border-white/10 bg-slate-900"}`}
-                        >
-                          {tempPerms.includes(p.id) && (
-                            <Check size={14} strokeWidth={4} />
-                          )}
-                        </div>
-                      </div>
-                      <p className="text-xs text-slate-500 font-bold uppercase tracking-tight opacity-60">
-                        {p.desc}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-[10px] font-black text-sky-500 uppercase tracking-[0.4em] mb-6 flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-sky-500"></div>
-                  Stage Visibility
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {classList.map((cls) => (
-                    <div
-                      key={cls.id}
-                      onClick={() => handleTogglePerm(cls.id)}
-                      className={`p-5 rounded-2xl border transition-all duration-300 flex items-center justify-between cursor-pointer ${tempPerms.includes(cls.id) ? "bg-sky-500/10 border-sky-400/40" : "bg-slate-950/40 border-white/5 hover:bg-slate-800"}`}
-                    >
-                      <span
-                        className={`font-black text-sm tracking-tight ${tempPerms.includes(cls.id) ? "text-sky-400" : "text-sky-100/60 transition-colors"}`}
-                      >
-                        {cls.name}
-                      </span>
-                      <div
-                        className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all ${tempPerms.includes(cls.id) ? "bg-sky-500 border-sky-500" : "border-white/10"}`}
-                      >
-                        {tempPerms.includes(cls.id) && (
-                          <Check
-                            size={12}
-                            strokeWidth={4}
-                            className="text-slate-950"
-                          />
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="p-10 border-t border-white/5 bg-slate-950/50 flex gap-6 relative z-10">
-              <button
-                className="flex-1 h-16 bg-slate-800 text-slate-400 font-black rounded-2xl border border-white/5 hover:bg-slate-700 transition-all active:scale-95"
-                onClick={() => setEditingUser(null)}
-              >
-                DISCARD
-              </button>
-              <button
-                className="tech-btn-primary flex-[2] h-16"
-                onClick={savePermissions}
-                disabled={saving}
-              >
-                {saving ? (
-                  <span className="loading loading-dots"></span>
-                ) : (
-                  <div className="flex items-center gap-4">
-                    <Check className="w-6 h-6" />
-                    <span className="text-lg">ACTIVATE PERMISSIONS</span>
-                  </div>
-                )}
-              </button>
-            </div>
-
-            {/* Modal Ambient Glow */}
-            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-sky-500/10 blur-[100px] rounded-full pointer-events-none"></div>
-          </div>
-        </div>
-      )}
+      </AnimatePresence>
 
       {cropImage && (
         <ImageCropperModal
@@ -886,6 +726,6 @@ export function AdminPage({
           onCancel={() => setCropImage(null)}
         />
       )}
-    </Page>
+    </div>
   );
 }
