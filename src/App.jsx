@@ -19,7 +19,6 @@ function NeoBrutalistLoadingScreen({
   return (
     <div
       className="min-h-screen w-full bg-[#FDF8F0] font-sans flex flex-col items-center justify-center p-4 selection:bg-[#FACC15] selection:text-black relative overflow-hidden"
-      dir="rtl"
     >
       {/* Decorative dot grid */}
       <div

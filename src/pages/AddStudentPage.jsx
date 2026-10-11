@@ -65,7 +65,6 @@ export function AddIdPage({ onBack, onNext }) {
   return (
     <div
       className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col"
-      dir="rtl"
     >
       {/* ── Neo-Brutalist Navbar ── */}
       <header className="sticky top-0 z-50 bg-[#FACC15] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">
@@ -243,7 +242,6 @@ export function AddFormPage({
   return (
     <div
       className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col"
-      dir="rtl"
     >
       {/* ── Neo-Brutalist Navbar ── */}
       <header className="sticky top-0 z-50 bg-[#FACC15] border-b-[3px] border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0px_#000000]">

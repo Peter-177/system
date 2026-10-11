@@ -27,7 +27,7 @@ export function PersonalAttendancePage({ person, onBack }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col" dir="rtl">
+    <div className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col">
       <Toast msg={toast.msg} />
 
       {/* ── Neo-Brutalist Navbar ── */}

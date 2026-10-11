@@ -119,7 +119,6 @@ export function CouponsPage({ currentUser, person, onBack }) {
   return (
     <div
       className="min-h-screen bg-[#FDF8F0] text-black font-sans selection:bg-[#FACC15] selection:text-black flex flex-col"
-      dir="rtl"
     >
       {/* Toast Notification */}
       {toast.msg && (
