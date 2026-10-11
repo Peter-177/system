@@ -112,7 +112,7 @@ export function ClassDetailPage({
           </div>
 
           <div className="bg-white text-black border-2 border-black px-3 py-1 font-black text-xs sm:text-sm uppercase shadow-[2px_2px_0px_#000000]">
-            <span>{filtered.length} مخدوم</span>
+            <span>{filtered.length} طفل</span>
           </div>
         </div>
       </header>
@@ -146,7 +146,7 @@ export function ClassDetailPage({
         {filtered.length === 0 ? (
           <div className="py-16 text-center bg-white border-[3px] border-black border-dashed p-8 shadow-[6px_6px_0px_#000000]">
             <p className="font-black text-black text-lg uppercase">
-              لا يوجد مخدومين في هذا الفصل مطابقين للبحث
+              لا يوجد أطفال في هذا الفصل مطابقين للبحث
             </p>
           </div>
         ) : (

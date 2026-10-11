@@ -3,6 +3,7 @@ import { visitsDB, studentsDB } from "../data/storage";
 import { buildVisitEntry, visitedToday } from "../utils/helpers";
 import { Toast } from "../components/UI";
 import { useToast } from "../hooks/useToast";
+import { useT } from "../hooks/useT";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 
 export function VisitsPage({ onBack, onGoVisitsHistory }) {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [pendingList, setPendingList] = useState([]);
   const [showNotification, setShowNotification] = useState(true);
@@ -73,7 +75,7 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
         count++;
       }
     });
-    toast.show(`✅ تمام، سجلنا زيارة ${count} مخدوم`);
+    toast.show(`✅ تمام، سجلنا زيارة ${count} طفل`);
     setPendingList([]);
   };
 
@@ -124,7 +126,7 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
               className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <ArrowRight className="w-5 h-5 stroke-[2.5]" />
-              <span>رجوع</span>
+              <span>{t("back", "رجوع")}</span>
             </button>
           ) : (
             <div className="w-10" />
@@ -136,7 +138,7 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
               VISITS
             </span>
             <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase flex items-center gap-2">
-              تسجيل الافتقاد والزيارات
+              {t("visitsTitle", "تسجيل الافتقاد والزيارات")}
             </h1>
           </div>
 
@@ -169,7 +171,7 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
                     <AlertTriangle className="w-5 h-5 stroke-[2.5]" />
                   </div>
                   <h3 className="text-base sm:text-lg font-black text-black uppercase">
-                    مخدومين لم تتم زيارتهم منذ 3 أشهر ({missingVisits.length} مخدوم)
+                    أطفال لم تتم زيارتهم منذ 3 أشهر ({missingVisits.length} طفل)
                   </h3>
                 </div>
                 <button
@@ -213,7 +215,7 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="اكتب اسم المخدوم أو الكود واضغط Enter لإضافته..."
+              placeholder="اكتب اسم الطفل أو الكود واضغط Enter لإضافته..."
               autoFocus
               className="w-full bg-transparent px-4 py-4 text-black font-black text-lg placeholder:text-black/30 outline-none"
             />
@@ -253,10 +255,10 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
         {/* Pending Visit List Section */}
         <div className="flex items-center justify-between px-1">
           <h2 className="text-lg sm:text-xl font-black text-black uppercase tracking-tight">
-            قائمة المخدومين المطلوب تسجيلهم
+            قائمة الأطفال المطلوب تسجيلهم
           </h2>
           <span className="bg-[#A3E635] text-black border-2 border-black px-3 py-1 font-black text-xs uppercase shadow-[2px_2px_0px_#000000]">
-            {pendingList.length} مخدومين
+            {pendingList.length} أطفال
           </span>
         </div>
 
@@ -273,7 +275,7 @@ export function VisitsPage({ onBack, onGoVisitsHistory }) {
                     القائمة فارغة
                   </h3>
                   <p className="text-sm text-black/60 font-bold">
-                    ابحث عن مخدوم وأضفه للقائمة ثم اضغط حفظ لتسجيل الزيارة
+                    ابحث عن طفل وأضفه للقائمة ثم اضغط حفظ لتسجيل الزيارة
                   </p>
                 </div>
               </div>

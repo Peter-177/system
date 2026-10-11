@@ -9,10 +9,13 @@ import {
   X,
   Pencil,
   ArrowRight,
+  ArrowLeft,
   Sparkles,
 } from "lucide-react";
 import { studentsDB, gameArenaDB } from "../data/storage";
 import { motion as Motion, AnimatePresence } from "framer-motion";
+import { useT } from "../hooks/useT";
+import { useAppContext } from "../context/AppContext";
 
 // ─── Neo Brutalism Team Color Palette ───────────────────────────────────────
 const GAME_TEAM_COLORS = [
@@ -24,17 +27,17 @@ const GAME_TEAM_COLORS = [
   { name: "white", bg: "bg-white", border: "border-white", text: "text-black", hex: "#FFFFFF" },
 ];
 
-const DEFAULT_TEAMS = () => [
-  { id: "T1", name: "الفريق الأول", members: [], theme: GAME_TEAM_COLORS[0] },
-  { id: "T2", name: "الفريق الثاني", members: [], theme: GAME_TEAM_COLORS[1] },
+const DEFAULT_TEAMS = (lang = "ar") => [
+  { id: "T1", name: lang === "en" ? "Team 1" : "الفريق الأول", members: [], theme: GAME_TEAM_COLORS[0] },
+  { id: "T2", name: lang === "en" ? "Team 2" : "الفريق الثاني", members: [], theme: GAME_TEAM_COLORS[1] },
 ];
 
-const DEFAULT_GAMES = (teamIds) => {
+const DEFAULT_GAMES = (teamIds, lang = "ar") => {
   const scores = {};
   teamIds.forEach((id) => {
     scores[id] = "";
   });
-  return [{ id: 1, name: "الجولة الأولى", scores }];
+  return [{ id: 1, name: lang === "en" ? "Round 1" : "الجولة الأولى", scores }];
 };
 
 function getRandomColor(usedNames = []) {
@@ -105,14 +108,17 @@ function loadPersistedGameArena() {
 }
 
 export function GamePage({ onBack, onGoHome }) {
+  const t = useT();
+  const { lang } = useAppContext();
+  const BackIcon = lang === "ar" ? ArrowRight : ArrowLeft;
   const [teams, setTeams] = useState(
-    () => loadPersistedGameArena()?.teams ?? DEFAULT_TEAMS(),
+    () => loadPersistedGameArena()?.teams ?? DEFAULT_TEAMS(lang),
   );
   const [games, setGames] = useState(() => {
     const p = loadPersistedGameArena();
     return (
       p?.games ??
-      DEFAULT_GAMES((p?.teams ?? DEFAULT_TEAMS()).map((t) => t.id))
+      DEFAULT_GAMES((p?.teams ?? DEFAULT_TEAMS(lang)).map((t) => t.id), lang)
     );
   });
   const [showMembers, setShowMembers] = useState(
@@ -183,10 +189,10 @@ export function GamePage({ onBack, onGoHome }) {
   };
 
   const openRenameTeamModal = (teamId) => {
-    const t = teams.find((x) => x.id === teamId);
-    if (!t) return;
+    const tItem = teams.find((x) => x.id === teamId);
+    if (!tItem) return;
     setRenameTeamId(teamId);
-    setModalNameInput(t.name);
+    setModalNameInput(tItem.name);
     setNameModal("renameTeam");
   };
 
@@ -218,7 +224,7 @@ export function GamePage({ onBack, onGoHome }) {
   };
 
   const openGameNameModal = () => {
-    setModalNameInput(`الجولة ${games.length + 1}`);
+    setModalNameInput(`${t("gameRoundPrefix", "الجولة")} ${games.length + 1}`);
     setNameModal("game");
   };
 
@@ -272,8 +278,8 @@ export function GamePage({ onBack, onGoHome }) {
             onClick={showResults ? () => setShowResults(false) : (onBack ?? onGoHome)}
             className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
           >
-            <ArrowRight className="w-5 h-5 stroke-[2.5]" />
-            <span>رجوع</span>
+            <BackIcon className="w-5 h-5 stroke-[2.5]" />
+            <span>{t("back", "رجوع")}</span>
           </button>
 
           <div className="flex items-center gap-2">
@@ -281,7 +287,7 @@ export function GamePage({ onBack, onGoHome }) {
               GAME ARENA
             </span>
             <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase">
-              {showResults ? "النتيجة النهائية" : "ساحة الألعاب والمسابقات"}
+              {showResults ? t("gameArenaResults", "النتيجة النهائية") : t("gameArenaTitle", "ساحة الألعاب والمسابقات")}
             </h1>
           </div>
 
@@ -299,7 +305,7 @@ export function GamePage({ onBack, onGoHome }) {
               <div className="flex items-center justify-between pb-4 mb-6 border-b-[3px] border-black">
                 <h3 className="text-xl font-black text-black flex items-center gap-2 uppercase">
                   <Settings className="text-black w-6 h-6 stroke-[2.5]" />
-                  <span>إدارة المسابقة</span>
+                  <span>{t("gameManage", "إدارة المسابقة")}</span>
                 </h3>
                 <span className="bg-[#38BDF8] border-2 border-black font-black text-xs px-2 py-0.5 uppercase shadow-[2px_2px_0px_#000000]">
                   SETTINGS
@@ -312,21 +318,21 @@ export function GamePage({ onBack, onGoHome }) {
                 className="w-full bg-[#A3E635] text-black border-[3px] border-black py-3 px-4 font-black text-base uppercase shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 mb-6 cursor-pointer"
               >
                 <Plus size={20} strokeWidth={3} />
-                <span>إضافة فريق جديد</span>
+                <span>{t("gameAddTeam", "إضافة فريق جديد")}</span>
               </button>
 
               {/* Games & Rounds List */}
               <div className="flex flex-col gap-4 mb-6">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-black uppercase tracking-wider bg-[#FACC15] px-2 py-1 border-2 border-black">
-                    الجولات والنقاط ({games.length})
+                    {t("gameRoundsPoints", "الجولات والنقاط")} ({games.length})
                   </span>
                   <button
                     type="button"
                     onClick={openGameNameModal}
                     className="bg-white hover:bg-black hover:text-white text-black border-2 border-black font-black text-xs px-2.5 py-1 uppercase shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
                   >
-                    + جولة جديدة
+                    {t("gameNewRound", "+ جولة جديدة")}
                   </button>
                 </div>
 
@@ -338,13 +344,13 @@ export function GamePage({ onBack, onGoHome }) {
                     >
                       <div className="flex justify-between items-center border-b-2 border-black pb-1.5">
                         <span className="font-black text-sm text-black">
-                          {game.name}
+                          {t(game.name)}
                         </span>
                         {games.length > 1 && (
                           <button
                             onClick={() => handleRemoveGame(game.id)}
                             className="text-black hover:bg-[#F472B6] p-1 border border-black transition-colors"
-                            title="حذف الجولة"
+                            title={t("gameDeleteRound", "حذف الجولة")}
                           >
                             <Minus size={14} strokeWidth={3} />
                           </button>
@@ -353,8 +359,8 @@ export function GamePage({ onBack, onGoHome }) {
                       <div className="grid grid-cols-2 gap-2">
                         {teams.map((team) => (
                           <div key={team.id} className="flex flex-col gap-1">
-                            <span className="text-[11px] font-black truncate text-right">
-                              {team.name}
+                            <span className="text-[11px] font-black truncate">
+                              {t(team.name)}
                             </span>
                             <input
                               type="number"
@@ -382,13 +388,13 @@ export function GamePage({ onBack, onGoHome }) {
                 <div className="flex items-center justify-between mb-4">
                   <span className="font-black text-black text-sm flex items-center gap-2">
                     <Users size={18} className="stroke-[2.5]" />
-                    <span>الفرق والأعضاء ({teams.length})</span>
+                    <span>{t("gameTeamsAndMembers", "الفرق والأعضاء")} ({teams.length})</span>
                   </span>
                   <button
                     onClick={() => setShowMembers(!showMembers)}
                     className="bg-[#FB923C] border-2 border-black font-black text-xs px-2 py-0.5 uppercase shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
                   >
-                    {showMembers ? "إخفاء" : "عرض"}
+                    {showMembers ? t("gameHide", "إخفاء") : t("gameShow", "عرض")}
                   </button>
                 </div>
 
@@ -412,7 +418,7 @@ export function GamePage({ onBack, onGoHome }) {
                                 style={{ backgroundColor: team.theme.hex || "#38BDF8" }}
                               />
                               <span className="font-black text-sm text-black truncate">
-                                {team.name}
+                                {t(team.name)}
                               </span>
                             </div>
 
@@ -421,7 +427,7 @@ export function GamePage({ onBack, onGoHome }) {
                                 type="button"
                                 onClick={() => openRenameTeamModal(team.id)}
                                 className="w-7 h-7 bg-white border border-black flex items-center justify-center hover:bg-[#FACC15] transition-colors"
-                                title="تعديل الاسم"
+                                title={t("gameEditName", "تعديل الاسم")}
                               >
                                 <Pencil size={13} strokeWidth={2.5} />
                               </button>
@@ -434,7 +440,7 @@ export function GamePage({ onBack, onGoHome }) {
                                   setNewMemberName("");
                                 }}
                                 className="w-7 h-7 bg-white border border-black flex items-center justify-center hover:bg-[#38BDF8] transition-colors"
-                                title="إضافة عضو"
+                                title={t("gameAddMember", "إضافة عضو")}
                               >
                                 {addingToTeam === team.id ? (
                                   <Minus size={13} strokeWidth={3} />
@@ -446,11 +452,11 @@ export function GamePage({ onBack, onGoHome }) {
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    if (window.confirm(`حذف فريق ${team.name}؟`))
+                                    if (window.confirm(`${t("gameConfirmDeleteTeamPrefix", "حذف فريق")} ${team.name}؟`))
                                       handleRemoveTeam(team.id);
                                   }}
                                   className="w-7 h-7 bg-white border border-black text-black hover:bg-[#F472B6] transition-colors flex items-center justify-center"
-                                  title="حذف الفريق"
+                                  title={t("gameDeleteTeam", "حذف الفريق")}
                                 >
                                   <Minus size={13} strokeWidth={3} />
                                 </button>
@@ -470,7 +476,7 @@ export function GamePage({ onBack, onGoHome }) {
                                   e.key === "Enter" &&
                                   handleAddMember(team.id)
                                 }
-                                placeholder="اكتب اسم العضو..."
+                                placeholder={t("gameTypeMemberName", "اكتب اسم العضو...")}
                                 className="w-full h-8 bg-white border-2 border-black px-2 text-xs font-bold focus:outline-none focus:bg-[#FACC15]"
                                 autoFocus
                               />
@@ -544,7 +550,7 @@ export function GamePage({ onBack, onGoHome }) {
             </div>
           </div>
 
-          {/* Action Button: Show Results */}
+          {/* Action Button: Show Results — Fix 3: Button text is just النتيجة */}
           <div className="w-full flex justify-center pt-4 pb-12">
             <button
               onClick={() => setShowResults(true)}
@@ -552,7 +558,7 @@ export function GamePage({ onBack, onGoHome }) {
             >
               <Trophy size={36} className="stroke-[2.5]" />
               <span className="text-3xl font-black uppercase tracking-tight">
-                إعلان النتيجة النهائية
+                {t("gameResultsBtn", "النتيجة")}
               </span>
             </button>
           </div>
@@ -577,10 +583,10 @@ export function GamePage({ onBack, onGoHome }) {
               <div className="flex items-start justify-between gap-4 mb-4 border-b-2 border-black pb-3">
                 <h4 className="text-xl font-black text-black uppercase">
                   {nameModal === "renameTeam"
-                    ? "تعديل اسم الفريق"
+                    ? t("gameModalEditTeamName", "تعديل اسم الفريق")
                     : nameModal === "team"
-                      ? "إضافة فريق جديد"
-                      : "إضافة جولة جديدة"}
+                      ? t("gameModalAddNewTeam", "إضافة فريق جديد")
+                      : t("gameModalAddNewRound", "إضافة جولة جديدة")}
                 </h4>
                 <button
                   type="button"
@@ -593,10 +599,10 @@ export function GamePage({ onBack, onGoHome }) {
 
               <label className="block text-xs font-black uppercase tracking-wider text-black mb-2">
                 {nameModal === "renameTeam"
-                  ? "الاسم الجديد"
+                  ? t("gameModalNewName", "الاسم الجديد")
                   : nameModal === "team"
-                    ? "اسم الفريق"
-                    : "اسم الجولة"}
+                    ? t("gameModalTeamName", "اسم الفريق")
+                    : t("gameModalRoundName", "اسم الجولة")}
               </label>
               <input
                 type="text"
@@ -612,10 +618,10 @@ export function GamePage({ onBack, onGoHome }) {
                 }}
                 placeholder={
                   nameModal === "renameTeam"
-                    ? "اكتب اسم الفريق..."
+                    ? t("gameModalPlaceholderTeam", "اكتب اسم الفريق...")
                     : nameModal === "team"
-                      ? "اكتب اسم الفريق..."
-                      : "اكتب اسم الجولة..."
+                      ? t("gameModalPlaceholderTeam", "اكتب اسم الفريق...")
+                      : t("gameModalPlaceholderRound", "اكتب اسم الجولة...")
                 }
                 className="w-full h-12 bg-[#FDF8F0] border-2 border-black font-bold text-base px-3 mb-6 focus:outline-none focus:bg-[#FACC15]"
                 autoFocus
@@ -627,7 +633,7 @@ export function GamePage({ onBack, onGoHome }) {
                   onClick={closeNameModal}
                   className="flex-1 h-12 border-2 border-black bg-white font-black text-black hover:bg-gray-100 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none transition-all"
                 >
-                  إلغاء
+                  {t("cancel", "إلغاء")}
                 </button>
                 <button
                   type="button"
@@ -641,10 +647,10 @@ export function GamePage({ onBack, onGoHome }) {
                   className="flex-1 h-12 border-2 border-black bg-[#A3E635] font-black text-black shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none transition-all"
                 >
                   {nameModal === "renameTeam"
-                    ? "حفظ الاسم"
+                    ? t("gameModalSaveName", "حفظ الاسم")
                     : nameModal === "team"
-                      ? "إضافة الفريق"
-                      : "إضافة الجولة"}
+                      ? t("gameModalAddTeam", "إضافة الفريق")
+                      : t("gameModalAddRound", "إضافة الجولة")}
                 </button>
               </div>
             </div>
@@ -656,6 +662,7 @@ export function GamePage({ onBack, onGoHome }) {
 }
 
 const ResultsView = ({ teams, games }) => {
+  const t = useT();
   const [step, setStep] = useState(0);
 
   const results = useMemo(() => {
@@ -686,7 +693,6 @@ const ResultsView = ({ teams, games }) => {
   return (
     <main
       className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-10 flex flex-col items-center justify-center"
-      dir="rtl"
     >
       <AnimatePresence mode="wait">
         {!isFinalStep ? (
@@ -700,12 +706,12 @@ const ResultsView = ({ teams, games }) => {
           >
             <div className="bg-[#38BDF8] border-[3px] border-black px-4 py-1.5 shadow-[4px_4px_0px_#000000]">
               <span className="font-black text-black uppercase tracking-widest text-sm">
-                TEAM RESULT / نتيجة الفريق
+                {t("gameTeamResultTag", "TEAM RESULT / نتيجة الفريق")}
               </span>
             </div>
 
             <h2 className="text-5xl sm:text-7xl font-black text-black uppercase tracking-tight">
-              {currentTeam.name}
+              {t(currentTeam.name)}
             </h2>
 
             <div
@@ -716,7 +722,7 @@ const ResultsView = ({ teams, games }) => {
                 {currentTeam.score}
               </span>
               <span className="text-base font-black uppercase tracking-widest bg-black text-white px-3 py-1 border-2 border-black">
-                TOTAL POINTS / إجمالي النقاط
+                {t("gameTotalPointsTag", "TOTAL POINTS / إجمالي النقاط")}
               </span>
             </div>
 
@@ -724,11 +730,11 @@ const ResultsView = ({ teams, games }) => {
               onClick={() => setStep((prev) => Math.min(prev + 1, results.length))}
               className="bg-white hover:bg-black hover:text-white text-black border-2 border-black px-6 py-3 font-black text-sm uppercase shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none transition-all flex items-center gap-2 cursor-pointer"
             >
-              <span>اضغط</span>
+              <span>{t("gamePressText", "اضغط")}</span>
               <span className="bg-[#FACC15] text-black px-2 py-0.5 border border-black font-mono">
                 ENTER
               </span>
-              <span>أو انقر هنا للانتقال للفريق التالي</span>
+              <span>{t("gamePressEnterOrClick", "أو انقر هنا للانتقال للفريق التالي")}</span>
             </button>
           </Motion.div>
         ) : (
@@ -740,10 +746,10 @@ const ResultsView = ({ teams, games }) => {
           >
             <div className="text-center">
               <span className="bg-[#FACC15] border-2 border-black px-3 py-1 font-black text-xs uppercase tracking-widest shadow-[2px_2px_0px_#000000] inline-block mb-2">
-                FINAL LEADERBOARD
+                {t("gameFinalRankingsTag", "FINAL LEADERBOARD")}
               </span>
               <h2 className="text-4xl sm:text-6xl font-black text-black uppercase tracking-tight">
-                الترتيب النهائي للفرق
+                {t("gameFinalRankings", "الترتيب النهائي للفرق")}
               </h2>
             </div>
 
@@ -767,11 +773,11 @@ const ResultsView = ({ teams, games }) => {
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2">
                           <span className="text-2xl sm:text-3xl font-black text-black">
-                            {team.name}
+                            {t(team.name)}
                           </span>
                           {isWinner && (
                             <span className="bg-black text-[#FACC15] px-2 py-0.5 border border-black font-black text-xs uppercase">
-                              👑 البطل
+                              {t("gameChampion", "👑 البطل")}
                             </span>
                           )}
                         </div>
@@ -788,7 +794,7 @@ const ResultsView = ({ teams, games }) => {
                         {team.score}
                       </span>
                       <span className="text-[10px] font-black uppercase tracking-widest text-black">
-                        POINTS
+                        {t("gamePointsUnit", "POINTS")}
                       </span>
                     </div>
                   </div>
@@ -803,6 +809,7 @@ const ResultsView = ({ teams, games }) => {
 };
 
 const TeamCard = ({ team, games, handleRemoveTeam, onRenameTeam, delay }) => {
+  const t = useT();
   return (
     <div
       className="bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 flex flex-col justify-between h-full min-h-[480px]"
@@ -817,23 +824,23 @@ const TeamCard = ({ team, games, handleRemoveTeam, onRenameTeam, delay }) => {
             type="button"
             onClick={() => onRenameTeam?.(team.id)}
             className="w-9 h-9 bg-white border-2 border-black flex items-center justify-center hover:bg-black hover:text-white transition-colors"
-            title="تعديل الاسم"
+            title={t("gameEditName", "تعديل الاسم")}
           >
             <Pencil size={16} strokeWidth={2.5} />
           </button>
 
           <h2 className="text-2xl sm:text-3xl font-black text-black uppercase tracking-tight text-center truncate">
-            {team.name}
+            {t(team.name)}
           </h2>
 
           <button
             type="button"
             onClick={() => {
-              if (window.confirm(`حذف فريق ${team.name}؟`))
+              if (window.confirm(`${t("gameConfirmDeleteTeamPrefix", "حذف فريق")} ${team.name}؟`))
                 handleRemoveTeam(team.id);
             }}
             className="w-9 h-9 bg-white border-2 border-black flex items-center justify-center hover:bg-[#F472B6] transition-colors"
-            title="حذف الفريق"
+            title={t("gameDeleteTeam", "حذف الفريق")}
           >
             <Minus size={16} strokeWidth={3} />
           </button>
@@ -848,10 +855,10 @@ const TeamCard = ({ team, games, handleRemoveTeam, onRenameTeam, delay }) => {
             >
               <div className="flex flex-col">
                 <span className="text-xs font-black text-black uppercase tracking-wider">
-                  {g.name}
+                  {t(g.name)}
                 </span>
                 <span className="text-[10px] font-bold text-gray-600">
-                  SCORE
+                  {t("gameScoreTag", "SCORE")}
                 </span>
               </div>
 
@@ -863,7 +870,7 @@ const TeamCard = ({ team, games, handleRemoveTeam, onRenameTeam, delay }) => {
 
           {games.length === 0 && (
             <div className="text-center py-10 font-bold text-gray-500">
-              لم تبدأ أي جولات بعد
+              {t("gameNoRoundsYet", "لم تبدأ أي جولات بعد")}
             </div>
           )}
         </div>
@@ -871,7 +878,7 @@ const TeamCard = ({ team, games, handleRemoveTeam, onRenameTeam, delay }) => {
 
       {/* Total calculated footer */}
       <div className="mt-6 pt-4 border-t-[3px] border-black flex items-center justify-between bg-black text-white p-3 border-2 border-black">
-        <span className="font-black text-sm uppercase">المجموع الحالي</span>
+        <span className="font-black text-sm uppercase">{t("gameCurrentTotal", "المجموع الحالي")}</span>
         <span className="text-2xl font-black text-[#FACC15] tabular-nums">
           {games.reduce(
             (acc, curr) => acc + (Number(curr.scores[team.id]) || 0),

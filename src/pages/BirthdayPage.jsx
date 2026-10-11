@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { studentsDB } from "../data/storage";
-import { ArrowRight, Gift, Calendar, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowLeft, Gift, Calendar, Sparkles } from "lucide-react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
+import { useT } from "../hooks/useT";
+import { useAppContext } from "../context/AppContext";
 
 /** Converts YYYY-MM-DD to d/m/y, or passes dd/mm/yyyy through */
 const fmtDate = (v) => {
@@ -60,6 +62,9 @@ function sendNotification(title, body) {
 }
 
 export function BirthdayPage({ onBack }) {
+  const t = useT();
+  const { lang } = useAppContext();
+  const BackIcon = lang === "ar" ? ArrowRight : ArrowLeft;
   const [notified, setNotified] = useState(false);
   const today = new Date();
   const currentMonthIdx = today.getMonth(); // 0-11
@@ -74,7 +79,7 @@ export function BirthdayPage({ onBack }) {
     }
   };
 
-  const MONTHS = [
+  const MONTHS_AR = [
     "يناير",
     "فبراير",
     "مارس",
@@ -88,6 +93,23 @@ export function BirthdayPage({ onBack }) {
     "نوفمبر",
     "ديسمبر",
   ];
+
+  const MONTHS_EN = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  const MONTHS = lang === "en" ? MONTHS_EN : MONTHS_AR;
 
   const birthdayStudents = useMemo(() => {
     const all = studentsDB.getAll();
@@ -137,13 +159,13 @@ export function BirthdayPage({ onBack }) {
       }
       todayBirthdays.forEach((s) => {
         sendNotification(
-          "🎂 كل سنة وأنت طيب!",
-          `النهارده عيد ميلاد ${s.name}! 🎉`
+          lang === "en" ? "🎂 Happy Birthday!" : "🎂 كل سنة وأنت طيب!",
+          lang === "en" ? `Today is ${s.name}'s birthday! 🎉` : `النهارده عيد ميلاد ${s.name}! 🎉`
         );
       });
       setNotified(true);
     }
-  }, [notified, currentMonthIdx]);
+  }, [notified, currentMonthIdx, lang]);
 
   const avatarColors = ["bg-[#FACC15]", "bg-[#38BDF8]", "bg-[#A3E635]", "bg-[#FB923C]", "bg-[#F472B6]"];
   const getAvatarBg = (str = "") => {
@@ -165,8 +187,8 @@ export function BirthdayPage({ onBack }) {
               onClick={onBack}
               className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
             >
-              <ArrowRight className="w-5 h-5 stroke-[2.5]" />
-              <span>رجوع</span>
+              <BackIcon className="w-5 h-5 stroke-[2.5]" />
+              <span>{t("back", "رجوع")}</span>
             </button>
           ) : (
             <div className="w-10" />
@@ -178,14 +200,14 @@ export function BirthdayPage({ onBack }) {
               CELEBRATIONS
             </span>
             <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase flex items-center gap-2">
-              <span>أعياد الميلاد</span>
               <Gift className="w-6 h-6 stroke-[2.5]" />
+              <span>{t("birthdayTitle", "أعياد الميلاد")}</span>
             </h1>
           </div>
 
           {/* Count Badge */}
           <div className="bg-white text-black border-2 border-black px-3 py-1 font-black text-xs sm:text-sm uppercase shadow-[2px_2px_0px_#000000]">
-            <span>{birthdayStudents.length} طفل</span>
+            <span>{birthdayStudents.length} {t("birthdayChildCount", "طفل")}</span>
           </div>
         </div>
       </header>
@@ -198,7 +220,7 @@ export function BirthdayPage({ onBack }) {
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-black uppercase tracking-widest text-black/60 flex items-center gap-1.5">
               <Calendar className="w-4 h-4" />
-              اختر الشهور
+              {t("birthdaySelectMonths", "اختر الشهور")}
             </span>
             <button
               onClick={() => {
@@ -210,7 +232,7 @@ export function BirthdayPage({ onBack }) {
               }}
               className="text-xs font-black text-black underline hover:bg-[#FEF08A] px-2 py-0.5 transition-colors cursor-pointer"
             >
-              {selectedMonths.length === 12 ? "الشهر الحالي فقط" : "كل الشهور"}
+              {selectedMonths.length === 12 ? t("birthdayCurrentMonthOnly", "الشهر الحالي فقط") : t("birthdayAllMonths", "كل الشهور")}
             </button>
           </div>
 
@@ -242,11 +264,11 @@ export function BirthdayPage({ onBack }) {
         <div className="flex items-center justify-between px-1">
           <h2 className="text-lg sm:text-xl font-black text-black uppercase tracking-tight">
             {selectedMonths.length === 12
-              ? "أعياد ميلاد السنة كاملة"
-              : selectedMonths.map((m) => MONTHS[m]).join("، ")}
+              ? t("birthdayAllYearTitle", "أعياد ميلاد السنة كاملة")
+              : selectedMonths.map((m) => MONTHS[m]).join(lang === "en" ? ", " : "، ")}
           </h2>
           <span className="bg-black text-white px-3 py-1 font-black text-xs uppercase tracking-wider border border-black">
-            {birthdayStudents.length} عيد ميلاد
+            {birthdayStudents.length} {t("birthdayCountUnit", "عيد ميلاد")}
           </span>
         </div>
 
@@ -258,10 +280,10 @@ export function BirthdayPage({ onBack }) {
             </div>
             <div className="space-y-1">
               <h3 className="text-xl font-black text-black uppercase">
-                لا توجد أعياد ميلاد في الشهور المختارة
+                {t("birthdayEmptyTitle", "لا توجد أعياد ميلاد في الشهور المختارة")}
               </h3>
               <p className="text-sm text-black/60 font-bold">
-                جرب تحديد شهور أخرى من القائمة بالأعلى
+                {t("birthdayEmptyHint", "جرب تحديد شهور أخرى من القائمة بالأعلى")}
               </p>
             </div>
           </div>
@@ -310,7 +332,7 @@ export function BirthdayPage({ onBack }) {
                           )}
                         </div>
 
-                        <div className="flex flex-col min-w-0 text-right">
+                        <div className="flex flex-col min-w-0 text-start">
                           <h4 className="text-lg sm:text-xl font-black text-black truncate">
                             {s.name}
                           </h4>
@@ -326,10 +348,10 @@ export function BirthdayPage({ onBack }) {
                       </div>
 
                       {/* Right: Days remaining / Today badge */}
-                      <div className="text-left shrink-0">
+                      <div className="text-center shrink-0">
                         {s.isToday ? (
                           <div className="bg-black text-[#A3E635] border-2 border-black px-3 py-1.5 font-black text-xs uppercase tracking-wider text-center shadow-[2px_2px_0px_#000000] animate-bounce">
-                            النهارده! 🎉
+                            {t("birthdayTodayBadge", "النهارده! 🎉")}
                           </div>
                         ) : (
                           <div className="bg-[#FDF8F0] border-2 border-black px-3 py-1 text-center shadow-[2px_2px_0px_#000000]">
@@ -337,7 +359,7 @@ export function BirthdayPage({ onBack }) {
                               {Math.abs(s.daysLeft)}
                             </span>
                             <span className="text-[8px] font-black uppercase tracking-tighter text-black/60">
-                              {s.daysLeft < 0 ? "يوم مضى" : "يوم باقٍ"}
+                              {s.daysLeft < 0 ? t("birthdayDaysAgo", "يوم مضى") : t("birthdayDaysLeft", "يوم باقٍ")}
                             </span>
                           </div>
                         )}
@@ -348,7 +370,7 @@ export function BirthdayPage({ onBack }) {
                     {s.isToday && (
                       <div className="pt-3 border-t-[3px] border-black flex justify-between items-center bg-black text-white px-3 py-2 -mx-1 -mb-1">
                         <span className="text-xs font-black uppercase text-[#FACC15]">
-                          🎂 كل سنة وأنت طيب يا بطل!
+                          {t("birthdayHeroBanner", "🎂 كل سنة وأنت طيب يا بطل!")}
                         </span>
                         <div className="flex gap-1 text-base">
                           <span>🎈</span>

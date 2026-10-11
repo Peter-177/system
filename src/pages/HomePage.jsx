@@ -78,14 +78,11 @@ const BrutalistCard = ({ card, index, t, lang }) => {
       className={`bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] hover:shadow-[0px_0px_0px_#000000] hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none active:translate-x-[5px] active:translate-y-[5px] p-6 ${lang === 'ar' ? 'text-right' : 'text-left'} flex flex-col justify-between gap-6 transition-all duration-150 group cursor-pointer w-full select-none rounded-none`}
     >
       {/* Top Row: Category Tag */}
-      <div className="w-full flex items-center justify-between">
+      <div className="w-full flex items-center justify-start">
         <span
           className={`inline-block ${theme.bgTag} text-black border-2 border-black px-2.5 py-0.5 text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_#000000]`}
         >
           {card.subLabel}
-        </span>
-        <span className="font-mono text-xs font-black text-black/40">
-          0{index + 1}
         </span>
       </div>
 
@@ -273,7 +270,7 @@ export function HomePage({
           <div className="space-y-3 z-10">
             <div className="inline-flex items-center gap-2 bg-[#FEF08A] text-black border-2 border-black px-3 py-1 text-xs font-black uppercase shadow-[2px_2px_0px_#000000]">
               <Sparkles className="w-3.5 h-3.5 stroke-[3]" />
-              <span>{t("homeWelcome")} {currentUser?.name || t("homeServant")}</span>
+              <span>{t("homeWelcome")} {currentUser?.username || currentUser?.name || ""}</span>
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-black tracking-tight leading-none">
               {t("homeTitle")}{" "}

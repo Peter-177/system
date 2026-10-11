@@ -99,7 +99,7 @@ export function VisitsHistoryPage({ onBack }) {
                 الزيارات من {from} إلى {to}
               </span>
               <span className="bg-black text-white px-3 py-1 font-black text-xs uppercase border border-black">
-                {results.length} مخدوم
+                {results.length} طفل
               </span>
             </div>
 

@@ -162,12 +162,12 @@ export function useAuth() {
     try {
       const existing = await getUserFB(uLower);
       if (existing) {
-        return { ok: false, error: "اسم المستخدم ده موجود بالفعل" };
+        return { ok: false, error: "Username is already taken" };
       }
       // Also check if it matches the admin username
       const admin = await getGlobalAdminKeyFB();
       if (admin && admin.username.trim().toLowerCase() === uLower) {
-        return { ok: false, error: "اسم المستخدم ده موجود بالفعل" };
+        return { ok: false, error: "Username is already taken" };
       }
     } catch {
       // Offline — allow

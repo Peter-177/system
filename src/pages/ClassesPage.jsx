@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { classesDB } from "../data/storage";
 import { Plus, RefreshCcw, Lock, Users, Trash2, ArrowRight } from "lucide-react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
+import { useT } from "../hooks/useT";
 
 export function ClassesPage({
   currentUser,
@@ -10,6 +11,7 @@ export function ClassesPage({
   onGoCreate,
   onGoClass,
 }) {
+  const t = useT();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [classesMap, setClassesMap] = useState(() => classesDB.getAll());
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -39,7 +41,7 @@ export function ClassesPage({
             className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <ArrowRight className="w-5 h-5 stroke-[2.5]" />
-            <span>رجوع</span>
+            <span>{t("back", "رجوع")}</span>
           </button>
 
           <div className="flex items-center gap-2">
@@ -47,7 +49,7 @@ export function ClassesPage({
               STAGES
             </span>
             <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase">
-              إدارة الفصول
+              {t("classesTitle", "إدارة الفصول")}
             </h1>
           </div>
 
@@ -62,7 +64,7 @@ export function ClassesPage({
               className="bg-white text-black border-2 border-black px-3 py-1.5 font-black text-xs uppercase shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <RefreshCcw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
-              <span>تحديث</span>
+              <span>{t("refresh", "تحديث")}</span>
             </button>
           )}
           {isAdmin && <div className="w-10" />}
@@ -77,7 +79,7 @@ export function ClassesPage({
               قائمة الفصول والمراحل
             </h2>
             <p className="text-xs font-bold text-black/60">
-              اختر الفصل للوصول لقائمة المخدومين والغياب
+              اختر الفصل للوصول لقائمة الأطفال والغياب
             </p>
           </div>
           {isAdmin && (

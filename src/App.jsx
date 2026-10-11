@@ -11,11 +11,7 @@ const RegisterPage = lazy(() => import("./pages/AuthPages").then(m => ({ default
 const ResetPage = lazy(() => import("./pages/AuthPages").then(m => ({ default: m.ResetPage })));
 
 // ── Neo-Brutalist Full-Screen Loader ────────────────────────────────
-function NeoBrutalistLoadingScreen({
-  tag = "SYSTEM LOADING",
-  title = "جاري تجهيز البيانات...",
-  subtitle = "لحظات وكل حاجة هتكون جاهزة ⚡",
-}) {
+function NeoBrutalistLoadingScreen() {
   return (
     <div
       className="min-h-screen w-full bg-[#FDF8F0] font-sans flex flex-col items-center justify-center p-4 selection:bg-[#FACC15] selection:text-black relative overflow-hidden"
@@ -29,56 +25,53 @@ function NeoBrutalistLoadingScreen({
         }}
       />
 
-      <div className="w-full max-w-md relative z-10 animate-in fade-in duration-200">
-        {/* Category Tag */}
-        <div className="flex justify-start mb-[-3px] relative z-20">
-          <span className="bg-black text-[#FACC15] border-[3px] border-black px-4 py-1 font-black text-xs uppercase tracking-widest">
-            {tag}
-          </span>
+      {/* Card */}
+      <div className="relative z-10 bg-white border-[3px] border-black shadow-[8px_8px_0px_#000000] p-8 w-full max-w-[340px] animate-in fade-in duration-300">
+
+        {/* AUTH CHECK badge — top-right corner */}
+        <div className="absolute -top-[3px] -right-[3px] bg-black text-[#FACC15] px-3 py-1 text-[10px] font-black uppercase tracking-widest border-[3px] border-black">
+          AUTH CHECK
         </div>
 
-        {/* Card Body */}
-        <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_#000000] p-8 sm:p-10 flex flex-col items-center text-center gap-6">
-          {/* Animated Brutalist Icon Box */}
+        {/* Spinner icon box */}
+        <div className="flex justify-center mb-6 mt-2">
           <div className="relative">
-            <div className="w-20 h-20 bg-[#FACC15] border-[3px] border-black shadow-[4px_4px_0px_#000000] flex items-center justify-center text-3xl font-black animate-bounce">
+            <div className="w-20 h-20 bg-[#FACC15] border-[3px] border-black shadow-[6px_6px_0px_#000000] flex items-center justify-center text-3xl animate-bounce">
               ⏳
             </div>
             <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-[#38BDF8] border-[3px] border-black flex items-center justify-center font-black text-sm text-black animate-spin">
               ✦
             </div>
           </div>
+        </div>
 
-          <div className="space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-black text-black tracking-tight uppercase">
-              {title}
-            </h2>
-            <p className="text-xs sm:text-sm font-bold text-black/70">
-              {subtitle}
-            </p>
-          </div>
+        {/* Striped progress bar */}
+        <div className="w-full h-8 border-[3px] border-black overflow-hidden mb-4"
+          style={{
+            background: "repeating-linear-gradient(45deg, #A3E635, #A3E635 10px, #86EFAC 10px, #86EFAC 20px)",
+            backgroundSize: "200% 100%",
+            animation: "slide 1s linear infinite",
+          }}
+        />
 
-          {/* Brutalist Striped Progress Bar */}
-          <div className="w-full bg-white border-[3px] border-black p-1 shadow-[3px_3px_0px_#000000] overflow-hidden">
-            <div
-              className="h-4 bg-[#A3E635] border-r-2 border-black animate-pulse"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(45deg, #000 0, #000 2px, transparent 2px, transparent 8px)",
-                width: "100%",
-              }}
-            />
-          </div>
-
-          {/* Status Badge */}
-          <span className="inline-block bg-[#FEF08A] text-black border-2 border-black px-3 py-1 font-black text-xs uppercase tracking-wider">
+        {/* PLEASE WAIT • SYNCING badge */}
+        <div className="flex justify-center">
+          <span className="bg-white border-[3px] border-black px-4 py-1.5 text-[11px] font-black uppercase tracking-widest text-black shadow-[3px_3px_0px_#000000]">
             PLEASE WAIT • SYNCING
           </span>
         </div>
       </div>
+
+      <style>{`
+        @keyframes slide {
+          from { background-position: 0 0; }
+          to   { background-position: 40px 0; }
+        }
+      `}</style>
     </div>
   );
 }
+
 
 function LoginFlow({ auth }) {
   const [view, setView] = useState("login");
@@ -129,26 +122,14 @@ export default function App() {
   // Single AppProvider wrapping everything — LangToggleBtn always visible
   return (
     <AppProvider>
-      <Suspense fallback={<NeoBrutalistLoadingScreen tag="LOADING" title="لحظة واحدة..." subtitle="بنفتح الصفحة المطلوبة ⚡" />}>
-        {auth.screen === "loading" && (
-          <NeoBrutalistLoadingScreen
-            tag="AUTH CHECK"
-            title="جاري التحقق من الحساب..."
-            subtitle="بنراجع بيانات الدخول 🔐"
-          />
-        )}
+      <Suspense fallback={<NeoBrutalistLoadingScreen />}>
+        {auth.screen === "loading" && <NeoBrutalistLoadingScreen />}
 
         {auth.screen === "setup" && <SetupPage onDone={auth.setupAccount} />}
 
         {auth.screen === "login" && <LoginFlow auth={auth} />}
 
-        {auth.screen === "app" && isSyncing && (
-          <NeoBrutalistLoadingScreen
-            tag="SYNCING"
-            title="جاري مزامنة البيانات..."
-            subtitle="بنجهز الفصول وقوائم المخدومين ⏳"
-          />
-        )}
+        {auth.screen === "app" && isSyncing && <NeoBrutalistLoadingScreen />}
 
         {auth.screen === "app" && !isSyncing && (
           <AppRouter

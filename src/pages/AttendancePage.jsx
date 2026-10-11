@@ -25,8 +25,12 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useAttendanceContext } from "../context/AttendanceContext";
+import { useT } from "../hooks/useT";
+import { useAppContext } from "../context/AppContext";
 
 export function AttendancePage({ person, onBack, onGoHistory }) {
+  const t = useT();
+  const { lang } = useAppContext();
   const [query, setQuery] = useState("");
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayISO());
@@ -38,16 +42,14 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
     if (!selectedDate) return "";
     try {
       const [y, m, d] = selectedDate.split("-").map(Number);
-      return new Date(y, m - 1, d).toLocaleDateString("ar-EG", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
+      return new Date(y, m - 1, d).toLocaleDateString(
+        lang === "en" ? "en-US" : "ar-EG",
+        { weekday: "long", year: "numeric", month: "long", day: "numeric" }
+      );
     } catch {
       return selectedDate;
     }
-  }, [selectedDate]);
+  }, [selectedDate, lang]);
 
   const isCustomDate = selectedDate !== todayISO();
 
@@ -84,7 +86,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
   const addPerson = (student) => {
     if (!student) return;
     if (pendingList.find((p) => p.qrId === student.qrId)) {
-      toast.show(`⚠️ ${student.name} موجود في قائمة التحضير!`);
+      toast.show(`⚠️ ${student.name} ${lang === "en" ? "is already in the attendance list!" : "موجود في قائمة التحضير!"}`);
       setQuery("");
       return;
     }
@@ -92,9 +94,11 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
     if (registeredToday(log, selectedDate)) {
       const isToday = selectedDate === todayISO();
       toast.show(
-        isToday
-          ? `⚠️ ${student.name} متسجل النهارده فعلاً!`
-          : `⚠️ ${student.name} متسجل في تاريخ ${selectedDate} فعلاً!`
+        lang === "en"
+          ? `⚠️ ${student.name} is already registered ${isToday ? "today" : `on ${selectedDate}`}!`
+          : isToday
+            ? `⚠️ ${student.name} متسجل النهارده فعلاً!`
+            : `⚠️ ${student.name} متسجل في تاريخ ${selectedDate} فعلاً!`
       );
       return;
     }
@@ -109,7 +113,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
       let match = allStudents.find((s) => s.qrId.toLowerCase() === q);
       if (!match) match = allStudents.find((s) => s.name.toLowerCase().includes(q));
       if (match) addPerson(match);
-      else toast.show("ما لقيناش حد بالاسم أو الكود ده");
+      else toast.show(lang === "en" ? "No student found with that name or code" : "ما لقيناش حد بالاسم أو الكود ده");
     }
     if (e.key === "Escape") setQuery("");
   };
@@ -130,8 +134,13 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
         registeredCount++;
       }
     });
-    const dateLabel = isToday ? "النهاردة" : `ليوم ${selectedDate}`;
-    toast.show(`✅ تمام، حضرنا ${registeredCount} شخص ${dateLabel}`);
+    const dateLabel = lang === "en"
+      ? (isToday ? "today" : `for ${selectedDate}`)
+      : (isToday ? "النهاردة" : `ليوم ${selectedDate}`);
+    const msg = lang === "en"
+      ? `✅ Saved! ${registeredCount} student(s) marked present ${dateLabel}`
+      : `✅ تمام، حضرنا ${registeredCount} شخص ${dateLabel}`;
+    toast.show(msg);
     setPendingList([]);
   };
 
@@ -169,7 +178,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
               className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <ArrowRight className="w-5 h-5 stroke-[2.5]" />
-              <span>رجوع</span>
+              <span>{t("back", "رجوع")}</span>
             </button>
           ) : (
             <div className="w-10" />
@@ -180,7 +189,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
               ATTENDANCE
             </span>
             <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase">
-              تسجيل الحضور
+              {t("attendanceTitle", "تسجيل الحضور")}
             </h1>
           </div>
 
@@ -189,21 +198,21 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
             className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 font-black text-xs sm:text-sm uppercase shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none flex items-center gap-2 transition-all cursor-pointer"
           >
             <CalendarDays className="w-4 h-4 stroke-[2.5]" />
-            <span className="hidden sm:inline">سجل الحضور</span>
+            <span className="hidden sm:inline">{t("attendanceHistoryBtn", "سجل الحضور")}</span>
           </button>
         </div>
       </header>
 
       {/* ── Main Content ── */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex flex-col gap-6">
-        
+
         {/* Custom Date Warning */}
         {isCustomDate && (
           <div className="bg-[#FEF08A] border-[3px] border-black shadow-[4px_4px_0px_#000000] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <CalendarDays className="w-6 h-6 stroke-[2.5] text-black" />
               <div>
-                <span className="font-black text-sm text-black block">تسجيل لتاريخ مخصص</span>
+                <span className="font-black text-sm text-black block">{t("attendanceCustomDate", "تسجيل لتاريخ مخصص")}</span>
                 <span className="text-xs font-bold text-black/70">{formattedSelectedDate} ({selectedDate})</span>
               </div>
             </div>
@@ -211,18 +220,18 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
               onClick={() => setSelectedDate(todayISO())}
               className="bg-black text-white px-3 py-1.5 font-black text-xs uppercase border border-black hover:bg-white hover:text-black transition-colors cursor-pointer"
             >
-              الرجوع لتاريخ اليوم
+              {t("attendanceBackToday", "الرجوع لتاريخ اليوم")}
             </button>
           </div>
         )}
 
         {/* Controls Card */}
         <div className="bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 grid grid-cols-1 md:grid-cols-12 gap-4">
-          
+
           {/* Quick Search */}
           <div className="md:col-span-6 relative">
             <label className="text-xs font-black uppercase tracking-wider text-black block mb-1.5">
-              بحث وإضافة سريعة
+              {t("attendanceQuickSearch", "بحث وإضافة سريعة")}
             </label>
             <div className="relative flex items-center bg-[#FDF8F0] border-[3px] border-black shadow-[2px_2px_0px_#000000]">
               <div className="bg-[#38BDF8] border-l-[3px] border-black p-3 flex items-center justify-center">
@@ -233,7 +242,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="اسم الطفل أو الكود..."
+                placeholder={t("attendanceSearchPlaceholder", "اسم الطفل أو الكود...")}
                 className="w-full bg-transparent px-3 py-2.5 text-black font-black text-base outline-none placeholder:text-black/30"
               />
               {query && (
@@ -280,14 +289,14 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
           {/* Class Select */}
           <div className="md:col-span-3">
             <label className="text-xs font-black uppercase tracking-wider text-black block mb-1.5">
-              حسب الفصل
+              {t("attendanceByClass", "حسب الفصل")}
             </label>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
               className="w-full h-12 bg-[#FDF8F0] border-[3px] border-black px-3 font-black text-sm text-black outline-none focus:bg-[#FEF08A] transition-colors cursor-pointer shadow-[2px_2px_0px_#000000]"
             >
-              <option value="">اختر الفصل...</option>
+              <option value="">{t("attendanceSelectClass", "اختر الفصل...")}</option>
               {classList.map((cls) => (
                 <option key={cls.id} value={cls.id}>
                   {cls.name}
@@ -299,7 +308,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
           {/* Date Picker */}
           <div className="md:col-span-3">
             <label className="text-xs font-black uppercase tracking-wider text-black block mb-1.5">
-              تاريخ الحضور
+              {t("attendanceDateLabel", "تاريخ الحضور")}
             </label>
             <input
               type="date"
@@ -312,23 +321,23 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
 
         {/* ── Two Columns: Pending List & Class View ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
+
           {/* Left: Pending List */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between px-1">
               <h3 className="text-lg font-black text-black uppercase flex items-center gap-2">
-                <span>قائمة الحاضرين المطلوبة</span>
+                <span>{t("attendancePendingList", "قائمة الحاضرين المطلوبة")}</span>
               </h3>
               <span className="bg-[#A3E635] text-black border-2 border-black px-3 py-0.5 font-black text-xs uppercase shadow-[2px_2px_0px_#000000]">
-                {pendingList.length} مخدوم
+                {pendingList.length} {t("attendanceServantCount", "طفل")}
               </span>
             </div>
 
             {pendingList.length === 0 ? (
               <div className="py-14 text-center bg-white border-[3px] border-black border-dashed p-6 shadow-[4px_4px_0px_#000000]">
                 <UserCheck className="w-10 h-10 stroke-[2] mx-auto text-black/30 mb-2" />
-                <p className="font-black text-base text-black uppercase">القائمة فارغة</p>
-                <p className="text-xs font-bold text-black/60">ابحث عن المخدومين لإضافتهم للقائمة</p>
+                <p className="font-black text-base text-black uppercase">{t("attendanceEmptyList", "القائمة فارغة")}</p>
+                <p className="text-xs font-bold text-black/60">{t("attendanceEmptyHint", "ابحث عن الأطفال لإضافتهم للقائمة")}</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3">
@@ -367,7 +376,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                   className="w-full bg-[#A3E635] text-black border-[3px] border-black shadow-[6px_6px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none py-4 font-black text-base uppercase flex items-center justify-center gap-2 transition-all cursor-pointer mt-2"
                 >
                   <Save size={20} className="stroke-[2.5]" />
-                  <span>تأكيد تسجيل حضور ({pendingList.length}) مخدوم</span>
+                  <span>{t("attendanceSaveBtn", "تأكيد تسجيل حضور")} ({pendingList.length} {t("attendanceServantCount", "طفل")})</span>
                 </button>
               </div>
             )}
@@ -377,11 +386,13 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between px-1">
               <h3 className="text-lg font-black text-black uppercase">
-                {selectedClass ? `حضور فصل: ${allClassesDB[selectedClass]?.name}` : "عرض حضور الفصل"}
+                {selectedClass
+                  ? `${t("attendanceClassPrefix", "حضور فصل:")} ${allClassesDB[selectedClass]?.name}`
+                  : t("attendanceClassView", "عرض حضور الفصل")}
               </h3>
               {selectedClass && (
                 <span className="bg-[#38BDF8] text-black border-2 border-black px-3 py-0.5 font-black text-xs uppercase shadow-[2px_2px_0px_#000000]">
-                  {classRoster.length} حاضر
+                  {classRoster.length} {t("attendanceAttendedCount", "حاضر")}
                 </span>
               )}
             </div>
@@ -389,12 +400,12 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
             {!selectedClass ? (
               <div className="py-14 text-center bg-white border-[3px] border-black border-dashed p-6 shadow-[4px_4px_0px_#000000]">
                 <Users className="w-10 h-10 stroke-[2] mx-auto text-black/30 mb-2" />
-                <p className="font-black text-base text-black uppercase">اختر فصلاً</p>
-                <p className="text-xs font-bold text-black/60">حدد فصلاً من القائمة بالأعلى لعرض الحاضرين</p>
+                <p className="font-black text-base text-black uppercase">{t("attendanceSelectClassHint", "اختر فصلاً")}</p>
+                <p className="text-xs font-bold text-black/60">{t("attendanceSelectClassSub", "حدد فصلاً من القائمة بالأعلى لعرض الحاضرين")}</p>
               </div>
             ) : classRoster.length === 0 ? (
               <div className="py-14 text-center bg-white border-[3px] border-black border-dashed p-6 shadow-[4px_4px_0px_#000000]">
-                <p className="font-black text-base text-black uppercase">لم يتم تسجيل حضور لأي مخدوم من هذا الفصل في هذا اليوم</p>
+                <p className="font-black text-base text-black uppercase">{t("attendanceNoAttendance", "لم يتم تسجيل حضور لأي طفل من هذا الفصل في هذا اليوم")}</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-1">
@@ -414,7 +425,7 @@ export function AttendancePage({ person, onBack, onGoHistory }) {
                     </div>
                     <div className="bg-[#DCFCE7] border-2 border-black px-2.5 py-1 text-black font-black text-xs flex items-center gap-1">
                       <CheckCircle2 size={14} className="text-black stroke-[3]" />
-                      <span>حاضر</span>
+                      <span>{t("attendancePresent", "حاضر")}</span>
                     </div>
                   </div>
                 ))}

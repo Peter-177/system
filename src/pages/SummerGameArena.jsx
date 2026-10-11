@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { studentsDB, summerGameArenaDB } from "../data/storage";
 import { motion as Motion, AnimatePresence } from "framer-motion";
+import { useT } from "../hooks/useT";
 
 // ─── Neo Brutalism Team Color Palette ───────────────────────────────────────
 const GAME_TEAM_COLORS = [
@@ -83,6 +84,7 @@ function loadPersistedGameArena() {
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 export function SummerGameArena() {
+  const t = useT();
   const [teams, setTeams] = useState(
     () => loadPersistedGameArena()?.teams ?? DEFAULT_TEAMS()
   );
@@ -480,7 +482,7 @@ export function SummerGameArena() {
             className="bg-[#FACC15] text-black border-[3px] border-black shadow-[6px_6px_0px_#000000] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] active:shadow-none transition-all flex items-center gap-4 px-10 py-5 font-black text-2xl sm:text-3xl uppercase cursor-pointer"
           >
             <Trophy className="w-8 h-8 stroke-[2.5]" />
-            <span>النتيجة</span>
+            <span>{t("gameResultsBtn", "النتيجة")}</span>
           </Motion.button>
         </div>
       </div>

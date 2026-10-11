@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Download,
   ArrowRight,
+  ArrowLeft,
   Trash2,
   Check,
   X,
@@ -30,6 +31,8 @@ import {
   Sliders,
 } from "lucide-react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
+import { useT } from "../hooks/useT";
+import { useAppContext } from "../context/AppContext";
 
 export function AdminPage({
   currentUser,
@@ -38,6 +41,9 @@ export function AdminPage({
   onGoAddStudent,
   onUpdateSecret,
 }) {
+  const t = useT();
+  const { lang } = useAppContext();
+  const BackIcon = lang === "ar" ? ArrowRight : ArrowLeft;
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
@@ -87,18 +93,18 @@ export function AdminPage({
 
   if (currentUser?.role !== "admin") {
     return (
-      <div className="min-h-screen bg-[#FDF8F0] text-black font-sans flex flex-col items-center justify-center p-4" dir="rtl">
+      <div className="min-h-screen bg-[#FDF8F0] text-black font-sans flex flex-col items-center justify-center p-4">
         <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_#000000] p-8 max-w-md w-full text-center space-y-4">
           <div className="w-16 h-16 bg-[#EF4444] border-[3px] border-black shadow-[4px_4px_0px_#000000] flex items-center justify-center mx-auto text-white">
             <ShieldCheck size={36} strokeWidth={2.5} />
           </div>
-          <h2 className="text-2xl font-black uppercase text-black">الوصول محظور</h2>
-          <p className="text-sm font-bold text-black/70">عفواً، هذه المنطقة للمشرفين فقط</p>
+          <h2 className="text-2xl font-black uppercase text-black">{t("adminAccessDenied", "الوصول محظور")}</h2>
+          <p className="text-sm font-bold text-black/70">{t("adminAccessDeniedSub", "عفواً، هذه المنطقة للمشرفين فقط")}</p>
           <button
             onClick={onBack}
             className="w-full bg-[#FACC15] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] py-3 font-black text-sm uppercase cursor-pointer"
           >
-            الرجوع للصفحة الرئيسية
+            {t("adminBackHome", "الرجوع للصفحة الرئيسية")}
           </button>
         </div>
       </div>
@@ -138,13 +144,14 @@ export function AdminPage({
   };
 
   const handleDeleteUser = async (username) => {
-    if (!window.confirm(`متأكد من حذف الخادم "${username}"؟`)) return;
+    const confirmMsg = lang === "en" ? `Are you sure you want to delete servant "${username}"?` : `متأكد من حذف الخادم "${username}"؟`;
+    if (!window.confirm(confirmMsg)) return;
     try {
       await deleteUserFB(username);
       setUsers(users.filter((u) => u.username !== username));
     } catch (err) {
       console.error(err);
-      alert("حدث خطأ أثناء محاولة حذف المستخدم");
+      alert(lang === "en" ? "An error occurred while deleting user" : "حدث خطأ أثناء محاولة حذف المستخدم");
     }
   };
 
@@ -166,6 +173,15 @@ export function AdminPage({
       ];
     });
 
+    const isEn = lang === "en";
+    const colId = isEn ? "Code (ID)" : "الكود (ID)";
+    const colName = isEn ? "Name" : "الاسم";
+    const colYear = isEn ? "Grade" : "السنة الدراسية";
+    const colPhone = isEn ? "Phone" : "رقم التليفون";
+    const colAddress = isEn ? "Address" : "العنوان";
+    const colBirth = isEn ? "Birthdate" : "تاريخ الميلاد";
+    const colExtra = isEn ? "Extra Info" : "تفاصيل إضافية";
+
     const html = `
       <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
       <head>
@@ -178,17 +194,17 @@ export function AdminPage({
           .odd td { background-color: #FFFFFF; }
         </style>
       </head>
-      <body dir="rtl">
+      <body dir="${isEn ? 'ltr' : 'rtl'}">
         <table>
           <thead>
             <tr>
-              <th style="width: 100px;">الكود (ID)</th>
-              <th style="width: 250px;">الاسم</th>
-              <th style="width: 120px;">السنة الدراسية</th>
-              <th style="width: 150px;">رقم التليفون</th>
-              <th style="width: 300px;">العنوان</th>
-              <th style="width: 120px;">تاريخ الميلاد</th>
-              <th style="width: 300px;">تفاصيل إضافية</th>
+              <th style="width: 100px;">${colId}</th>
+              <th style="width: 250px;">${colName}</th>
+              <th style="width: 120px;">${colYear}</th>
+              <th style="width: 150px;">${colPhone}</th>
+              <th style="width: 300px;">${colAddress}</th>
+              <th style="width: 120px;">${colBirth}</th>
+              <th style="width: 300px;">${colExtra}</th>
             </tr>
           </thead>
           <tbody>
@@ -213,7 +229,7 @@ export function AdminPage({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "بيانات_مدارس_الاحد.xls";
+    link.download = isEn ? "sunday_school_data.xls" : "بيانات_مدارس_الاحد.xls";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -221,10 +237,10 @@ export function AdminPage({
   };
 
   const navItems = [
-    { id: "dashboard", label: "نظرة عامة", icon: LayoutDashboard, bg: "bg-[#FACC15]" },
-    { id: "servants",  label: "إدارة الخدام", icon: Users,           bg: "bg-[#38BDF8]" },
-    { id: "branding",  label: "هوية النظام", icon: Palette,         bg: "bg-[#A3E635]" },
-    { id: "security",  label: "الأمان والمفاتيح", icon: ShieldCheck,   bg: "bg-[#FB923C]" },
+    { id: "dashboard", label: t("adminNavDashboard", "نظرة عامة"), icon: LayoutDashboard, bg: "bg-[#FACC15]" },
+    { id: "servants",  label: t("adminNavServants", "إدارة الخدام"), icon: Users,           bg: "bg-[#38BDF8]" },
+    { id: "branding",  label: t("adminNavBranding", "هوية النظام"), icon: Palette,         bg: "bg-[#A3E635]" },
+    { id: "security",  label: t("adminNavSecurity", "الأمان والمفاتيح"), icon: ShieldCheck,   bg: "bg-[#FB923C]" },
   ];
 
   return (
@@ -238,8 +254,8 @@ export function AdminPage({
               onClick={onBack}
               className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm sm:text-base uppercase flex items-center gap-1.5 transition-all cursor-pointer"
             >
-              <ArrowRight className="w-5 h-5 stroke-[2.5]" />
-              <span>رجوع</span>
+              <BackIcon className="w-5 h-5 stroke-[2.5]" />
+              <span>{t("back", "رجوع")}</span>
             </button>
           ) : (
             <div className="w-10" />
@@ -251,7 +267,7 @@ export function AdminPage({
               ADMIN
             </span>
             <h1 className="font-black text-2xl sm:text-3xl tracking-tight text-black uppercase flex items-center gap-2">
-              لوحة التحكم
+              {t("adminTitle", "لوحة التحكم")}
             </h1>
           </div>
 
@@ -259,7 +275,7 @@ export function AdminPage({
           <button
             onClick={handleExportExcel}
             className="bg-black text-[#A3E635] border-2 border-black px-3 py-1 font-black text-xs sm:text-sm uppercase shadow-[2px_2px_0px_#000000] hover:bg-[#A3E635] hover:text-black transition-colors flex items-center gap-1.5 cursor-pointer"
-            title="تصدير ملف إكسيل"
+            title={t("exportExcel", "تصدير ملف إكسيل")}
           >
             <Download className="w-4 h-4 stroke-[3]" />
             <span className="hidden sm:inline">Excel</span>
@@ -306,7 +322,7 @@ export function AdminPage({
                 </div>
                 <div>
                   <span className="text-xs font-black uppercase tracking-widest text-black/60 block">
-                    إجمالي الأطفال
+                    {t("adminTotalStudents", "إجمالي الأطفال")}
                   </span>
                   <span className="text-4xl font-black text-black tabular-nums tracking-tight">
                     {totalStudents}
@@ -321,7 +337,7 @@ export function AdminPage({
                 </div>
                 <div>
                   <span className="text-xs font-black uppercase tracking-widest text-black/60 block">
-                    أعياد ميلاد اليوم
+                    {t("adminBirthdaysToday", "أعياد ميلاد اليوم")}
                   </span>
                   <span className="text-4xl font-black text-black tabular-nums tracking-tight">
                     {birthdaysToday}
@@ -336,7 +352,7 @@ export function AdminPage({
                 </div>
                 <div>
                   <span className="text-xs font-black uppercase tracking-widest text-black/60 block">
-                    الفصول النشطة
+                    {t("adminActiveClasses", "الفصول النشطة")}
                   </span>
                   <span className="text-4xl font-black text-black tabular-nums tracking-tight">
                     {classList.length}
@@ -353,33 +369,33 @@ export function AdminPage({
                   <div className="w-8 h-8 bg-[#FACC15] border-2 border-black flex items-center justify-center">
                     <Sliders className="w-4 h-4 stroke-[3]" />
                   </div>
-                  <h3 className="font-black text-xl text-black uppercase">إجراءات سريعة</h3>
+                  <h3 className="font-black text-xl text-black uppercase">{t("adminQuickActions", "إجراءات سريعة")}</h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <button
                     onClick={onGoClasses}
-                    className="bg-[#FEF08A] hover:bg-[#FACC15] border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none p-5 flex items-center gap-4 transition-all text-right cursor-pointer group"
+                    className="bg-[#FEF08A] hover:bg-[#FACC15] border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none p-5 flex items-center gap-4 transition-all text-start cursor-pointer group"
                   >
                     <div className="w-12 h-12 bg-white border-2 border-black flex items-center justify-center shrink-0">
                       <BookOpen size={24} className="stroke-[2.5] text-black" />
                     </div>
                     <div>
-                      <span className="font-black text-lg text-black block">إدارة الفصول</span>
-                      <span className="text-xs font-bold text-black/60">تعديل المراحل والصفوف</span>
+                      <span className="font-black text-lg text-black block">{t("adminClassesManage", "إدارة الفصول")}</span>
+                      <span className="text-xs font-bold text-black/60">{t("adminClassesManageSub", "تعديل المراحل والصفوف")}</span>
                     </div>
                   </button>
 
                   <button
                     onClick={onGoAddStudent}
-                    className="bg-[#DCFCE7] hover:bg-[#A3E635] border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none p-5 flex items-center gap-4 transition-all text-right cursor-pointer group"
+                    className="bg-[#DCFCE7] hover:bg-[#A3E635] border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none p-5 flex items-center gap-4 transition-all text-start cursor-pointer group"
                   >
                     <div className="w-12 h-12 bg-white border-2 border-black flex items-center justify-center shrink-0">
                       <PlusCircle size={24} className="stroke-[2.5] text-black" />
                     </div>
                     <div>
-                      <span className="font-black text-lg text-black block">إضافة مخدوم</span>
-                      <span className="text-xs font-bold text-black/60">تسجيل طفل جديد</span>
+                      <span className="font-black text-lg text-black block">{t("adminAddChild", "إضافة طفل")}</span>
+                      <span className="text-xs font-bold text-black/60">{t("adminAddChildSub", "تسجيل طفل جديد")}</span>
                     </div>
                   </button>
                 </div>
@@ -392,10 +408,10 @@ export function AdminPage({
                 </div>
                 <div>
                   <h4 className="font-black text-2xl text-black uppercase mb-1">
-                    تصدير قاعدة البيانات
+                    {t("adminExportTitle", "تصدير قاعدة البيانات")}
                   </h4>
                   <p className="text-xs font-bold text-black/70">
-                    تحميل جميع بيانات الأطفال في ملف Excel منظم
+                    {t("adminExportSub", "تحميل جميع بيانات الأطفال في ملف Excel منظم")}
                   </p>
                 </div>
                 <button
@@ -403,7 +419,7 @@ export function AdminPage({
                   className="w-full bg-black text-white hover:bg-white hover:text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] py-3.5 font-black text-sm uppercase transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Download size={18} className="stroke-[3]" />
-                  <span>تحميل ملف EXCEL</span>
+                  <span>{t("adminDownloadExcelBtn", "تحميل ملف EXCEL")}</span>
                 </button>
               </div>
             </div>
@@ -415,11 +431,11 @@ export function AdminPage({
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-2xl font-black text-black uppercase">دليل الخدام والصلاحيات</h3>
-                <p className="text-xs font-bold text-black/60">التحكم في وصول الفصول وحذف المخدومين</p>
+                <h3 className="text-2xl font-black text-black uppercase">{t("adminServantsTitle", "دليل الخدام والصلاحيات")}</h3>
+                <p className="text-xs font-bold text-black/60">{t("adminServantsSub", "التحكم في وصول الفصول وحذف الأطفال")}</p>
               </div>
               <span className="bg-black text-white px-3 py-1 font-black text-xs uppercase border border-black">
-                {users.length} خادم مسجل
+                {users.length} {t("adminRegisteredServants", "خادم مسجل")}
               </span>
             </div>
 
@@ -427,12 +443,12 @@ export function AdminPage({
               <div className="py-20 flex flex-col items-center justify-center bg-white border-[3px] border-black p-8 gap-3">
                 <div className="w-10 h-10 border-4 border-black border-t-[#FACC15] animate-spin" />
                 <span className="font-black text-xs uppercase tracking-widest text-black">
-                  جاري جلب الخدام...
+                  {t("adminLoadingServants", "جاري جلب الخدام...")}
                 </span>
               </div>
             ) : users.length === 0 ? (
               <div className="py-16 text-center bg-white border-[3px] border-black border-dashed p-8">
-                <p className="font-black text-black text-lg">لا يوجد خدام مسجلين حالياً</p>
+                <p className="font-black text-black text-lg">{t("adminNoServants", "لا يوجد خدام مسجلين حالياً")}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -448,7 +464,9 @@ export function AdminPage({
                       <div className="min-w-0">
                         <h4 className="font-black text-xl text-black truncate">{u.username}</h4>
                         <span className="inline-block bg-[#FEF08A] text-black font-mono font-black text-[10px] px-2 py-0.5 border border-black mt-1">
-                          {u.role === "admin" ? "مسؤول كامل (Admin)" : `${u.permissions?.length || 0} صلاحية فصل`}
+                          {u.role === "admin"
+                            ? t("adminFullAdmin", "مسؤول كامل (Admin)")
+                            : `${u.permissions?.length || 0} ${t("adminClassPermsCount", "صلاحية فصل")}`}
                         </span>
                       </div>
                     </div>
@@ -458,12 +476,12 @@ export function AdminPage({
                         onClick={() => handleEditClick(u)}
                         className="flex-1 bg-[#38BDF8] text-black border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 py-2.5 font-black text-xs uppercase transition-all cursor-pointer"
                       >
-                        تعديل الصلاحيات
+                        {t("adminEditPermsBtn", "تعديل الصلاحيات")}
                       </button>
                       <button
                         onClick={() => handleDeleteUser(u.username)}
                         className="w-10 bg-[#EF4444] text-white border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 flex items-center justify-center transition-all cursor-pointer shrink-0"
-                        title="حذف الخادم"
+                        title={t("adminDeleteServantTitle", "حذف الخادم")}
                       >
                         <Trash2 size={18} className="stroke-[2.5]" />
                       </button>
@@ -479,8 +497,8 @@ export function AdminPage({
         {activeSection === "branding" && (
           <div className="max-w-2xl bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 sm:p-8 flex flex-col gap-6">
             <div>
-              <h3 className="text-2xl font-black text-black uppercase">هوية النظام والأيقونة</h3>
-              <p className="text-xs font-bold text-black/60">تخصيص اللوجو الظاهر في أعلى التطبيق</p>
+              <h3 className="text-2xl font-black text-black uppercase">{t("adminBrandingTitle", "هوية النظام والأيقونة")}</h3>
+              <p className="text-xs font-bold text-black/60">{t("adminBrandingSub", "تخصيص اللوجو الظاهر في أعلى التطبيق")}</p>
             </div>
 
             <div className="border-[3px] border-black p-6 bg-[#FDF8F0] flex flex-col sm:flex-row items-center gap-6">
@@ -501,11 +519,11 @@ export function AdminPage({
                   className="bg-white border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 py-2.5 font-black text-xs uppercase flex items-center justify-center gap-2 cursor-pointer transition-all"
                 >
                   <Home size={16} />
-                  <span>استعادة الأيقونة الافتراضية ⛪</span>
+                  <span>{t("adminDefaultIconBtn", "استعادة الأيقونة الافتراضية ⛪")}</span>
                 </button>
                 <label className="bg-[#A3E635] border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 py-2.5 font-black text-xs uppercase flex items-center justify-center gap-2 cursor-pointer transition-all text-black">
                   <Camera size={16} />
-                  <span>رفع لوجو أو صورة جديدة</span>
+                  <span>{t("adminUploadLogoBtn", "رفع لوجو أو صورة جديدة")}</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -528,13 +546,13 @@ export function AdminPage({
                 setBrandLoading(true);
                 await settingsDB.set(brand);
                 setBrandLoading(false);
-                alert("تم حفظ الهوية بنجاح!");
+                alert(lang === "en" ? "Identity saved successfully!" : "تم حفظ الهوية بنجاح!");
               }}
               className="w-full bg-[#FACC15] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none py-4 font-black text-base uppercase flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
               disabled={brandLoading}
             >
               <Save size={20} className="stroke-[2.5]" />
-              <span>{brandLoading ? "جاري الحفظ..." : "حفظ التغييرات"}</span>
+              <span>{brandLoading ? t("adminSaving", "جاري الحفظ...") : t("adminSaveBrandingBtn", "حفظ التغييرات")}</span>
             </button>
           </div>
         )}
@@ -543,16 +561,16 @@ export function AdminPage({
         {activeSection === "security" && (
           <div className="max-w-2xl bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 sm:p-8 flex flex-col gap-6">
             <div>
-              <h3 className="text-2xl font-black text-black uppercase">مفتاح الاسترجاع الرئيسي</h3>
-              <p className="text-xs font-bold text-black/60">تغيير كود الطوارئ لحسابات المشرفين</p>
+              <h3 className="text-2xl font-black text-black uppercase">{t("adminSecurityTitle", "مفتاح الاسترجاع الرئيسي")}</h3>
+              <p className="text-xs font-bold text-black/60">{t("adminSecuritySub", "تغيير كود الطوارئ لحسابات المشرفين")}</p>
             </div>
 
             <div className="space-y-3">
               <label className="text-xs font-black uppercase tracking-wider text-black">
-                المفتاح السري الجديد
+                {t("adminNewSecretLabel", "المفتاح السري الجديد")}
               </label>
               <div className="relative flex items-center bg-[#FDF8F0] border-[3px] border-black shadow-[4px_4px_0px_#000000]">
-                <div className="bg-[#FB923C] border-l-[3px] border-black p-3.5 flex items-center justify-center">
+                <div className="bg-[#FB923C] border-s-[3px] border-black p-3.5 flex items-center justify-center">
                   <Key size={20} className="stroke-[2.5] text-black" />
                 </div>
                 <input
@@ -564,7 +582,7 @@ export function AdminPage({
                 />
               </div>
               <p className="text-xs font-bold text-black/60 leading-relaxed">
-                * عند تغيير هذا المفتاح، سيُطلب من أي مشرف إدخال الكود الجديد عند استعادة كلمة المرور.
+                {t("adminSecurityHint", "* عند تغيير هذا المفتاح، سيُطلب من أي مشرف إدخال الكود الجديد عند استعادة كلمة المرور.")}
               </p>
             </div>
 
@@ -575,13 +593,13 @@ export function AdminPage({
                 await onUpdateSecret(newSecret.trim());
                 setNewSecret("");
                 setSecretLoading(false);
-                alert("تم تحديث مفتاح الاسترجاع بنجاح!");
+                alert(lang === "en" ? "Recovery key updated successfully!" : "تم تحديث مفتاح الاسترجاع بنجاح!");
               }}
               className="w-full bg-[#FB923C] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none py-4 font-black text-base uppercase flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
               disabled={secretLoading || !newSecret.trim()}
             >
               <Shield size={20} className="stroke-[2.5]" />
-              <span>{secretLoading ? "جاري التحديث..." : "تحديث المفتاح السري"}</span>
+              <span>{secretLoading ? t("adminUpdating", "جاري التحديث...") : t("adminUpdateSecretBtn", "تحديث المفتاح السري")}</span>
             </button>
           </div>
         )}
@@ -590,7 +608,7 @@ export function AdminPage({
       {/* ── EDIT USER PERMISSIONS MODAL ── */}
       <AnimatePresence>
         {editingUser && (
-          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60" dir="rtl">
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60">
             <Motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -601,9 +619,9 @@ export function AdminPage({
               <div className="p-6 border-b-[3px] border-black bg-[#FACC15] flex items-center justify-between">
                 <div>
                   <h3 className="text-2xl font-black text-black uppercase">
-                    صلاحيات: {editingUser.username}
+                    {t("adminModalPermsFor", "صلاحيات:")} {editingUser.username}
                   </h3>
-                  <p className="text-xs font-bold text-black/70">حدد الفصول والصلاحيات الإدارية المتاحة</p>
+                  <p className="text-xs font-bold text-black/70">{t("adminModalPermsSub", "حدد الفصول والصلاحيات الإدارية المتاحة")}</p>
                 </div>
                 <button
                   onClick={() => setEditingUser(null)}
@@ -618,19 +636,19 @@ export function AdminPage({
                 {/* Admin Powers */}
                 <div>
                   <h4 className="text-xs font-black text-black uppercase tracking-widest mb-3">
-                    الصلاحيات الإدارية
+                    {t("adminModalAdminPowers", "الصلاحيات الإدارية")}
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {[
                       {
                         id: "perm_admin",
-                        label: "مسؤول كامل (Admin)",
-                        desc: "يمتلك كل الصلاحيات الإدارية والوصول لكل شيء",
+                        label: t("adminModalFullAdminLabel", "مسؤول كامل (Admin)"),
+                        desc: t("adminModalFullAdminDesc", "يمتلك كل الصلاحيات الإدارية والوصول لكل شيء"),
                       },
                       {
                         id: "perm_delete_student",
-                        label: "حذف السجلات",
-                        desc: "صلاحية مسح بيانات المخدومين والغياب",
+                        label: t("adminModalDeleteRecordsLabel", "حذف السجلات"),
+                        desc: t("adminModalDeleteRecordsDesc", "صلاحية مسح بيانات الأطفال والغياب"),
                       },
                     ].map((p) => {
                       const isChecked = tempPerms.includes(p.id);
@@ -664,7 +682,7 @@ export function AdminPage({
                 {/* Class Visibility */}
                 <div>
                   <h4 className="text-xs font-black text-black uppercase tracking-widest mb-3">
-                    فصول الخدمة المصرح بها
+                    {t("adminModalClassesTitle", "فصول الخدمة المصرح بها")}
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                     {classList.map((cls) => {
@@ -700,7 +718,7 @@ export function AdminPage({
                   onClick={() => setEditingUser(null)}
                   className="flex-1 bg-white border-[3px] border-black shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 py-3 font-black text-sm uppercase transition-all cursor-pointer"
                 >
-                  إلغاء
+                  {t("adminModalCancel", "إلغاء")}
                 </button>
                 <button
                   onClick={savePermissions}
@@ -708,7 +726,7 @@ export function AdminPage({
                   className="flex-[2] bg-[#A3E635] text-black border-[3px] border-black shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 py-3 font-black text-sm uppercase transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   <Check size={18} strokeWidth={3} />
-                  <span>{saving ? "جاري الحفظ..." : "حفظ وتفعيل الصلاحيات"}</span>
+                  <span>{saving ? t("adminSaving", "جاري الحفظ...") : t("adminModalSave", "حفظ وتفعيل الصلاحيات")}</span>
                 </button>
               </div>
             </Motion.div>
