@@ -403,3 +403,34 @@ export const deleteClassFB = async (classId) => {
   if (!db) return;
   await deleteDoc(doc(db, "classes", classId));
 };
+
+// --- SUMMER CLUB API --- //
+// One document per club (id-keyed). Shape: { id, name, createdAt, teams: [...] }
+
+export const getAllSummerClubsFB = async () => {
+  if (!db) return {};
+  const snap = await getDocs(collection(db, "summerClubs"));
+  const clubs = {};
+  snap.forEach((d) => {
+    const data = d.data();
+    const id = data.id || d.id;
+    clubs[id] = { ...data, id };
+  });
+  return clubs;
+};
+
+export const getSummerClubFB = async (clubId) => {
+  if (!db) return null;
+  const ds = await getDoc(doc(db, "summerClubs", clubId));
+  return ds.exists() ? { ...ds.data(), id: ds.data().id || clubId } : null;
+};
+
+export const setSummerClubFB = async (clubId, data) => {
+  if (!db) return;
+  await setDoc(doc(db, "summerClubs", clubId), { ...data, id: clubId });
+};
+
+export const deleteSummerClubFB = async (clubId) => {
+  if (!db) return;
+  await deleteDoc(doc(db, "summerClubs", clubId));
+};

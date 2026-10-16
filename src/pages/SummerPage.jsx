@@ -13,6 +13,7 @@ import {
   X,
   AlertTriangle,
   Sparkles,
+  Users,
 } from "lucide-react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import { studentsDB, summerAttendanceDB } from "../data/storage";
@@ -23,6 +24,7 @@ import { Toast } from "../components/UI";
 import { SummerGameArena } from "./SummerGameArena";
 import { SummerProfile } from "./SummerProfile";
 import { SummerCoupons } from "./SummerCoupons";
+import { SummerClub } from "./SummerClub";
 import { useT } from "../hooks/useT";
 import { useAppContext } from "../context/AppContext";
 
@@ -145,6 +147,14 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
 
   const summerCards = [
     {
+      id: "club",
+      label: t("summerCardClub"),
+      subLabel: "CLUB BUILDER",
+      icon: <Users className="w-8 h-8 stroke-[2.5]" />,
+      tagBg: "bg-[#A78BFA]",
+      iconBg: "bg-[#A78BFA]",
+    },
+    {
       id: "search",
       label: t("summerCardSearch"),
       subLabel: "SEARCH",
@@ -265,7 +275,7 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
 
                 <div className="bg-[#A3E635] border-[3px] border-black shadow-[4px_4px_0px_#000000] p-4 text-center shrink-0 self-stretch md:self-auto flex flex-col items-center justify-center">
                   <span className="text-2xl sm:text-3xl font-black text-black">
-                    ⚽ 4
+                    ⚽ 5
                   </span>
                   <span className="text-xs font-black uppercase text-black/80 tracking-wider">
                     {t("summerSections")}
@@ -274,7 +284,7 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
               </section>
 
               {/* Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                 {summerCards.map((card, idx) => (
                   <Motion.button
                     key={card.id}
@@ -333,6 +343,18 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
                   </Motion.button>
                 ))}
               </div>
+            </Motion.div>
+          )}
+
+          {/* ── 1b. CLUB BUILDER VIEW ── */}
+          {internalView === "club" && (
+            <Motion.div
+              key="club"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+            >
+              <SummerClub />
             </Motion.div>
           )}
 

@@ -26,4 +26,18 @@ export const STORAGE_KEYS = {
   /** حضور النادي الصيفي (Firebase) */
   summerAttendance: "qrapp_summer_attendance",
   summerCoupons: "qrapp_summer_coupons",
+  /** بيانات النادي الصيفي — الفرق والأعضاء (Firebase) */
+  summerClub: "qrapp_summer_club",
 };
+
+/** ألوان فرق النادي الصيفي */
+export const CLUB_TEAM_COLORS = [
+  "#FACC15",
+  "#38BDF8",
+  "#A3E635",
+  "#FB923C",
+  "#F472B6",
+  "#A78BFA",
+  "#34D399",
+  "#F87171",
+];

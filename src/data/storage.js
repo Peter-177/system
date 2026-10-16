@@ -11,6 +11,7 @@ import {
   removeSummerAttendanceFB, resetSummerAttendanceFB,
   getAllSummerCouponsFB, addSummerCouponFB,
   removeSummerCouponFB, resetSummerCouponsFB,
+  getAllSummerClubsFB, setSummerClubFB, deleteSummerClubFB,
 } from "../services/firestoreService";
 
 const mem = {
@@ -21,6 +22,7 @@ const mem = {
   [STORAGE_KEYS.summerCoupons]:     {},
   [STORAGE_KEYS.visits]:            {},
   [STORAGE_KEYS.classes]:           {},
+  [STORAGE_KEYS.summerClub]:        {},
   [STORAGE_KEYS.settings]:          {
     nameTop: "SUNDAY",
     nameBottom: "SCHOOL",
@@ -287,6 +289,26 @@ export const summerCouponsDB = {
   },
 };
 
+// ── Summer Club (Firebase-only) ──
+// Single active club stored under doc id "main":
+// { id, name, createdAt, teams: [{ id, name, color, members: [qrId] }] }
+export const summerClubDB = {
+  getAll: () => loadMem(STORAGE_KEYS.summerClub, {}),
+  get: (id) => loadMem(STORAGE_KEYS.summerClub, {})[id] ?? null,
+  set: (id, data) => {
+    const a = loadMem(STORAGE_KEYS.summerClub, {});
+    a[id] = { ...data, id };
+    saveMem(STORAGE_KEYS.summerClub, a);
+    setSummerClubFB(id, a[id]).catch(console.error);
+  },
+  remove: (id) => {
+    const a = loadMem(STORAGE_KEYS.summerClub, {});
+    delete a[id];
+    saveMem(STORAGE_KEYS.summerClub, a);
+    deleteSummerClubFB(id).catch(console.error);
+  },
+};
+
 // ── Visits (Firebase-only) ──
 export const visitsDB = {
   getAll: () => loadMem(STORAGE_KEYS.visits, {}),
@@ -370,6 +392,7 @@ export const syncFromFirebase = async () => {
     const classes         = await getAllClassesFB();
     const coupons         = await getAllCouponsFB();
     const summerCoupons   = await getAllSummerCouponsFB();
+    const summerClub      = await getAllSummerClubsFB();
     const settings        = await getAppSettingsFB();
 
     saveMem(STORAGE_KEYS.students,         students);
@@ -379,6 +402,7 @@ export const syncFromFirebase = async () => {
     saveMem(STORAGE_KEYS.classes,          classes);
     saveMem(STORAGE_KEYS.coupons,          coupons);
     saveMem(STORAGE_KEYS.summerCoupons,    summerCoupons);
+    saveMem(STORAGE_KEYS.summerClub,       summerClub);
     if (settings) saveMem(STORAGE_KEYS.settings, settings);
     return true;
   } catch (error) {
