@@ -11,7 +11,7 @@ import {
   removeSummerAttendanceFB, resetSummerAttendanceFB,
   getAllSummerCouponsFB, addSummerCouponFB,
   removeSummerCouponFB, resetSummerCouponsFB,
-  getAllSummerClubsFB, setSummerClubFB, deleteSummerClubFB,
+  getAllSummerClubsFB, getSummerClubFB, setSummerClubFB, deleteSummerClubFB,
 } from "../services/firestoreService";
 
 const mem = {
@@ -30,8 +30,31 @@ const mem = {
   },
 };
 
-const loadMem = (key, fb) => mem[key] ?? fb;
-const saveMem = (key, val) => { mem[key] = val; };
+const loadMem = (key, fb) => {
+  if (mem[key] && (typeof mem[key] !== "object" || Object.keys(mem[key]).length > 0)) {
+    return mem[key];
+  }
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      mem[key] = parsed;
+      return parsed;
+    }
+  } catch {
+    // fallback
+  }
+  return mem[key] ?? fb;
+};
+
+const saveMem = (key, val) => {
+  mem[key] = val;
+  try {
+    localStorage.setItem(key, JSON.stringify(val));
+  } catch {
+    // ignore
+  }
+};
 
 const loadLocal = (key, fb) => {
   try { return JSON.parse(localStorage.getItem(key)) ?? fb; }
@@ -291,21 +314,42 @@ export const summerCouponsDB = {
 
 // ── Summer Club (Firebase-only) ──
 // Single active club stored under doc id "main":
-// { id, name, createdAt, teams: [{ id, name, color, members: [qrId] }] }
+// { id, name, days, createdAt, teams: [{ id, name, color, members: [qrId] }] }
 export const summerClubDB = {
   getAll: () => loadMem(STORAGE_KEYS.summerClub, {}),
   get: (id) => loadMem(STORAGE_KEYS.summerClub, {})[id] ?? null,
+  getAsync: async (id) => {
+    const cached = summerClubDB.get(id);
+    try {
+      const remote = await getSummerClubFB(id);
+      if (remote) {
+        const a = loadMem(STORAGE_KEYS.summerClub, {});
+        a[id] = remote;
+        saveMem(STORAGE_KEYS.summerClub, a);
+        return remote;
+      }
+    } catch (e) {
+      console.error("summerClubDB.getAsync failed:", e);
+    }
+    return cached;
+  },
   set: (id, data) => {
     const a = loadMem(STORAGE_KEYS.summerClub, {});
     a[id] = { ...data, id };
     saveMem(STORAGE_KEYS.summerClub, a);
     setSummerClubFB(id, a[id]).catch(console.error);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("summerClubUpdated", { detail: a[id] }));
+    }
   },
   remove: (id) => {
     const a = loadMem(STORAGE_KEYS.summerClub, {});
     delete a[id];
     saveMem(STORAGE_KEYS.summerClub, a);
     deleteSummerClubFB(id).catch(console.error);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("summerClubUpdated", { detail: null }));
+    }
   },
 };
 

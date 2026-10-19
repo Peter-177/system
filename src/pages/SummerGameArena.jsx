@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
   Plus,
-  Search,
   Minus,
   Trophy,
   Users,
@@ -10,179 +9,243 @@ import {
   Pencil,
   Crown,
   Medal,
+  Calendar,
+  RotateCcw,
+  AlertTriangle,
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  Sparkles,
 } from "lucide-react";
-import { studentsDB, summerGameArenaDB } from "../data/storage";
+import { studentsDB, summerGameArenaDB, summerClubDB } from "../data/storage";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import { useT } from "../hooks/useT";
+import { useAppContext } from "../context/AppContext";
 
-// ─── Neo Brutalism Team Color Palette ───────────────────────────────────────
-const GAME_TEAM_COLORS = [
-  { name: "sky",    bg: "bg-[#38BDF8]",  border: "border-[#38BDF8]",  text: "text-black" },
-  { name: "lime",   bg: "bg-[#A3E635]",  border: "border-[#A3E635]",  text: "text-black" },
-  { name: "pink",   bg: "bg-[#F472B6]",  border: "border-[#F472B6]",  text: "text-black" },
-  { name: "orange", bg: "bg-[#FB923C]",  border: "border-[#FB923C]",  text: "text-black" },
-  { name: "yellow", bg: "bg-[#FACC15]",  border: "border-[#FACC15]",  text: "text-black" },
-  { name: "white",  bg: "bg-white",      border: "border-white",       text: "text-black" },
+// ─── Default Team Colors Fallback ───────────────────────────────────────────
+const FALLBACK_COLORS = [
+  "#38BDF8", // sky
+  "#A3E635", // lime
+  "#F472B6", // pink
+  "#FB923C", // orange
+  "#FACC15", // yellow
+  "#A78BFA", // purple
+  "#34D399", // emerald
+  "#F87171", // red
 ];
 
-const DEFAULT_TEAMS = () => [
-  { id: "T1", name: "الفريق الأول",  members: [],  theme: GAME_TEAM_COLORS[0] },
-  { id: "T2", name: "الفريق الثاني", members: [],  theme: GAME_TEAM_COLORS[1] },
-];
-
-const DEFAULT_GAMES = (teamIds) => {
-  const scores = {};
-  teamIds.forEach((id) => { scores[id] = ""; });
-  return [{ id: 1, name: "الجولة الأولى", scores }];
-};
-
-function getRandomColor(usedNames = []) {
-  const available = GAME_TEAM_COLORS.filter((c) => !usedNames.includes(c.name));
-  const pool = available.length > 0 ? available : GAME_TEAM_COLORS;
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-function mergeTeamTheme(theme) {
-  if (theme && typeof theme === "object" && typeof theme.name === "string" && typeof theme.bg === "string") {
-    return theme;
-  }
-  return GAME_TEAM_COLORS[Math.floor(Math.random() * GAME_TEAM_COLORS.length)];
-}
-
-function loadPersistedGameArena() {
-  const raw = summerGameArenaDB.get();
-  if (!raw || !Array.isArray(raw.teams) || !Array.isArray(raw.games)) return null;
-  if (raw.teams.length < 1 || raw.games.length < 1) return null;
-
-  const teams = raw.teams.map((t, i) => ({
-    id: String(t.id ?? `T${i}`),
-    name: typeof t.name === "string" && t.name.trim() ? t.name : `فريق ${i + 1}`,
-    members: Array.isArray(t.members) ? t.members.map(String) : [],
-    theme: mergeTeamTheme(t.theme),
-  }));
-
-  const teamIds = new Set(teams.map((t) => t.id));
-
-  const games = raw.games.map((g, i) => {
-    const scores = { ...(g.scores && typeof g.scores === "object" ? g.scores : {}) };
-    for (const k of Object.keys(scores)) { if (!teamIds.has(k)) delete scores[k]; }
-    for (const tid of teamIds) { if (!(tid in scores)) scores[tid] = ""; }
-    const gid = g.id;
-    const id =
-      typeof gid === "number" && !Number.isNaN(gid) ? gid
-      : typeof gid === "string" && /^\d+$/.test(gid) ? Number(gid)
-      : Date.now() + i;
-    return {
-      id,
-      name: typeof g.name === "string" && g.name.trim() ? g.name : `الجولة ${i + 1}`,
-      scores,
-    };
-  });
-
-  return { teams, games, showMembers: Boolean(raw.showMembers) };
+function getContrastColor(hexColor) {
+  if (!hexColor || typeof hexColor !== "string") return "#000000";
+  // Return black text for neo-brutalism vibrant colors
+  return "#000000";
 }
 
 // ─── Main Component ──────────────────────────────────────────────────────────
-export function SummerGameArena() {
+export function SummerGameArena({ onGoClubBuilder }) {
   const t = useT();
-  const [teams, setTeams] = useState(
-    () => loadPersistedGameArena()?.teams ?? DEFAULT_TEAMS()
-  );
-  const [games, setGames] = useState(() => {
-    const p = loadPersistedGameArena();
-    return p?.games ?? DEFAULT_GAMES((p?.teams ?? DEFAULT_TEAMS()).map((t) => t.id));
-  });
-  const [showMembers, setShowMembers] = useState(
-    () => loadPersistedGameArena()?.showMembers ?? false
-  );
-  const [addingToTeam, setAddingToTeam]       = useState(null);
-  const [newMemberName, setNewMemberName]     = useState("");
-  const [nameModal, setNameModal]             = useState(null);
-  const [modalNameInput, setModalNameInput]   = useState("");
-  const [modalThemeInput, setModalThemeInput] = useState(null);
-  const [renameTeamId, setRenameTeamId]       = useState(null);
-  const [showResults, setShowResults]         = useState(false);
+  const { lang } = useAppContext();
 
+  const [loading, setLoading] = useState(true);
+  const [club, setClub] = useState(() => summerClubDB.get("main") || Object.values(summerClubDB.getAll())[0] || null);
+
+  const [selectedDay, setSelectedDay] = useState(1); // 1..N or 'all'
+  const [games, setGames] = useState([]);
+  const [showMembers, setShowMembers] = useState(true);
+  const [nameModal, setNameModal] = useState(null); // 'game' | 'renameTeam'
+  const [modalNameInput, setModalNameInput] = useState("");
+  const [modalDayInput, setModalDayInput] = useState(1);
+  const [renameTeamId, setRenameTeamId] = useState(null);
+  const [showResults, setShowResults] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  // ── Database Fetching & Live Sync ──
+  const refreshClubFromDB = async () => {
+    setSyncing(true);
+    try {
+      const remote = await summerClubDB.getAsync("main");
+      if (remote) {
+        setClub(remote);
+      } else {
+        const local = summerClubDB.get("main") || Object.values(summerClubDB.getAll())[0] || null;
+        setClub(local);
+      }
+    } catch (e) {
+      console.error("Failed to sync club:", e);
+      const local = summerClubDB.get("main") || Object.values(summerClubDB.getAll())[0] || null;
+      setClub(local);
+    } finally {
+      setSyncing(false);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const init = async () => {
+      const local = summerClubDB.get("main") || Object.values(summerClubDB.getAll())[0] || null;
+      if (local && mounted) {
+        setClub(local);
+      }
+      try {
+        const remote = await summerClubDB.getAsync("main");
+        if (remote && mounted) {
+          setClub(remote);
+        }
+      } catch (e) {
+        console.error("Failed to load summer club in arena:", e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    init();
+
+    const handleClubUpdate = (e) => {
+      if (e?.detail) {
+        setClub(e.detail);
+      } else {
+        const next = summerClubDB.get("main") || Object.values(summerClubDB.getAll())[0] || null;
+        setClub(next);
+      }
+    };
+
+    window.addEventListener("summerClubUpdated", handleClubUpdate);
+    window.addEventListener("storage", handleClubUpdate);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("summerClubUpdated", handleClubUpdate);
+      window.removeEventListener("storage", handleClubUpdate);
+    };
+  }, []);
+
+  // Teams directly from Database
+  const teams = useMemo(() => {
+    if (!club || !Array.isArray(club.teams)) return [];
+    return club.teams.map((tm, idx) => ({
+      id: String(tm.id || `t_${idx}`),
+      name: tm.name || `${lang === "ar" ? "فريق" : "Team"} ${idx + 1}`,
+      color: tm.color || FALLBACK_COLORS[idx % FALLBACK_COLORS.length],
+      members: Array.isArray(tm.members) ? tm.members : [],
+    }));
+  }, [club, lang]);
+
+  // Number of Days directly from Database
+  const totalDays = useMemo(() => {
+    return Math.max(1, Number(club?.days) || 5);
+  }, [club]);
+
+  // Days Array [1, 2, 3, 4, 5, ...]
+  const daysList = useMemo(() => {
+    return Array.from({ length: totalDays }, (_, i) => i + 1);
+  }, [totalDays]);
+
+  // Load / initialize games for this club
+  useEffect(() => {
+    if (!club || teams.length === 0) return;
+
+    const savedArena = summerGameArenaDB.get();
+    const teamIds = new Set(teams.map((t) => t.id));
+
+    if (savedArena && Array.isArray(savedArena.games) && savedArena.games.length > 0) {
+      // Sync loaded games with existing team IDs
+      const cleanGames = savedArena.games.map((g, i) => {
+        const scores = { ...(g.scores || {}) };
+        for (const k of Object.keys(scores)) {
+          if (!teamIds.has(k)) delete scores[k];
+        }
+        for (const tid of teamIds) {
+          if (!(tid in scores)) scores[tid] = "";
+        }
+        return {
+          id: g.id || Date.now() + i,
+          day: Math.min(totalDays, Math.max(1, Number(g.day) || 1)),
+          name: g.name || `${lang === "ar" ? "الجولة" : "Round"} ${i + 1}`,
+          scores,
+        };
+      });
+      setGames(cleanGames);
+    } else {
+      // Seed default rounds across the days
+      const seeded = daysList.map((d) => {
+        const scores = {};
+        teams.forEach((t) => {
+          scores[t.id] = "";
+        });
+        return {
+          id: Date.now() + d,
+          day: d,
+          name: lang === "ar" ? `ألعاب اليوم ${d}` : `Day ${d} Games`,
+          scores,
+        };
+      });
+      setGames(seeded);
+    }
+  }, [club?.id, teams.length, totalDays, lang]);
+
+  // Save games to storage whenever they change
+  useEffect(() => {
+    if (games.length > 0) {
+      summerGameArenaDB.set({
+        clubId: club?.id || "main",
+        games,
+        showMembers,
+      });
+    }
+  }, [games, showMembers, club?.id]);
+
+  // Reset selectedDay if totalDays changed and selectedDay > totalDays
+  useEffect(() => {
+    if (selectedDay !== "all" && selectedDay > totalDays) {
+      setSelectedDay(1);
+    }
+  }, [totalDays, selectedDay]);
+
+  // All Students lookup map from Database
+  const studentsMap = useMemo(() => {
+    const all = studentsDB.getAll();
+    const map = {};
+    Object.keys(all).forEach((id) => {
+      map[id] = { id, qrId: id, ...all[id] };
+    });
+    return map;
+  }, []);
+
+  const totalAssignedChildren = useMemo(() => {
+    return teams.reduce((acc, t) => acc + (t.members?.length || 0), 0);
+  }, [teams]);
+
+  // Filter games based on selected day
+  const displayedGames = useMemo(() => {
+    if (selectedDay === "all") return games;
+    return games.filter((g) => Number(g.day) === Number(selectedDay));
+  }, [games, selectedDay]);
+
+  // ── Game Handlers ──
   const closeNameModal = () => {
     setNameModal(null);
     setModalNameInput("");
-    setModalThemeInput(null);
+    setModalDayInput(1);
     setRenameTeamId(null);
   };
 
-  useEffect(() => {
-    if (!nameModal) return;
-    const onKey = (e) => { if (e.key === "Escape") closeNameModal(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [nameModal]);
-
-  useEffect(() => {
-    summerGameArenaDB.set({ teams, games, showMembers });
-  }, [teams, games, showMembers]);
-
-  const allStudents = useMemo(() => {
-    const db = studentsDB.getAll();
-    return Object.keys(db).map((id) => ({ id, ...db[id] }));
-  }, []);
-
-  const searchResults = useMemo(() => {
-    const q = newMemberName.trim().toLowerCase();
-    if (!q || !addingToTeam) return [];
-    return allStudents.filter((s) =>
-      s.name?.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
-    ).slice(0, 5);
-  }, [newMemberName, addingToTeam, allStudents]);
-
-  const handleAddMember = (teamId, specificName = null) => {
-    const nameToAdd = specificName || newMemberName.trim();
-    if (!nameToAdd) return;
-    setTeams((prev) =>
-      prev.map((t) => t.id === teamId ? { ...t, members: [...t.members, nameToAdd] } : t)
-    );
-    setNewMemberName("");
-    setAddingToTeam(null);
-  };
-
-  const handleRemoveMember = (teamId, index) => {
-    setTeams((prev) =>
-      prev.map((t) => t.id === teamId ? { ...t, members: t.members.filter((_, i) => i !== index) } : t)
+  const handleUpdateScore = (gameId, teamId, val) => {
+    setGames((prev) =>
+      prev.map((g) =>
+        g.id === gameId ? { ...g, scores: { ...g.scores, [teamId]: val } } : g
+      )
     );
   };
 
-  const openRenameTeamModal = (teamId) => {
-    const t = teams.find((x) => x.id === teamId);
-    if (!t) return;
-    setRenameTeamId(teamId);
-    setModalNameInput(t.name);
-    setModalThemeInput(t.theme);
-    setNameModal("renameTeam");
-  };
-
-  const confirmRenameTeam = () => {
-    const name = modalNameInput.trim();
-    if (!name || !renameTeamId) return;
-    setTeams((prev) =>
-      prev.map((t) => (t.id === renameTeamId ? { ...t, name, theme: modalThemeInput || t.theme } : t))
+  const openGameModalForDay = (dayNum) => {
+    const targetDay = dayNum === "all" ? 1 : dayNum;
+    setModalDayInput(targetDay);
+    const dayGamesCount = games.filter((g) => Number(g.day) === Number(targetDay)).length;
+    setModalNameInput(
+      lang === "ar"
+        ? `جولة ${dayGamesCount + 1} - اليوم ${targetDay}`
+        : `Round ${dayGamesCount + 1} - Day ${targetDay}`
     );
-    closeNameModal();
-  };
-
-  const openTeamNameModal = () => { setModalNameInput(""); setNameModal("team"); };
-
-  const confirmAddTeam = () => {
-    const name = modalNameInput.trim();
-    if (!name) return;
-    const newId = `T${Date.now()}`;
-    const usedColors = teams.map((t) => t.theme?.name).filter(Boolean);
-    const theme = getRandomColor(usedColors);
-    setTeams((prev) => [...prev, { id: newId, name, members: [], theme }]);
-    setGames((prev) => prev.map((g) => ({ ...g, scores: { ...g.scores, [newId]: "" } })));
-    closeNameModal();
-  };
-
-  const openGameNameModal = () => {
-    setModalNameInput(`الجولة ${games.length + 1}`);
     setNameModal("game");
   };
 
@@ -190,268 +253,398 @@ export function SummerGameArena() {
     const name = modalNameInput.trim();
     if (!name) return;
     const initialScores = {};
-    teams.forEach((t) => { initialScores[t.id] = ""; });
-    setGames((prev) => [...prev, { id: Date.now(), name, scores: initialScores }]);
+    teams.forEach((t) => {
+      initialScores[t.id] = "";
+    });
+    const newGame = {
+      id: Date.now(),
+      day: Math.min(totalDays, Math.max(1, Number(modalDayInput) || 1)),
+      name,
+      scores: initialScores,
+    };
+    setGames((prev) => [...prev, newGame]);
     closeNameModal();
   };
 
-  const handleRemoveTeam = (teamId) => {
-    if (teams.length <= 1) return;
-    setTeams((prev) => prev.filter((t) => t.id !== teamId));
-    setGames((prev) =>
-      prev.map((g) => {
-        const scores = { ...g.scores };
-        delete scores[teamId];
-        return { ...g, scores };
-      })
-    );
-  };
-
   const handleRemoveGame = (id) => {
-    if (games.length <= 1) return;
     setGames((prev) => prev.filter((g) => g.id !== id));
   };
 
-  const handleUpdateScore = (gameId, teamId, val) => {
-    setGames((prev) =>
-      prev.map((g) => g.id === gameId ? { ...g, scores: { ...g.scores, [teamId]: val } } : g)
+  // ── 1. LOADING STATE ──
+  if (loading) {
+    return (
+      <div className="w-full max-w-4xl mx-auto py-16 px-4" dir={lang === "ar" ? "rtl" : "ltr"}>
+        <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_#000000] p-10 flex flex-col items-center justify-center text-center gap-5">
+          <div className="w-16 h-16 bg-[#FACC15] border-[3px] border-black shadow-[4px_4px_0px_#000000] flex items-center justify-center text-3xl animate-bounce">
+            ⏳
+          </div>
+          <h3 className="text-2xl font-black uppercase text-black tracking-tight">
+            {t("gameLoadingClub")}
+          </h3>
+          <p className="text-sm font-bold text-black/60 max-w-md">
+            {lang === "ar" ? "جاري فحص قاعدة البيانات وتحديث الفرق والأيام..." : "Fetching summer club data and teams from database..."}
+          </p>
+        </div>
+      </div>
     );
-  };
+  }
 
-  // ── RESULTS VIEW ──────────────────────────────────────────────────────────
+  // ── 2. EMPTY STATE: NO CLUB CREATED YET ──
+  if (!club || !club.name || teams.length === 0) {
+    return (
+      <div className="w-full max-w-3xl mx-auto py-12 px-4" dir={lang === "ar" ? "rtl" : "ltr"}>
+        <Motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border-[4px] border-black shadow-[10px_10px_0px_#000000] p-8 sm:p-12 flex flex-col items-center text-center gap-6"
+        >
+          {/* Warning Banner Icon */}
+          <div className="relative">
+            <div className="w-20 h-20 bg-[#EF4444] text-white border-[3px] border-black shadow-[4px_4px_0px_#000000] flex items-center justify-center">
+              <AlertTriangle className="w-10 h-10 stroke-[3]" />
+            </div>
+            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-[#FACC15] border-2 border-black flex items-center justify-center font-black text-sm">
+              !
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <span className="inline-block bg-[#FACC15] border-2 border-black px-3 py-1 text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_#000000]">
+              {lang === "ar" ? "تنبيه قاعدة البيانات" : "DATABASE NOTICE"}
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-black tracking-tight">
+              {t("gameNoClubYet")}
+            </h2>
+            <p className="text-sm sm:text-base font-bold text-black/70 max-w-lg leading-relaxed">
+              {t("gameNoClubDesc")}
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mt-2">
+            {onGoClubBuilder && (
+              <button
+                type="button"
+                onClick={onGoClubBuilder}
+                className="bg-[#A3E635] text-black border-[3px] border-black shadow-[5px_5px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:scale-95 transition-all font-black text-base uppercase px-8 py-3.5 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Sparkles className="w-5 h-5 stroke-[2.5]" />
+                <span>{t("gameCreateClubBtn")}</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={refreshClubFromDB}
+              className="bg-white text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all font-black text-sm uppercase px-6 py-3.5 cursor-pointer flex items-center justify-center gap-2"
+            >
+              <RotateCcw className={`w-4 h-4 stroke-[3] ${syncing ? "animate-spin" : ""}`} />
+              <span>{t("gameSyncDatabase")}</span>
+            </button>
+          </div>
+        </Motion.div>
+      </div>
+    );
+  }
+
+  // ── 3. RESULTS / LEADERBOARD VIEW ──
   if (showResults) {
     return (
       <ResultsView
         teams={teams}
         games={games}
         onBack={() => setShowResults(false)}
+        lang={lang}
+        t={t}
       />
     );
   }
 
+  // ── 4. MAIN ARENA VIEW WITH TEAMS & DAYS ──
   return (
-    <>
-      <div className="flex-1 w-full flex flex-col" dir="rtl">
-        <div className="w-full max-w-[95rem] mx-auto flex flex-col lg:flex-row p-3 sm:p-6 gap-6 pb-20">
-
-          {/* ── Admin Panel (sidebar) ── */}
-          <Motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="w-full lg:w-[360px] bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-4 sm:p-6 flex flex-col shrink-0 gap-6"
-          >
-            {/* Panel Header */}
-            <div className="flex items-center gap-2 pb-4 border-b-[3px] border-black">
-              <div className="w-9 h-9 bg-[#FACC15] border-2 border-black shadow-[2px_2px_0px_#000000] flex items-center justify-center">
-                <Settings className="w-5 h-5 stroke-[2.5] text-black" />
-              </div>
-              <h3 className="font-black text-lg text-black uppercase">إدارة اللعبة</h3>
+    <div className="w-full flex flex-col gap-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+      {/* ── Top Header / Club Info Banner ── */}
+      <div className="w-full max-w-[95rem] mx-auto bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-[#FACC15] border-[3px] border-black shadow-[3px_3px_0px_#000000] flex items-center justify-center text-2xl shrink-0">
+            🏆
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="bg-black text-[#A3E635] text-[10px] font-black uppercase px-2 py-0.5 border border-black">
+                {t("summerCardGames")}
+              </span>
+              <span className="text-xs font-bold text-black/50">
+                {new Date(club.createdAt || Date.now()).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US")}
+              </span>
             </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-black tracking-tight mt-0.5">
+              {club.name}
+            </h1>
+          </div>
+        </div>
 
-            {/* Add Team Button */}
+        {/* Club Statistics Badges */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <div className="bg-[#FEF08A] border-2 border-black px-3 py-1.5 shadow-[2px_2px_0px_#000000] flex items-center gap-2">
+            <Calendar className="w-4 h-4 stroke-[2.5]" />
+            <span className="font-black text-xs sm:text-sm">
+              {totalDays} {t("clubDaysUnit")}
+            </span>
+          </div>
+
+          <div className="bg-[#38BDF8] border-2 border-black px-3 py-1.5 shadow-[2px_2px_0px_#000000] flex items-center gap-2">
+            <Users className="w-4 h-4 stroke-[2.5]" />
+            <span className="font-black text-xs sm:text-sm">
+              {teams.length} {t("clubTotalTeams")}
+            </span>
+          </div>
+
+          <div className="bg-[#A3E635] border-2 border-black px-3 py-1.5 shadow-[2px_2px_0px_#000000] flex items-center gap-2">
+            <span className="font-black text-xs sm:text-sm">
+              🎒 {totalAssignedChildren} {t("gameAssignedChildren")}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={refreshClubFromDB}
+            title={t("gameSyncDatabase")}
+            className="bg-white border-2 border-black p-2 shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
+          >
+            <RotateCcw className={`w-4 h-4 stroke-[3] ${syncing ? "animate-spin" : ""}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Feature 2: Games Schedule by Day (جدول ألعاب الأيام) ── */}
+      <div className="w-full max-w-[95rem] mx-auto bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-4 sm:p-6 flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-black pb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-[#A78BFA] border-2 border-black shadow-[2px_2px_0px_#000000] flex items-center justify-center">
+              <Calendar className="w-4 h-4 stroke-[2.5] text-black" />
+            </div>
+            <div>
+              <h3 className="font-black text-lg text-black uppercase tracking-tight">
+                {t("gameScheduleTitle")} ({totalDays} {t("clubDaysUnit")})
+              </h3>
+              <p className="text-xs font-bold text-black/60">
+                {lang === "ar"
+                  ? `اختر يوماً لمتابعة ألعابه ونقاط الفرق أو اعرض جميع الأيام`
+                  : `Select a day to view games and team scores or view all days`}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={openTeamNameModal}
-              className="w-full flex items-center justify-center gap-2 bg-[#A3E635] text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none transition-all font-black text-sm uppercase py-3 cursor-pointer"
+              onClick={() => openGameModalForDay(selectedDay === "all" ? 1 : selectedDay)}
+              className="bg-[#A3E635] text-black border-2 border-black px-3.5 py-1.5 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 font-black text-xs uppercase cursor-pointer flex items-center gap-1.5 transition-all"
             >
-              <Plus className="w-5 h-5 stroke-[3]" />
-              <span>إضافة فريق</span>
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>
+                {selectedDay === "all"
+                  ? `${t("gameNewRound")}`
+                  : `${t("gameAddRoundForDay")} ${selectedDay}`}
+              </span>
             </button>
+          </div>
+        </div>
 
-            {/* Games Management */}
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-widest text-black">
-                  الجولات والنقاط
+        {/* Days Selector Tabs (e.g. Day 1, Day 2, Day 3, ... Day N) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+          {daysList.map((dayNum) => {
+            const isActive = selectedDay === dayNum;
+            const dayGames = games.filter((g) => Number(g.day) === dayNum);
+            return (
+              <button
+                key={dayNum}
+                type="button"
+                onClick={() => setSelectedDay(dayNum)}
+                className={`flex items-center gap-2 border-[3px] border-black px-4 py-2.5 font-black text-sm uppercase transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                  isActive
+                    ? "bg-[#FACC15] text-black shadow-[4px_4px_0px_#000000] -translate-y-0.5"
+                    : "bg-[#FDF8F0] text-black/80 shadow-[2px_2px_0px_#000000] hover:bg-white hover:text-black"
+                }`}
+              >
+                <span>
+                  {t("gameDayPrefix")} {dayNum}
                 </span>
-                <button
-                  type="button"
-                  onClick={openGameNameModal}
-                  className="bg-[#38BDF8] text-black border-2 border-black px-3 py-1.5 shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all font-black text-xs uppercase cursor-pointer"
+                <span
+                  className={`text-[10px] font-black px-1.5 py-0.5 border border-black ${
+                    isActive ? "bg-black text-[#FACC15]" : "bg-white text-black"
+                  }`}
                 >
-                  + جولة
-                </button>
-              </div>
+                  {dayGames.length}
+                </span>
+              </button>
+            );
+          })}
 
-              <div className="flex flex-col gap-3 max-h-[40vh] overflow-y-auto pr-1">
-                {games.map((game) => (
+          {/* All Days Tab */}
+          <button
+            type="button"
+            onClick={() => setSelectedDay("all")}
+            className={`border-[3px] border-black px-4 py-2.5 font-black text-sm uppercase transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+              selectedDay === "all"
+                ? "bg-black text-[#A3E635] shadow-[4px_4px_0px_#000000] -translate-y-0.5"
+                : "bg-white text-black shadow-[2px_2px_0px_#000000] hover:bg-[#FDF8F0]"
+            }`}
+          >
+            {t("gameAllDays")}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Main Arena Content: Sidebar & Team Cards ── */}
+      <div className="w-full max-w-[95rem] mx-auto flex flex-col lg:flex-row gap-6 pb-12">
+        {/* ── Admin & Rounds Panel (Sidebar) ── */}
+        <Motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="w-full lg:w-[380px] bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-4 sm:p-6 flex flex-col shrink-0 gap-5"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between border-b-[3px] border-black pb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-[#FB923C] border-2 border-black shadow-[2px_2px_0px_#000000] flex items-center justify-center">
+                <Settings className="w-4 h-4 stroke-[2.5] text-black" />
+              </div>
+              <h3 className="font-black text-base text-black uppercase">
+                {t("gameManage")}
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowMembers(!showMembers)}
+              className="bg-white border-2 border-black px-2.5 py-1 text-xs font-black shadow-[2px_2px_0px_#000000] hover:shadow-none transition-all cursor-pointer"
+            >
+              {showMembers ? t("gameHide") : t("gameShow")} {t("gameMembers")}
+            </button>
+          </div>
+
+          {/* Current Day Filter Info */}
+          <div className="bg-[#FEF08A] border-2 border-black p-3 flex items-center justify-between">
+            <span className="font-black text-xs uppercase">
+              {selectedDay === "all"
+                ? t("gameAllDays")
+                : `${t("gameDayPrefix")} ${selectedDay}`}
+            </span>
+            <span className="text-xs font-bold text-black/70">
+              {displayedGames.length} {t("gameRoundsPoints")}
+            </span>
+          </div>
+
+          {/* Games and Scores Input list for Current Day */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black uppercase tracking-widest text-black">
+                {t("gameRoundsPoints")}
+              </span>
+              <button
+                type="button"
+                onClick={() => openGameModalForDay(selectedDay === "all" ? 1 : selectedDay)}
+                className="bg-[#38BDF8] text-black border-2 border-black px-2.5 py-1 text-xs font-black shadow-[2px_2px_0px_#000000] hover:shadow-none transition-all cursor-pointer"
+              >
+                + {t("gameNewRound")}
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3 max-h-[45vh] overflow-y-auto pr-1">
+              {displayedGames.length === 0 ? (
+                <div className="bg-[#FDF8F0] border-2 border-dashed border-black/30 p-6 text-center font-bold text-xs text-black/50">
+                  {t("gameNoRoundsYet")}
+                </div>
+              ) : (
+                displayedGames.map((game) => (
                   <div
                     key={game.id}
-                    className="bg-[#FDF8F0] border-2 border-black p-3 group/game"
+                    className="bg-[#FDF8F0] border-2 border-black p-3 flex flex-col gap-2 group/game"
                   >
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-black text-black">{game.name}</span>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="bg-[#FACC15] border border-black text-[10px] font-black px-1.5 py-0.2 shrink-0">
+                          {t("gameDayPrefix")} {game.day || 1}
+                        </span>
+                        <span className="text-xs font-black text-black truncate">
+                          {game.name}
+                        </span>
+                      </div>
                       <button
+                        type="button"
                         onClick={() => handleRemoveGame(game.id)}
-                        className="text-black/40 hover:text-[#EF4444] transition-colors p-1 cursor-pointer"
+                        className="text-black/40 hover:text-[#EF4444] transition-colors p-1 cursor-pointer shrink-0"
+                        title={t("gameDeleteRound")}
                       >
-                        <Minus className="w-3 h-3 stroke-[3]" />
+                        <Minus className="w-3.5 h-3.5 stroke-[3]" />
                       </button>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {teams.map((team) => (
-                        <div key={team.id} className="flex flex-col gap-1">
-                          <span className="text-[9px] font-black text-black/60 uppercase truncate text-right">
-                            {team.name}
+
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      {teams.map((tm) => (
+                        <div key={tm.id} className="flex flex-col gap-0.5">
+                          <span
+                            className="text-[10px] font-black uppercase truncate text-right px-1"
+                            style={{ color: "#000000" }}
+                          >
+                            ● {tm.name}
                           </span>
                           <input
                             type="text"
-                            value={game.scores[team.id] || ""}
+                            value={game.scores[tm.id] || ""}
                             onChange={(e) =>
-                              handleUpdateScore(game.id, team.id, e.target.value)
+                              handleUpdateScore(game.id, tm.id, e.target.value)
                             }
                             placeholder="0"
-                            className="h-9 bg-white border-2 border-black text-black font-black text-sm text-center outline-none focus:bg-[#FACC15] transition-colors px-1"
+                            className="h-8 bg-white border-2 border-black text-black font-black text-xs text-center outline-none focus:bg-[#FEF08A] transition-colors"
                           />
                         </div>
                       ))}
                     </div>
                   </div>
-                ))}
-              </div>
+                ))
+              )}
             </div>
+          </div>
 
-            {/* Teams & Members */}
-            <div className="flex flex-col gap-3 border-t-[3px] border-black pt-4">
-              <div className="flex items-center justify-between">
-                <span className="font-black text-sm text-black flex items-center gap-2">
-                  <Users className="w-4 h-4 stroke-[2.5]" />
-                  الفرق والأعضاء
-                </span>
-                <button
-                  onClick={() => setShowMembers(!showMembers)}
-                  className="bg-white border-2 border-black px-3 py-1 shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all font-black text-xs uppercase cursor-pointer"
-                >
-                  {showMembers ? "إخفاء" : "عرض"}
-                </button>
-              </div>
-
-              <AnimatePresence>
-                {showMembers && (
-                  <Motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="overflow-y-auto flex flex-col gap-3 max-h-[35vh]"
+          {/* Quick Standings Leaderboard in Sidebar */}
+          <div className="border-t-[3px] border-black pt-4 flex flex-col gap-2">
+            <span className="text-xs font-black uppercase tracking-widest text-black">
+              🏆 {t("gameCurrentTotal")}
+            </span>
+            <div className="flex flex-col gap-1.5">
+              {[...teams]
+                .map((tm) => {
+                  const score = games.reduce(
+                    (acc, g) => acc + (Number(g.scores[tm.id]) || 0),
+                    0
+                  );
+                  return { ...tm, score };
+                })
+                .sort((a, b) => b.score - a.score)
+                .map((tm, idx) => (
+                  <div
+                    key={tm.id}
+                    className="flex items-center justify-between bg-white border-2 border-black px-3 py-1.5 text-xs font-black"
                   >
-                    {teams.map((team) => (
-                      <div
-                        key={team.id}
-                        className={`border-[3px] border-black p-3 flex flex-col gap-3 ${team.theme.bg}`}
-                      >
-                        <div className="flex justify-between items-center gap-2">
-                          <span className="font-black text-sm text-black leading-snug flex-1 text-right">
-                            {team.name}
-                          </span>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => openRenameTeamModal(team.id)}
-                              className="w-8 h-8 bg-white border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all flex items-center justify-center cursor-pointer"
-                              title="تغيير الاسم"
-                            >
-                              <Pencil className="w-3.5 h-3.5 stroke-[2.5] text-black" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setAddingToTeam(
-                                  addingToTeam === team.id ? null : team.id
-                                );
-                                setNewMemberName("");
-                              }}
-                              className="w-8 h-8 bg-white border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all flex items-center justify-center cursor-pointer"
-                            >
-                              {addingToTeam === team.id ? (
-                                <Minus className="w-3.5 h-3.5 stroke-[3] text-black" />
-                              ) : (
-                                <Plus className="w-3.5 h-3.5 stroke-[3] text-black" />
-                              )}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (window.confirm(`حذف ${team.name}؟`))
-                                  handleRemoveTeam(team.id);
-                              }}
-                              className="w-8 h-8 bg-[#EF4444] border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all flex items-center justify-center cursor-pointer"
-                            >
-                              <X className="w-3.5 h-3.5 stroke-[3] text-white" />
-                            </button>
-                          </div>
-                        </div>
-
-                        <AnimatePresence>
-                          {addingToTeam === team.id && (
-                            <Motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: "auto" }}
-                              className="relative"
-                            >
-                              <Search className="absolute right-3 top-2.5 w-4 h-4 text-black/40" />
-                              <input
-                                type="text"
-                                value={newMemberName}
-                                onChange={(e) => setNewMemberName(e.target.value)}
-                                onKeyDown={(e) =>
-                                  e.key === "Enter" && handleAddMember(team.id)
-                                }
-                                placeholder="ابحث..."
-                                className="w-full h-10 bg-white border-2 border-black text-black font-bold text-sm pr-9 pl-3 outline-none"
-                                autoFocus
-                              />
-                              {searchResults.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 z-[100] bg-white border-2 border-black shadow-[3px_3px_0px_#000000]">
-                                  {searchResults.map((s) => (
-                                    <button
-                                      key={s.id}
-                                      onClick={() =>
-                                        handleAddMember(team.id, s.name)
-                                      }
-                                      className="w-full text-right p-2.5 hover:bg-[#FACC15] flex items-center justify-between border-b-2 border-black last:border-0 text-xs font-bold text-black cursor-pointer"
-                                    >
-                                      <span>{s.name}</span>
-                                      <span className="opacity-40 font-mono">
-                                        {s.id}
-                                      </span>
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </Motion.div>
-                          )}
-                        </AnimatePresence>
-
-                        <div className="flex flex-col gap-1.5">
-                          {team.members.map((m, i) => (
-                            <div
-                              key={i}
-                              className="group/memb text-xs font-bold text-black flex items-center justify-between bg-white/70 border border-black px-3 py-2"
-                            >
-                              <span className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-black border border-black" />
-                                {m}
-                              </span>
-                              <button
-                                onClick={() => handleRemoveMember(team.id, i)}
-                                className="opacity-100 sm:opacity-0 sm:group-hover/memb:opacity-100 text-[#EF4444] font-black text-base leading-none cursor-pointer"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </Motion.div>
-                )}
-              </AnimatePresence>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        style={{ backgroundColor: tm.color }}
+                        className="w-3.5 h-3.5 border border-black shrink-0 inline-block"
+                      />
+                      <span className="truncate">{tm.name}</span>
+                    </div>
+                    <span className="font-mono text-sm">{tm.score}</span>
+                  </div>
+                ))}
             </div>
-          </Motion.div>
+          </div>
+        </Motion.div>
 
-          {/* ── Teams Arena — Score Cards ── */}
+        {/* ── Feature 1: Team Cards with Name, Color, and Assigned Children ── */}
+        <div className="flex-1 flex flex-col gap-6">
           <div
-            className={`flex-1 grid gap-4 sm:gap-6 h-fit ${
+            className={`grid gap-5 sm:gap-6 ${
               teams.length === 1
                 ? "grid-cols-1"
                 : teams.length === 2
@@ -464,98 +657,93 @@ export function SummerGameArena() {
                 key={team.id}
                 team={team}
                 games={games}
-                handleRemoveTeam={handleRemoveTeam}
-                onRenameTeam={openRenameTeamModal}
-                delay={idx * 0.08}
+                selectedDay={selectedDay}
+                studentsMap={studentsMap}
+                showMembers={showMembers}
+                delay={idx * 0.06}
+                lang={lang}
+                t={t}
               />
             ))}
           </div>
-        </div>
 
-        {/* Results Button */}
-        <div className="w-full flex justify-center py-8 px-4">
-          <Motion.button
-            onClick={() => setShowResults(true)}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-[#FACC15] text-black border-[3px] border-black shadow-[6px_6px_0px_#000000] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] active:shadow-none transition-all flex items-center gap-4 px-10 py-5 font-black text-2xl sm:text-3xl uppercase cursor-pointer"
-          >
-            <Trophy className="w-8 h-8 stroke-[2.5]" />
-            <span>{t("gameResultsBtn", "النتيجة")}</span>
-          </Motion.button>
+          {/* Big Results Reveal Button */}
+          <div className="w-full flex justify-center pt-4">
+            <Motion.button
+              type="button"
+              onClick={() => setShowResults(true)}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-[#FACC15] text-black border-[3px] border-black shadow-[6px_6px_0px_#000000] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] active:scale-95 transition-all flex items-center gap-4 px-10 py-5 font-black text-xl sm:text-2xl uppercase cursor-pointer"
+            >
+              <Trophy className="w-7 h-7 stroke-[2.5]" />
+              <span>{t("gameArenaResults")}</span>
+            </Motion.button>
+          </div>
         </div>
       </div>
 
-      {/* ── Name / Game Modal ── */}
+      {/* ── Add Game Modal ── */}
       <AnimatePresence>
-        {nameModal && (
+        {nameModal === "game" && (
           <Motion.div
             role="dialog"
             aria-modal="true"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
             className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60"
-            onClick={(e) => { if (e.target === e.currentTarget) closeNameModal(); }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) closeNameModal();
+            }}
           >
             <Motion.div
-              initial={{ scale: 0.96, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.96, opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              exit={{ scale: 0.95, opacity: 0 }}
               className="w-full max-w-md bg-white border-[3px] border-black shadow-[8px_8px_0px_#000000] p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Modal Header */}
-              <div className="flex items-start justify-between gap-4 mb-5">
-                <h4 className="text-lg font-black text-black uppercase tracking-tight">
-                  {nameModal === "renameTeam"
-                    ? "تعديل اسم الفريق"
-                    : nameModal === "team"
-                    ? "فريق جديد"
-                    : "جولة جديدة"}
+              <div className="flex items-center justify-between border-b-2 border-black pb-3 mb-4">
+                <h4 className="text-lg font-black uppercase text-black">
+                  {t("gameAddRoundModal")}
                 </h4>
                 <button
                   type="button"
                   onClick={closeNameModal}
-                  className="bg-white border-2 border-black p-1.5 shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
+                  className="bg-white border-2 border-black p-1 shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
                 >
-                  <X className="w-4 h-4 stroke-[3] text-black" />
+                  <X className="w-4 h-4 stroke-[3]" />
                 </button>
               </div>
 
-              {/* Color Picker (rename only) */}
-              {nameModal === "renameTeam" && (
-                <div className="mb-5">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-black/60 mb-2">
-                    لون الفريق
-                  </label>
-                  <div className="flex gap-2 flex-wrap">
-                    {GAME_TEAM_COLORS.map((c) => (
-                      <button
-                        key={c.name}
-                        type="button"
-                        onClick={() => setModalThemeInput(c)}
-                        className={`w-10 h-10 border-[3px] border-black transition-all cursor-pointer ${c.bg} ${
-                          modalThemeInput?.name === c.name
-                            ? "shadow-[3px_3px_0px_#000000] scale-110"
-                            : "opacity-50 hover:opacity-100"
-                        }`}
-                      />
-                    ))}
-                  </div>
+              {/* Day selection */}
+              <div className="mb-4">
+                <label className="block text-xs font-black uppercase mb-1">
+                  📅 {t("gameDayPrefix")}
+                </label>
+                <div className="flex gap-2 flex-wrap">
+                  {daysList.map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setModalDayInput(d)}
+                      className={`px-3 py-1.5 border-2 border-black font-black text-xs uppercase cursor-pointer ${
+                        modalDayInput === d
+                          ? "bg-[#FACC15] shadow-[2px_2px_0px_#000000]"
+                          : "bg-white"
+                      }`}
+                    >
+                      {t("gameDayPrefix")} {d}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
 
-              {/* Name Input */}
-              <label className="block text-[10px] font-black uppercase tracking-widest text-black/60 mb-2">
-                {nameModal === "renameTeam"
-                  ? "الاسم الجديد"
-                  : nameModal === "team"
-                  ? "اسم الفريق"
-                  : "اسم الجولة"}
+              {/* Round Name */}
+              <label className="block text-xs font-black uppercase mb-1">
+                {t("gameRoundNameLabel")}
               </label>
               <input
                 type="text"
@@ -564,174 +752,211 @@ export function SummerGameArena() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    if (nameModal === "renameTeam") confirmRenameTeam();
-                    else if (nameModal === "team") confirmAddTeam();
-                    else confirmAddGame();
+                    confirmAddGame();
                   }
                 }}
-                placeholder={
-                  nameModal === "renameTeam"
-                    ? "اسم الفريق..."
-                    : nameModal === "team"
-                    ? "اكتب اسم الفريق..."
-                    : "اكتب اسم الجولة..."
-                }
+                placeholder={t("gameTypeRoundName")}
                 className="w-full h-12 bg-white border-[3px] border-black text-black font-black text-base px-4 outline-none focus:bg-[#FEF08A] transition-colors mb-5"
                 autoFocus
               />
 
-              {/* Action Buttons */}
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={closeNameModal}
-                  className="flex-1 h-12 bg-white border-[3px] border-black shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all font-black text-sm uppercase text-black cursor-pointer"
+                  className="flex-1 h-11 bg-white border-[3px] border-black font-black text-sm uppercase shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
                 >
-                  إلغاء
+                  {t("cancel")}
                 </button>
                 <button
                   type="button"
-                  onClick={
-                    nameModal === "renameTeam"
-                      ? confirmRenameTeam
-                      : nameModal === "team"
-                      ? confirmAddTeam
-                      : confirmAddGame
-                  }
-                  className="flex-1 h-12 bg-[#A3E635] border-[3px] border-black shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all font-black text-sm uppercase text-black cursor-pointer"
+                  onClick={confirmAddGame}
+                  className="flex-1 h-11 bg-[#A3E635] border-[3px] border-black font-black text-sm uppercase shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
                 >
-                  {nameModal === "renameTeam"
-                    ? "حفظ"
-                    : nameModal === "team"
-                    ? "إضافة الفريق"
-                    : "إضافة الجولة"}
+                  {t("gameSaveRound")}
                 </button>
               </div>
             </Motion.div>
           </Motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }
 
-// ─── Team Card ────────────────────────────────────────────────────────────────
-const TeamCard = ({ team, games, handleRemoveTeam, onRenameTeam, delay }) => {
-  const totalScore = games.reduce(
-    (sum, g) => sum + (Number(g.scores[team.id]) || 0),
-    0
-  );
+// ─── Team Card with Name, Color, and Children Roster ─────────────────────────
+function TeamCard({ team, games, selectedDay, studentsMap, showMembers, delay, lang, t }) {
+  // Day Score
+  const dayGames = useMemo(() => {
+    if (selectedDay === "all") return games;
+    return games.filter((g) => Number(g.day) === Number(selectedDay));
+  }, [games, selectedDay]);
+
+  const dayScore = useMemo(() => {
+    return dayGames.reduce((acc, g) => acc + (Number(g.scores[team.id]) || 0), 0);
+  }, [dayGames, team.id]);
+
+  // Overall Total Score
+  const totalScore = useMemo(() => {
+    return games.reduce((acc, g) => acc + (Number(g.scores[team.id]) || 0), 0);
+  }, [games, team.id]);
+
+  const members = team.members || [];
 
   return (
     <Motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 25 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className="flex flex-col relative group min-h-[400px] sm:min-h-[480px]"
+      className="flex flex-col relative group h-full"
     >
-      <div
-        className={`${team.theme.bg} border-[3px] border-black shadow-[6px_6px_0px_#000000] p-4 sm:p-6 flex-1 flex flex-col relative h-full`}
-      >
-        {/* Top Action Buttons */}
-        <div className="flex justify-between mb-4">
-          <button
-            type="button"
-            onClick={() => onRenameTeam?.(team.id)}
-            className="h-9 w-9 bg-white border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all flex items-center justify-center cursor-pointer opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-            title="تغيير اسم الفريق"
-          >
-            <Pencil className="w-4 h-4 stroke-[2.5] text-black" />
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (window.confirm(`حذف ${team.name}؟`)) handleRemoveTeam(team.id);
-            }}
-            className="h-9 w-9 bg-[#EF4444] border-2 border-black shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all flex items-center justify-center cursor-pointer opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-            title="حذف الفريق"
-          >
-            <X className="w-4 h-4 stroke-[3] text-white" />
-          </button>
+      <div className="bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] flex-1 flex flex-col overflow-hidden">
+        {/* Team Color Top Header */}
+        <div
+          style={{ backgroundColor: team.color }}
+          className="border-b-[3px] border-black p-4 sm:p-5 flex items-center justify-between"
+        >
+          <div className="min-w-0 pr-1">
+            <h2 className="text-2xl sm:text-3xl font-black text-black tracking-tight uppercase truncate">
+              {team.name}
+            </h2>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="bg-black text-white text-[11px] font-black px-2 py-0.5 border border-black uppercase tracking-wide">
+                {members.length} {t("clubTeamMembers")}
+              </span>
+            </div>
+          </div>
+
+          {/* Color swatch dot */}
+          <div className="w-8 h-8 rounded-none border-[3px] border-black bg-white shadow-[2px_2px_0px_#000000] flex items-center justify-center font-black text-xs">
+            ⚽
+          </div>
         </div>
 
-        {/* Team Name */}
-        <div className="text-center mb-6">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-black tracking-tight uppercase break-words">
-            {team.name}
-          </h2>
-          <div className="w-16 h-1 bg-black mx-auto mt-2" />
-        </div>
+        {/* Score Display Area */}
+        <div className="p-4 bg-[#FDF8F0] border-b-[3px] border-black grid grid-cols-2 gap-3 text-center">
+          {/* Day Score */}
+          <div className="bg-white border-2 border-black p-2.5 shadow-[2px_2px_0px_#000000]">
+            <span className="text-2xl sm:text-3xl font-black text-black tabular-nums block leading-none">
+              {dayScore}
+            </span>
+            <span className="text-[10px] font-black uppercase text-black/60 tracking-wider mt-1 block">
+              {selectedDay === "all" ? t("gameAllDays") : `${t("gameDayPrefix")} ${selectedDay}`}
+            </span>
+          </div>
 
-        {/* Total Score Badge */}
-        <div className="flex justify-center mb-6">
-          <div className="bg-black text-white border-[3px] border-black shadow-[4px_4px_0px_rgba(0,0,0,0.3)] px-6 py-3 text-center">
-            <span className="text-4xl sm:text-5xl font-black tabular-nums block">
+          {/* Total Overall Tournament Score */}
+          <div className="bg-black text-white border-2 border-black p-2.5 shadow-[2px_2px_0px_#000000]">
+            <span className="text-2xl sm:text-3xl font-black text-[#A3E635] tabular-nums block leading-none">
               {totalScore}
             </span>
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">
-              إجمالي النقاط
+            <span className="text-[10px] font-black uppercase text-white/70 tracking-wider mt-1 block">
+              {t("gameOverallScore")}
             </span>
           </div>
         </div>
 
-        {/* Per-round scores */}
-        <div className="flex-1 flex flex-col gap-3 overflow-y-auto pb-2">
-          {games.map((g, i) => (
-            <Motion.div
-              key={g.id}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.04 }}
-              className="bg-white border-2 border-black p-3 flex items-center justify-between"
-            >
-              <div className="flex flex-col gap-0.5 min-w-0">
-                <span className="text-xs font-black text-black uppercase tracking-wider truncate">
-                  {g.name}
-                </span>
-                <span className="text-[10px] font-bold text-black/50 flex items-center gap-1">
-                  <Trophy className="w-2.5 h-2.5" />
-                  نتيجة الجولة
-                </span>
-              </div>
-              <div className="shrink-0">
-                <span className="text-3xl sm:text-4xl font-black text-black tabular-nums">
-                  {g.scores[team.id] || "0"}
-                </span>
-              </div>
-            </Motion.div>
-          ))}
+        {/* ── Feature 1: List of Children Assigned to this Team ── */}
+        <div className="p-4 flex-1 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="font-black text-xs uppercase tracking-wide text-black flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5 stroke-[2.5]" />
+              {t("gameAssignedChildren")} ({members.length})
+            </span>
+          </div>
 
-          {games.length === 0 && (
-            <div className="flex-1 flex flex-col items-center justify-center opacity-30 gap-3 py-8">
-              <Trophy className="w-10 h-10" />
-              <span className="text-xs font-black uppercase tracking-widest">
-                لا توجد جولات
-              </span>
+          {/* Members list */}
+          {members.length === 0 ? (
+            <div className="bg-white border-2 border-dashed border-black/30 p-4 text-center text-xs font-bold text-black/50">
+              {t("gameNoChildrenInTeam")}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1">
+              {members.map((qrId) => {
+                const student = studentsMap[qrId];
+                const displayName = student?.name || `#${qrId}`;
+                const initial = (displayName || "M")[0]?.toUpperCase();
+                return (
+                  <div
+                    key={qrId}
+                    className="flex items-center justify-between bg-white border-2 border-black px-3 py-2 shadow-[2px_2px_0px_#000000]"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span
+                        style={{ backgroundColor: team.color }}
+                        className="w-7 h-7 border-2 border-black font-black text-xs flex items-center justify-center shrink-0 text-black"
+                      >
+                        {initial}
+                      </span>
+                      <span className="font-black text-xs text-black truncate">
+                        {displayName}
+                      </span>
+                    </div>
+
+                    <span className="font-mono text-[10px] font-bold text-black/40 shrink-0">
+                      #{qrId}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
+
+          {/* Active Day Rounds / Scores list */}
+          <div className="mt-2 pt-3 border-t-2 border-black/10 flex flex-col gap-2">
+            <span className="text-[11px] font-black uppercase text-black/60">
+              {lang === "ar"
+                ? `جولات ${selectedDay === "all" ? "جميع الأيام" : `اليوم ${selectedDay}`}`
+                : `Rounds for ${selectedDay === "all" ? "All Days" : `Day ${selectedDay}`}`}
+            </span>
+            <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto pr-1">
+              {dayGames.map((g) => (
+                <div
+                  key={g.id}
+                  className="bg-[#FDF8F0] border border-black px-2.5 py-1.5 flex items-center justify-between text-xs"
+                >
+                  <span className="font-bold text-black/80 truncate pr-2">
+                    {g.name}
+                  </span>
+                  <span className="font-black text-sm tabular-nums text-black shrink-0">
+                    {g.scores[team.id] || "0"}
+                  </span>
+                </div>
+              ))}
+              {dayGames.length === 0 && (
+                <span className="text-[11px] font-bold text-black/40 italic">
+                  {t("gameNoRoundsYet")}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </Motion.div>
   );
-};
+}
 
-// ─── Results View ─────────────────────────────────────────────────────────────
-const ResultsView = ({ teams, games, onBack }) => {
+// ─── Results / Celebration View ───────────────────────────────────────────────
+function ResultsView({ teams, games, onBack, lang, t }) {
   const [step, setStep] = useState(0);
 
   const results = useMemo(() => {
     return teams
-      .map((t) => {
-        let score = 0;
-        games.forEach((g) => { score += Number(g.scores[t.id]) || 0; });
-        return { ...t, score };
+      .map((tm) => {
+        const score = games.reduce(
+          (acc, g) => acc + (Number(g.scores[tm.id]) || 0),
+          0
+        );
+        return { ...tm, score };
       })
       .sort((a, b) => b.score - a.score);
   }, [teams, games]);
 
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.key === "Enter") setStep((prev) => Math.min(prev + 1, results.length));
+      if (e.key === "Enter") {
+        setStep((prev) => Math.min(prev + 1, results.length));
+      }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
@@ -743,31 +968,31 @@ const ResultsView = ({ teams, games, onBack }) => {
   return (
     <div
       className="min-h-screen bg-[#FDF8F0] flex flex-col items-center justify-center p-4 relative"
-      dir="rtl"
+      dir={lang === "ar" ? "rtl" : "ltr"}
     >
       {/* Back Button */}
       <button
         onClick={onBack}
-        className="absolute top-4 right-4 sm:top-6 sm:right-6 bg-white text-black border-[3px] border-black px-4 py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none font-black text-sm uppercase transition-all cursor-pointer"
+        className="absolute top-4 right-4 sm:top-6 sm:right-6 bg-white text-black border-[3px] border-black px-4 py-2 shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:scale-95 font-black text-sm uppercase transition-all cursor-pointer"
       >
-        ← رجوع
+        ← {t("summerBackClub")}
       </button>
 
       <AnimatePresence mode="wait">
-        {!isFinalStep ? (
+        {!isFinalStep && currentTeam ? (
           <Motion.div
             key={`reveal-${step}`}
             initial={{ opacity: 0, scale: 0.85, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 1.1, y: -40 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col items-center gap-8 text-center w-full max-w-2xl px-4"
+            transition={{ duration: 0.45 }}
+            className="flex flex-col items-center gap-6 text-center w-full max-w-2xl px-4"
           >
             <div className="space-y-2">
-              <span className="bg-black text-white font-black text-xs uppercase tracking-widest px-3 py-1 border-2 border-black inline-block">
-                TEAM RESULT
+              <span className="bg-black text-[#A3E635] font-black text-xs uppercase tracking-widest px-3 py-1 border-2 border-black inline-block">
+                {t("gameTeamResultTag")}
               </span>
-              <h2 className="text-4xl sm:text-6xl md:text-8xl font-black text-black tracking-tight break-words">
+              <h2 className="text-4xl sm:text-6xl md:text-7xl font-black text-black tracking-tight break-words">
                 {currentTeam.name}
               </h2>
             </div>
@@ -775,101 +1000,118 @@ const ResultsView = ({ teams, games, onBack }) => {
             {/* Score Box */}
             <div
               onClick={() => setStep((prev) => Math.min(prev + 1, results.length))}
-              className={`${currentTeam.theme.bg} border-[3px] border-black shadow-[8px_8px_0px_#000000] hover:shadow-none hover:translate-x-[8px] hover:translate-y-[8px] transition-all cursor-pointer px-12 py-8 text-center`}
+              style={{ backgroundColor: currentTeam.color }}
+              className="border-[4px] border-black shadow-[8px_8px_0px_#000000] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] transition-all cursor-pointer px-12 py-8 text-center"
             >
               <Motion.span
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.2 }}
                 className="text-7xl sm:text-9xl md:text-[10rem] font-black tabular-nums text-black block leading-none"
               >
                 {currentTeam.score}
               </Motion.span>
-              <span className="text-sm font-black uppercase tracking-widest text-black/60">
-                Total Points
+              <span className="text-sm font-black uppercase tracking-widest text-black/80 mt-2 block">
+                {t("gameTotalPointsTag")}
               </span>
             </div>
 
-            <Motion.button
+            <button
               onClick={() => setStep((prev) => Math.min(prev + 1, results.length))}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
               className="bg-white text-black border-[3px] border-black shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all flex items-center gap-3 px-6 py-3 font-black text-sm uppercase cursor-pointer"
             >
-              <span>اضغط هنا أو</span>
+              <span>{t("gamePressText")}</span>
               <div className="bg-black text-white font-mono text-xs px-2 py-1 border border-black">
                 Enter
               </div>
-              <span>للفريق التالي ⬅️</span>
-            </Motion.button>
+              <span>{t("gamePressEnterOrClick")}</span>
+            </button>
           </Motion.div>
         ) : (
           <Motion.div
             key="final-list"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="w-full max-w-2xl flex flex-col items-center gap-8 py-8 px-4"
+            className="w-full max-w-2xl flex flex-col items-center gap-6 py-8 px-4"
           >
-            <div className="text-center">
-              <Motion.h1
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="text-3xl sm:text-5xl font-black text-black tracking-tight"
-              >
-                الترتيب النهائي
-              </Motion.h1>
-              <span className="text-xs text-black/40 uppercase tracking-widest font-black">
-                CONSOLIDATED LEADERBOARD
+            <div className="text-center space-y-1">
+              <span className="text-3xl">👑</span>
+              <h1 className="text-3xl sm:text-5xl font-black text-black tracking-tight">
+                {t("gameFinalRankings")}
+              </h1>
+              <span className="text-xs text-black/50 uppercase tracking-widest font-black block">
+                {t("gameFinalRankingsTag")}
               </span>
             </div>
 
-            <div className="w-full flex flex-col gap-4">
-              {results.map((team, index) => {
+            <div className="w-full flex flex-col gap-3">
+              {results.map((tm, index) => {
                 const isWinner = index === 0;
-                const medalBg = index === 0 ? "bg-[#FACC15]" : index === 1 ? "bg-[#E5E7EB]" : index === 2 ? "bg-[#FB923C]" : "bg-white";
+                const medalBg =
+                  index === 0
+                    ? "bg-[#FACC15]"
+                    : index === 1
+                    ? "bg-[#E5E7EB]"
+                    : index === 2
+                    ? "bg-[#FB923C]"
+                    : "bg-white";
+
                 return (
                   <Motion.div
-                    initial={{ opacity: 0, x: 40 }}
+                    key={tm.id}
+                    initial={{ opacity: 0, x: 30 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    key={team.id}
-                    className={`flex items-center justify-between p-4 sm:p-6 border-[3px] border-black shadow-[4px_4px_0px_#000000] gap-4 ${
-                      isWinner ? "bg-[#FACC15]" : "bg-white"
+                    transition={{ delay: index * 0.08 }}
+                    className={`flex items-center justify-between p-4 sm:p-5 border-[3px] border-black shadow-[4px_4px_0px_#000000] gap-4 ${
+                      isWinner ? "bg-[#FEF08A]" : "bg-white"
                     }`}
                   >
-                    <div className="flex items-center gap-4 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0">
                       <div
                         className={`w-10 h-10 sm:w-12 sm:h-12 ${medalBg} border-[3px] border-black shadow-[2px_2px_0px_#000000] flex items-center justify-center font-black text-lg sm:text-xl text-black shrink-0`}
                       >
                         {index === 0 ? (
-                          <Crown className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
+                          <Crown className="w-6 h-6 stroke-[2.5]" />
                         ) : index === 1 ? (
-                          <Medal className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
+                          <Medal className="w-6 h-6 stroke-[2.5]" />
                         ) : (
                           index + 1
                         )}
                       </div>
-                      <span className="text-xl sm:text-2xl md:text-3xl font-black text-black tracking-tight truncate">
-                        {team.name}
-                      </span>
+
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          style={{ backgroundColor: tm.color }}
+                          className="w-4 h-4 border-2 border-black shrink-0 inline-block"
+                        />
+                        <span className="text-xl sm:text-2xl font-black text-black tracking-tight truncate">
+                          {tm.name}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="shrink-0 text-right">
-                      <span className="text-3xl sm:text-4xl md:text-5xl font-black text-black tabular-nums block">
-                        {team.score}
+                      <span className="text-3xl sm:text-4xl font-black text-black tabular-nums block leading-none">
+                        {tm.score}
                       </span>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-black/40">
-                        Points
+                      <span className="text-[10px] font-black uppercase tracking-widest text-black/50">
+                        {t("gamePointsUnit")}
                       </span>
                     </div>
                   </Motion.div>
                 );
               })}
             </div>
+
+            <button
+              onClick={onBack}
+              className="bg-[#A3E635] text-black border-[3px] border-black px-8 py-3.5 font-black text-base uppercase shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all cursor-pointer mt-4"
+            >
+              {t("gameBackToArena")}
+            </button>
           </Motion.div>
         )}
       </AnimatePresence>
     </div>
   );
-};
+}

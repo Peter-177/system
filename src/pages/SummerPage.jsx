@@ -512,7 +512,7 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
               exit={{ opacity: 0, scale: 0.98 }}
               className="w-full"
             >
-              <SummerGameArena />
+              <SummerGameArena onGoClubBuilder={() => setInternalView("club")} />
             </Motion.div>
           )}
 

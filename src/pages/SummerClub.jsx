@@ -37,10 +37,13 @@ export function SummerClub() {
   const [club, setClub] = useState(() => summerClubDB.get(CLUB_ID));
   const [step, setStep] = useState(() => (summerClubDB.get(CLUB_ID) ? 4 : 1));
   const [name, setName] = useState(() => summerClubDB.get(CLUB_ID)?.name || "");
+  const [days, setDays] = useState(() => Number(summerClubDB.get(CLUB_ID)?.days) || 5);
   const [teamName, setTeamName] = useState("");
   const [teamColor, setTeamColor] = useState(CLUB_TEAM_COLORS[0]);
   const [search, setSearch] = useState("");
   const [confirmReset, setConfirmReset] = useState(false);
+  const [editingDays, setEditingDays] = useState(false);
+  const [tempDays, setTempDays] = useState(() => Number(summerClubDB.get(CLUB_ID)?.days) || 5);
 
   const BackIcon = lang === "ar" ? ArrowRight : ArrowLeft;
   const ChevronIcon = lang === "ar" ? ChevronLeft : ChevronRight;
@@ -85,9 +88,23 @@ export function SummerClub() {
   const handleCreateClub = () => {
     const trimmed = name.trim();
     if (!trimmed) return toast.show(t("clubEmptyName"));
-    persist({ name: trimmed, createdAt: club?.createdAt || Date.now(), teams: teams });
+    const validDays = Math.max(1, Number(days) || 5);
+    persist({
+      name: trimmed,
+      days: validDays,
+      createdAt: club?.createdAt || Date.now(),
+      teams: teams,
+    });
     toast.show(t("clubCreated"));
     setStep(2);
+  };
+
+  const handleUpdateDays = () => {
+    const validDays = Math.max(1, Number(tempDays) || 5);
+    persist({ ...club, days: validDays });
+    setDays(validDays);
+    setEditingDays(false);
+    toast.show(t("clubSaved"));
   };
 
   const handleAddTeam = () => {
@@ -129,6 +146,8 @@ export function SummerClub() {
     summerClubDB.remove(CLUB_ID);
     setClub(null);
     setName("");
+    setDays(5);
+    setTempDays(5);
     setConfirmReset(false);
     setStep(1);
   };
@@ -207,9 +226,66 @@ export function SummerClub() {
               />
             </label>
 
+            {/* ── Number of Days (عدد الأيام) ── */}
+            <div className="flex flex-col gap-2 pt-2 border-t-2 border-black/10">
+              <div className="flex items-center justify-between">
+                <span className="font-black text-sm uppercase flex items-center gap-2">
+                  📅 {t("clubDaysLabel")}
+                </span>
+                <span className="bg-[#FEF08A] border-2 border-black px-2 py-0.5 text-xs font-black">
+                  {days} {t("clubDaysUnit")}
+                </span>
+              </div>
+              <p className="text-xs font-bold text-black/60">{t("clubDaysHint")}</p>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDays((d) => Math.max(1, (Number(d) || 1) - 1))}
+                  className="w-12 h-12 bg-white border-[3px] border-black font-black text-xl shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={days}
+                  onChange={(e) => setDays(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-28 text-center bg-white border-[3px] border-black px-3 py-2.5 font-black text-xl outline-none focus:shadow-[4px_4px_0px_#000000]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setDays((d) => Math.min(60, (Number(d) || 1) + 1))}
+                  className="w-12 h-12 bg-white border-[3px] border-black font-black text-xl shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
+                >
+                  +
+                </button>
+                <span className="font-black text-sm text-black/70">{t("clubDaysUnit")}</span>
+              </div>
+
+              {/* Quick preset buttons */}
+              <div className="flex gap-2 flex-wrap mt-2">
+                {[3, 5, 7, 10, 14, 20].map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setDays(d)}
+                    className={`px-3 py-1.5 border-2 border-black font-black text-xs uppercase cursor-pointer transition-all ${
+                      days === d
+                        ? "bg-[#FACC15] shadow-[2px_2px_0px_#000000] scale-105"
+                        : "bg-white text-black/70 hover:bg-[#FEF08A]"
+                    }`}
+                  >
+                    {d} {t("clubDaysUnit")}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button
               onClick={handleCreateClub}
-              className="self-start bg-[#A3E635] text-black border-[3px] border-black px-6 py-3 font-black uppercase shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all cursor-pointer flex items-center gap-2"
+              className="self-start bg-[#A3E635] text-black border-[3px] border-black px-6 py-3 font-black uppercase shadow-[4px_4px_0px_#000000] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all cursor-pointer flex items-center gap-2 mt-2"
             >
               <Check className="w-5 h-5 stroke-[3]" />
               <span>{t("clubCreate")}</span>
@@ -460,8 +536,9 @@ export function SummerClub() {
               </div>
               <h2 className="text-3xl sm:text-4xl font-black tracking-tight">{club.name}</h2>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <StatCard value={teams.length} label={t("clubTotalTeams")} bg="bg-[#38BDF8]" />
+                <StatCard value={`${club.days || 5} ${t("clubDaysUnit")}`} label={t("clubDaysLabel")} bg="bg-[#FACC15]" />
                 <StatCard value={assignedCount} label={t("clubTotalMembers")} bg="bg-[#A3E635]" />
                 <StatCard
                   value={Math.max(0, allStudents.length - assignedCount)}
@@ -471,6 +548,16 @@ export function SummerClub() {
               </div>
 
               <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => {
+                    setTempDays(club.days || 5);
+                    setEditingDays(true);
+                  }}
+                  className="bg-white border-[3px] border-black px-4 py-2.5 font-black text-sm uppercase shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <Pencil className="w-4 h-4 stroke-[3]" />
+                  {t("clubEditDays")}
+                </button>
                 <button
                   onClick={() => setStep(2)}
                   className="bg-white border-[3px] border-black px-4 py-2.5 font-black text-sm uppercase shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer flex items-center gap-2"
@@ -544,6 +631,94 @@ export function SummerClub() {
               </div>
             )}
           </Motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Edit Days Modal ── */}
+      <AnimatePresence>
+        {editingDays && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/70 p-4">
+            <Motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-sm bg-white border-[3px] border-black shadow-[8px_8px_0px_#000000] p-6 flex flex-col gap-5"
+            >
+              <div className="flex items-center justify-between border-b-2 border-black pb-3">
+                <h3 className="text-xl font-black uppercase flex items-center gap-2">
+                  📅 {t("clubEditDays")}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setEditingDays(false)}
+                  className="bg-white border-2 border-black p-1 shadow-[2px_2px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
+                >
+                  <X className="w-4 h-4 stroke-[3]" />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <p className="text-xs font-bold text-black/60">{t("clubDaysHint")}</p>
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setTempDays((d) => Math.max(1, (Number(d) || 1) - 1))}
+                    className="w-12 h-12 bg-white border-[3px] border-black font-black text-xl shadow-[3px_3px_0px_#000000] hover:shadow-none cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    max={60}
+                    value={tempDays}
+                    onChange={(e) => setTempDays(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-28 text-center bg-white border-[3px] border-black px-3 py-2.5 font-black text-2xl outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setTempDays((d) => Math.min(60, (Number(d) || 1) + 1))}
+                    className="w-12 h-12 bg-white border-[3px] border-black font-black text-xl shadow-[3px_3px_0px_#000000] hover:shadow-none cursor-pointer flex items-center justify-center shrink-0 active:scale-95"
+                  >
+                    +
+                  </button>
+                </div>
+
+                <div className="flex gap-2 flex-wrap justify-center mt-1">
+                  {[3, 5, 7, 10, 14].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setTempDays(d)}
+                      className={`px-3 py-1 border-2 border-black font-black text-xs uppercase cursor-pointer ${
+                        tempDays === d ? "bg-[#FACC15] shadow-[2px_2px_0px_#000000]" : "bg-white"
+                      }`}
+                    >
+                      {d} {t("clubDaysUnit")}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 w-full pt-2 border-t-2 border-black/10">
+                <button
+                  type="button"
+                  onClick={handleUpdateDays}
+                  className="flex-1 bg-[#A3E635] text-black border-2 border-black py-2.5 font-black uppercase text-sm shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span>{t("save")}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingDays(false)}
+                  className="flex-1 bg-white border-2 border-black py-2.5 font-black uppercase text-sm shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 transition-all cursor-pointer"
+                >
+                  {t("cancel")}
+                </button>
+              </div>
+            </Motion.div>
+          </div>
         )}
       </AnimatePresence>
 
