@@ -162,7 +162,10 @@ export function HomePage({
       subLabel: t("cardAttendanceSub"),
       icon: <ClipboardList />,
       onClick: onGoAttendance,
-      show: currentUser?.role === "admin",
+      show:
+        currentUser?.role === "admin" ||
+        (currentUser?.permissions || []).includes("perm_attendance") ||
+        (currentUser?.permissions || []).includes("perm_admin"),
     },
     {
       id: "visits",

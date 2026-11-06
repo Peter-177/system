@@ -34,7 +34,7 @@
  * @property {string}   username    - Login username
  * @property {string}   name        - Display name
  * @property {string}   role        - 'admin' | 'servant'
- * @property {string[]} [permissions] - Permission keys (e.g. 'perm_add_student')
+ * @property {string[]} [permissions] - Permission keys (e.g. 'perm_add_student', 'perm_attendance')
  */
 
 /**

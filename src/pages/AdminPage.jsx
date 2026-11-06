@@ -650,6 +650,11 @@ export function AdminPage({
                         label: t("adminModalDeleteRecordsLabel", "حذف السجلات"),
                         desc: t("adminModalDeleteRecordsDesc", "صلاحية مسح بيانات الأطفال والغياب"),
                       },
+                      {
+                        id: "perm_attendance",
+                        label: t("adminModalAttendanceLabel", "تسجيل الحضور (Attendance)"),
+                        desc: t("adminModalAttendanceDesc", "صلاحية تسجيل الحضور لكل الفصول"),
+                      },
                     ].map((p) => {
                       const isChecked = tempPerms.includes(p.id);
                       return (

@@ -4,7 +4,6 @@ import {
   ChevronRight,
   Search,
   ClipboardList,
-  Gamepad2,
   ArrowRight,
   ArrowLeft,
   Target,
@@ -12,30 +11,37 @@ import {
   Award,
   X,
   AlertTriangle,
-  Sparkles,
   Users,
 } from "lucide-react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
-import { studentsDB, summerAttendanceDB } from "../data/storage";
+import { studentsDB, summerAttendanceDB, summerClubDB } from "../data/storage";
 import { buildAttendanceEntry, registeredToday, todayISO } from "../utils/helpers";
 import { useToast } from "../hooks/useToast";
 import { Toast } from "../components/UI";
 
-import { SummerGameArena } from "./SummerGameArena";
 import { SummerProfile } from "./SummerProfile";
 import { SummerCoupons } from "./SummerCoupons";
 import { SummerClub } from "./SummerClub";
 import { useT } from "../hooks/useT";
 import { useAppContext } from "../context/AppContext";
 
+const CLUB_ID = "main";
+
 export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
   const sectionRef = useRef(null);
-  const [internalView, setInternalView] = useState("menu"); // 'menu' | 'search' | 'attendance' | 'games' | 'profile' | 'coupons'
+
+  // ── Club State ──
+  const [club, setClub] = useState(null);
+  const [clubLoaded, setClubLoaded] = useState(false);
+
+  // internalView: 'club' | 'search' | 'attendance' | 'profile' | 'coupons'
+  const [internalView, setInternalView] = useState("club");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [prevView, setPrevView] = useState("search");
   const [studentToRemove, setStudentToRemove] = useState(null);
   const [updateTrigger, setUpdateTrigger] = useState(0);
+
   const toast = useToast();
   const t = useT();
   const { lang } = useAppContext();
@@ -43,28 +49,69 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
   const BackIcon = lang === "ar" ? ArrowRight : ArrowLeft;
   const ChevronIcon = lang === "ar" ? ChevronLeft : ChevronRight;
 
+  // ── Load Club Data with Remote Sync ──
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      // 1. Quick local cache read (prevents flash of wrong state)
+      const local = summerClubDB.get(CLUB_ID) || Object.values(summerClubDB.getAll())[0] || null;
+      if (mounted) setClub(local);
+
+      // 2. Async remote read
+      try {
+        const remote = await summerClubDB.getAsync(CLUB_ID);
+        if (mounted) setClub(remote || local);
+      } catch (e) {
+        console.error("SummerPage: remote fetch error:", e);
+      } finally {
+        if (mounted) setClubLoaded(true);
+      }
+    };
+    load();
+
+    const handleUpdate = (e) => {
+      if (e?.detail !== undefined) {
+        setClub(e.detail);
+      } else {
+        const next = summerClubDB.get(CLUB_ID) || Object.values(summerClubDB.getAll())[0] || null;
+        setClub(next);
+      }
+    };
+    window.addEventListener("summerClubUpdated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      mounted = false;
+      window.removeEventListener("summerClubUpdated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, []);
+
+  // ── Page Title Logic ──
+  // When club exists: user chosen club name (from DB, never hardcoded, never translated)
+  // When no club exists: "إضافة نادي صيفي جديد" (Create New Summer Club)
+  const pageTitle = useMemo(() => {
+    if (!clubLoaded) return t("summerTitle");
+    if (club && club.name) return club.name;
+    return t("clubCreateNewTitle");
+  }, [clubLoaded, club, t]);
+
+  // ── Students List & Search Helper ──
   const filteredStudents = useMemo(() => {
     const db = studentsDB.getAll();
     const allStudents = Object.keys(db).map((id) => ({ qrId: id, ...db[id] }));
 
-    const normalizeArabic = (text) => {
-      if (!text) return "";
-      return text.replace(/[أإآا]/g, "ا");
-    };
-
+    const normalizeArabic = (text) => (text ? String(text).replace(/[أإآا]/g, "ا") : "");
     const sortAr = (arr) =>
-      [...arr].sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", lang === "ar" ? "ar" : "en"));
+      [...arr].sort((a, b) =>
+        (a.name ?? "").localeCompare(b.name ?? "", lang === "ar" ? "ar" : "en")
+      );
 
     const q = normalizeArabic(searchQuery.toLowerCase().trim());
 
     if (internalView === "attendance" && !q) {
-      // Default: show only students with prior summer attendance
       return sortAr(allStudents.filter((s) => summerAttendanceDB.get(s.qrId).length > 0));
     }
-
-    if (!q) {
-      return sortAr(allStudents);
-    }
+    if (!q) return sortAr(allStudents);
 
     return sortAr(
       allStudents.filter((s) => {
@@ -81,6 +128,7 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
     }
   }, [internalView]);
 
+  // ── Attendance Handlers ──
   const handleToggleAttendance = (student) => {
     const log = summerAttendanceDB.get(student.qrId);
     if (registeredToday(log)) {
@@ -113,7 +161,6 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
         addedCount++;
       }
     });
-
     if (addedCount > 0) {
       setUpdateTrigger((prev) => prev + 1);
       toast.show(`✅ ${addedCount}`);
@@ -145,48 +192,32 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
     return avatarColors[Math.abs(hash) % avatarColors.length];
   };
 
-  const summerCards = [
-    {
-      id: "club",
-      label: t("summerCardClub"),
-      subLabel: "CLUB BUILDER",
-      icon: <Users className="w-8 h-8 stroke-[2.5]" />,
-      tagBg: "bg-[#A78BFA]",
-      iconBg: "bg-[#A78BFA]",
-    },
-    {
-      id: "search",
-      label: t("summerCardSearch"),
-      subLabel: "SEARCH",
-      icon: <Search className="w-8 h-8 stroke-[2.5]" />,
-      tagBg: "bg-[#38BDF8]",
-      iconBg: "bg-[#38BDF8]",
-    },
-    {
-      id: "attendance",
-      label: t("summerCardAttendance"),
-      subLabel: "ATTENDANCE",
-      icon: <ClipboardList className="w-8 h-8 stroke-[2.5]" />,
-      tagBg: "bg-[#FACC15]",
-      iconBg: "bg-[#FACC15]",
-    },
-    {
-      id: "check",
-      label: t("summerCardChecks"),
-      subLabel: "REWARD CHECKS",
-      icon: <Award className="w-8 h-8 stroke-[2.5]" />,
-      tagBg: "bg-[#FB923C]",
-      iconBg: "bg-[#FB923C]",
-    },
-    {
-      id: "games",
-      label: t("summerCardGames"),
-      subLabel: "GAME ARENA",
-      icon: <Gamepad2 className="w-8 h-8 stroke-[2.5]" />,
-      tagBg: "bg-[#A3E635]",
-      iconBg: "bg-[#A3E635]",
-    },
-  ];
+  const handleBack = () => {
+    if (internalView === "club") {
+      if (onGoHome) onGoHome();
+    } else {
+      setInternalView("club");
+    }
+  };
+
+  const backLabel = internalView === "club" ? t("summerBackHome") : t("summerBackClub");
+
+  // ── LOADING GUARD: prevents any flash of State A create form before data loads ──
+  if (!clubLoaded) {
+    return (
+      <div
+        className="min-h-screen bg-[#FDF8F0] flex items-center justify-center p-4"
+        dir={lang === "ar" ? "rtl" : "ltr"}
+      >
+        <div className="flex flex-col items-center gap-5 text-center">
+          <div className="w-16 h-16 bg-[#FACC15] border-[3px] border-black shadow-[4px_4px_0px_#000000] flex items-center justify-center text-3xl animate-bounce">
+            ⏳
+          </div>
+          <p className="font-black text-xl uppercase tracking-wider">{t("loading")}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -201,44 +232,66 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
           {/* Back Button */}
           <button
-            onClick={() => {
-              if (internalView !== "menu") {
-                setInternalView("menu");
-              } else {
-                if (onGoHome) onGoHome();
-              }
-            }}
-            className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-[0px_0px_0px_#000000] hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] font-black text-xs sm:text-sm uppercase flex items-center gap-1.5 transition-all cursor-pointer rounded-none"
+            onClick={handleBack}
+            className="bg-white text-black border-2 sm:border-[3px] border-black px-3 py-1.5 sm:px-4 sm:py-2 shadow-[3px_3px_0px_#000000] hover:shadow-[0px_0px_0px_#000000] hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] font-black text-xs sm:text-sm uppercase flex items-center gap-1.5 transition-all cursor-pointer rounded-none shrink-0"
           >
             <BackIcon className="w-4 h-4 sm:w-5 sm:h-5 stroke-[3]" />
-            <span>{internalView === "menu" ? t("summerBackHome") : t("summerBackClub")}</span>
+            <span>{backLabel}</span>
           </button>
 
-          {/* Title */}
-          <div className="flex items-center gap-2">
-            <span className="bg-black text-[#A3E635] px-2.5 py-0.5 border-2 border-black font-black text-xs uppercase tracking-widest hidden sm:inline-block">
+          {/* Title — displays the chosen club name when club exists, or "إضافة نادي صيفي جديد" */}
+          <div className="flex items-center gap-2 min-w-0 flex-1 justify-center px-2">
+            <span className="bg-black text-[#A3E635] px-2.5 py-0.5 border-2 border-black font-black text-xs uppercase tracking-widest hidden md:inline-block shrink-0">
               {t("summerTag")}
             </span>
-            <h1 className="font-black text-xl sm:text-2xl tracking-tight text-black uppercase">
-              {t("summerTitle")}
+            <h1 className="font-black text-base sm:text-xl lg:text-2xl tracking-tight text-black uppercase truncate text-center">
+              {pageTitle}
             </h1>
           </div>
 
-          {/* Current Section Tag */}
-          <div className="bg-white text-black border-2 border-black px-3 py-1 font-black text-xs sm:text-sm uppercase shadow-[2px_2px_0px_#000000]">
-            <span>
-              {internalView === "menu"
-                ? t("summerMenuLabel")
-                : internalView === "search"
-                ? t("summerSearchLabel")
-                : internalView === "attendance"
-                ? t("summerAttendanceLabel")
-                : internalView === "games"
-                ? t("summerGamesLabel")
-                : internalView === "profile"
-                ? t("summerProfileLabel")
-                : t("summerCouponsLabel")}
-            </span>
+          {/* Quick-Nav Actions (Search, Attendance, Checks) */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {internalView !== "club" && (
+              <button
+                onClick={() => setInternalView("club")}
+                className="bg-white text-black border-2 border-black px-2.5 py-1 text-xs font-black uppercase shadow-[2px_2px_0px_#000000] hover:shadow-none cursor-pointer"
+              >
+                {t("summerBackClub")}
+              </button>
+            )}
+
+            <button
+              onClick={() => setInternalView((v) => (v === "search" ? "club" : "search"))}
+              className={`border-2 border-black p-1.5 sm:px-2.5 sm:py-1 text-xs font-black uppercase shadow-[2px_2px_0px_#000000] hover:shadow-none transition-all cursor-pointer flex items-center gap-1 ${
+                internalView === "search" ? "bg-black text-[#38BDF8]" : "bg-white text-black"
+              }`}
+              title={t("summerCardSearch")}
+            >
+              <Search className="w-4 h-4 stroke-[2.5]" />
+              <span className="hidden sm:inline">{t("summerSearchLabel")}</span>
+            </button>
+
+            <button
+              onClick={() => setInternalView((v) => (v === "attendance" ? "club" : "attendance"))}
+              className={`border-2 border-black p-1.5 sm:px-2.5 sm:py-1 text-xs font-black uppercase shadow-[2px_2px_0px_#000000] hover:shadow-none transition-all cursor-pointer flex items-center gap-1 ${
+                internalView === "attendance" ? "bg-black text-[#FACC15]" : "bg-white text-black"
+              }`}
+              title={t("summerCardAttendance")}
+            >
+              <ClipboardList className="w-4 h-4 stroke-[2.5]" />
+              <span className="hidden sm:inline">{t("summerAttendanceLabel")}</span>
+            </button>
+
+            {onGoCheck && (
+              <button
+                onClick={onGoCheck}
+                className="border-2 border-black p-1.5 sm:px-2.5 sm:py-1 text-xs font-black uppercase shadow-[2px_2px_0px_#000000] hover:shadow-none transition-all cursor-pointer flex items-center gap-1 bg-white text-black"
+                title={t("summerCardChecks")}
+              >
+                <Award className="w-4 h-4 stroke-[2.5]" />
+                <span className="hidden sm:inline">{t("summerCardChecks")}</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -246,119 +299,30 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
       {/* ── Main Content Area ── */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-8 flex flex-col gap-8">
         <AnimatePresence mode="wait">
-          {/* ── 1. MENU VIEW ── */}
-          {internalView === "menu" && (
-            <Motion.div
-              key="menu"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              className="flex flex-col gap-8"
-            >
-              {/* Summer Hero Banner */}
-              <section className="bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                <div className="space-y-3">
-                  <div className="inline-flex items-center gap-2 bg-[#FEF08A] text-black border-2 border-black px-3 py-1 text-xs font-black uppercase shadow-[2px_2px_0px_#000000]">
-                    <Sparkles className="w-3.5 h-3.5 stroke-[3]" />
-                    <span>{t("summerWelcome")}</span>
-                  </div>
-                  <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-black tracking-tight leading-none">
-                    {t("summerHeroTitle")}{" "}
-                    <span className="bg-[#A3E635] text-black border-[3px] border-black px-3 py-0.5 inline-block shadow-[4px_4px_0px_#000000] -rotate-1">
-                      {t("summerHeroAccent")}
-                    </span>
-                  </h2>
-                  <p className="text-sm sm:text-base font-bold text-black/70 max-w-lg">
-                    {t("summerHeroText")}
-                  </p>
-                </div>
 
-                <div className="bg-[#A3E635] border-[3px] border-black shadow-[4px_4px_0px_#000000] p-4 text-center shrink-0 self-stretch md:self-auto flex flex-col items-center justify-center">
-                  <span className="text-2xl sm:text-3xl font-black text-black">
-                    ⚽ 5
-                  </span>
-                  <span className="text-xs font-black uppercase text-black/80 tracking-wider">
-                    {t("summerSections")}
-                  </span>
-                </div>
-              </section>
-
-              {/* Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-                {summerCards.map((card, idx) => (
-                  <Motion.button
-                    key={card.id}
-                    onClick={() => {
-                      if (card.id === "check" && onGoCheck) {
-                        onGoCheck();
-                      } else {
-                        setInternalView(card.id);
-                      }
-                    }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className={`bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] hover:shadow-[0px_0px_0px_#000000] hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none active:translate-x-[5px] active:translate-y-[5px] p-6 ${lang === 'ar' ? 'text-right' : 'text-left'} flex flex-col justify-between gap-6 transition-all duration-150 group cursor-pointer w-full select-none rounded-none`}
-                  >
-                    {/* Top Tag */}
-                    <div className="w-full flex items-center justify-between">
-                      <span
-                        className={`inline-block ${card.tagBg} text-black border-2 border-black px-2.5 py-0.5 text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_#000000]`}
-                      >
-                        {card.subLabel}
-                      </span>
-                      <span className="font-mono text-xs font-black text-black/40">
-                        0{idx + 1}
-                      </span>
-                    </div>
-
-                    {/* Middle: Icon & Title */}
-                    <div className="flex flex-col items-start gap-4">
-                      <div
-                        className={`w-14 h-14 ${card.iconBg} border-[3px] border-black shadow-[3px_3px_0px_#000000] flex items-center justify-center text-black shrink-0`}
-                      >
-                        {card.icon}
-                      </div>
-
-                      <div>
-                        <h3 className="text-xl sm:text-2xl font-black text-black tracking-tight group-hover:underline underline-offset-4 decoration-2">
-                          {card.label}
-                        </h3>
-                        <p className="text-xs font-bold text-black/60 uppercase tracking-widest mt-0.5">
-                          {card.subLabel}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Bottom Action Row */}
-                    <div className="pt-3 border-t-2 border-black flex items-center justify-between w-full">
-                      <span className="text-xs font-black uppercase text-black/60 tracking-wider">
-                        {t("open")}
-                      </span>
-                      <div className="bg-[#FACC15] group-hover:bg-[#A3E635] text-black border-2 border-black px-3 py-1 text-xs font-black uppercase shadow-[2px_2px_0px_#000000] flex items-center gap-1 transition-colors">
-                        <span>{t("enter")}</span>
-                        <ChevronIcon className="w-4 h-4 stroke-[3]" />
-                      </div>
-                    </div>
-                  </Motion.button>
-                ))}
-              </div>
-            </Motion.div>
-          )}
-
-          {/* ── 1b. CLUB BUILDER VIEW ── */}
+          {/* ═══════════════════════════════════════════════════════════════
+              1. MAIN CLUB VIEW (State A if no club, State B if club exists)
+          ═══════════════════════════════════════════════════════════════ */}
           {internalView === "club" && (
             <Motion.div
               key="club"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="w-full"
             >
-              <SummerClub />
+              <SummerClub
+                currentUser={currentUser}
+                onClubCreated={(newClub) => {
+                  setClub(newClub);
+                }}
+              />
             </Motion.div>
           )}
 
-          {/* ── 2. SEARCH & ATTENDANCE VIEWS ── */}
+          {/* ═══════════════════════════════════════════════════════════════
+              2. SEARCH & ATTENDANCE VIEWS
+          ═══════════════════════════════════════════════════════════════ */}
           {(internalView === "search" || internalView === "attendance") && (
             <Motion.div
               key={internalView}
@@ -369,7 +333,7 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
             >
               {/* Search Bar */}
               <div className="relative flex items-center bg-white border-[3px] border-black shadow-[6px_6px_0px_#000000] focus-within:shadow-[8px_8px_0px_#000000] transition-all">
-                <div className="bg-[#A3E635] text-black border-x-[3px] border-black p-3.5 sm:p-4.5 flex items-center justify-center shrink-0">
+                <div className="bg-[#A3E635] text-black border-e-[3px] border-black p-3.5 sm:p-4 flex items-center justify-center shrink-0">
                   <Search className="w-6 h-6 stroke-[3]" />
                 </div>
                 <input
@@ -403,9 +367,7 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
                     <button
                       onClick={allPresent ? handleRemoveAll : handleMarkAllPresent}
                       className={`flex items-center gap-2 px-5 py-2 border-2 border-black font-black text-sm uppercase shadow-[3px_3px_0px_#000000] hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 transition-all cursor-pointer ${
-                        allPresent
-                          ? "bg-[#EF4444] text-white"
-                          : "bg-[#A3E635] text-black"
+                        allPresent ? "bg-[#EF4444] text-white" : "bg-[#A3E635] text-black"
                       }`}
                     >
                       <CheckCircle2 className="w-5 h-5 stroke-[3]" />
@@ -440,7 +402,6 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
                       } ${isPresent ? "bg-[#FEF08A]" : "bg-white"}`}
                     >
                       <div className="flex items-center gap-3 min-w-0 pr-1">
-                        {/* Brutalist Avatar */}
                         <div
                           className={`w-12 h-12 sm:w-14 sm:h-14 shrink-0 border-2 border-black shadow-[2px_2px_0px_#000000] ${avatarBg} text-black font-black text-xl flex items-center justify-center overflow-hidden`}
                         >
@@ -455,7 +416,7 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
                           )}
                         </div>
 
-                        <div className={`flex flex-col min-w-0 ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
+                        <div className={`flex flex-col min-w-0 ${lang === "ar" ? "text-right" : "text-left"}`}>
                           <span className="font-black text-base sm:text-lg text-black truncate">
                             {student.name}
                           </span>
@@ -465,7 +426,6 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
                         </div>
                       </div>
 
-                      {/* Attendance Toggle Button */}
                       {internalView === "attendance" && (
                         <button
                           onClick={() => handleToggleAttendance(student)}
@@ -490,7 +450,6 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
                         </button>
                       )}
 
-                      {/* Search View: Open Profile arrow */}
                       {internalView === "search" && (
                         <div className="bg-[#FACC15] text-black border-2 border-black p-2 shadow-[2px_2px_0px_#000000] shrink-0">
                           <ChevronIcon className="w-4 h-4 stroke-[3]" />
@@ -503,20 +462,9 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
             </Motion.div>
           )}
 
-          {/* ── 3. GAMES VIEW ── */}
-          {internalView === "games" && (
-            <Motion.div
-              key="games"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              className="w-full"
-            >
-              <SummerGameArena onGoClubBuilder={() => setInternalView("club")} />
-            </Motion.div>
-          )}
-
-          {/* ── 4. PROFILE VIEW ── */}
+          {/* ═══════════════════════════════════════════════════════════════
+              3. PROFILE VIEW
+          ═══════════════════════════════════════════════════════════════ */}
           {internalView === "profile" && selectedStudent && (
             <Motion.div
               key="profile"
@@ -534,7 +482,9 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
             </Motion.div>
           )}
 
-          {/* ── 5. COUPONS VIEW ── */}
+          {/* ═══════════════════════════════════════════════════════════════
+              4. COUPONS VIEW
+          ═══════════════════════════════════════════════════════════════ */}
           {internalView === "coupons" && selectedStudent && (
             <Motion.div
               key="coupons"
@@ -553,7 +503,7 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
         </AnimatePresence>
       </main>
 
-      {/* ── Attendance Removal Confirmation Modal (Neo-Brutalist) ── */}
+      {/* ── Attendance Removal Confirmation Modal ── */}
       <AnimatePresence>
         {studentToRemove && (
           <div
@@ -571,14 +521,10 @@ export function SummerSection({ onGoHome, currentUser, onGoCheck }) {
               </div>
 
               <div className="space-y-1">
-                <h3 className="text-2xl font-black text-black uppercase">
-                  {t("summerRemoveModal")}
-                </h3>
+                <h3 className="text-2xl font-black text-black uppercase">{t("summerRemoveModal")}</h3>
                 <p className="text-sm font-bold text-black/70">
                   {t("summerRemoveConfirm")}{" "}
-                  <span className="text-black font-black underline">
-                    {studentToRemove.name}
-                  </span>{" "}
+                  <span className="text-black font-black underline">{studentToRemove.name}</span>{" "}
                   {t("summerRemoveToday")}
                 </p>
               </div>
@@ -614,7 +560,3 @@ export function SummerPage({ onBack, currentUser, onGoCheck }) {
     />
   );
 }
-
-
-
-
